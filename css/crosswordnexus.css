@@ -179,6 +179,10 @@ input.cw-hidden-input {
     /* width: 700px; */
 }
 
+.cw-clues-holder-fake {
+    display: none;
+}
+
 .cw-clues {
     display: flex;
     flex: 1 1 100%;

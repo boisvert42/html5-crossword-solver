@@ -173,6 +173,16 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
               <div class="cw-clues-items"></div>
             </div>
           </div>
+          <div class="cw-clues-holder-fake">
+            <div class="cw-clues cw-clues-fake-top">
+              <div class="cw-clues-title"></div>
+              <div class="cw-clues-items"></div>
+            </div>
+            <div class="cw-clues cw-clues-fake-bottom">
+              <div class="cw-clues-title"></div>
+              <div class="cw-clues-items"></div>
+            </div>
+          </div>
         </div>
       </div>`;
 
@@ -392,6 +402,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         this.clues_holder = this.root.find('div.cw-clues-holder');
         this.clues_top_container = this.root.find('div.cw-clues-top');
         this.clues_bottom_container = this.root.find('div.cw-clues-bottom');
+        // A place for "hidden" (i.e. "fake") across and down clues
+        this.fake_clues_top_container = this.root.find('div.cw-clues-fake-top');
+        this.fake_clues_bottom_container = this.root.find('div.cw-clues-fake-bottom');
         this.canvas_holder = this.root.find('div.cw-canvas');
         this.canvas = this.root.find('canvas');
         this.context = this.canvas[0].getContext('2d');
@@ -585,7 +598,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           // We do this by comparing the entry to the set of across entries
           var thisGrid = new xwGrid(puzzle.cells);
           var acrossEntries = thisGrid.acrossEntries();
-          var acrossEntries = thisGrid.acrossEntries();
           var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
           var entry_mapping = puzzle.get_entry_mapping();
           Object.keys(entry_mapping).forEach(function (id) {
@@ -688,6 +700,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         if (this.clues_bottom) {
           this.renderClues(this.clues_bottom, this.clues_bottom_container);
         }
+
         this.addListeners();
 
         this.root.removeClass('loading');

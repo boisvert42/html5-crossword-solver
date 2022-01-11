@@ -515,6 +515,45 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         alert(message);
       }
 
+      /** Default across and down clues **/
+      defaultClues() {
+        // initialize the across and down groups
+        var clueMapping = {};
+        var puzzle = this.jsxw;
+        var across_group = new CluesGroup(this, {
+          id: CLUES_TOP,
+          title: 'ACROSS',
+          clues: [],
+          words_ids: [],
+        });
+        var down_group = new CluesGroup(this, {
+          id: CLUES_BOTTOM,
+          title: 'DOWN',
+          clues: [],
+          words_ids: [],
+        });
+        // Determine which word is an across and which is a down
+        // We do this by comparing the entry to the set of across entries
+        var thisGrid = new xwGrid(puzzle.cells);
+        var acrossEntries = thisGrid.acrossEntries();
+        var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
+        var entry_mapping = puzzle.get_entry_mapping();
+        Object.keys(entry_mapping).forEach(function (id) {
+          var thisClue = {word: id, number: id, text: '--'};
+          var entry = entry_mapping[id];
+          if (acrossSet.has(entry)) {
+            across_group.clues.push(thisClue);
+            across_group.words_ids.push(id);
+            clueMapping[id] = thisClue;
+          } else {
+            down_group.clues.push(thisClue);
+            down_group.words_ids.push(id);
+            clueMapping[id] = thisClue;
+          }
+        });
+        return {'across': across_group, 'down': down_group, 'clueMapping': clueMapping};
+      }
+
       /** Parse a puzzle using JSCrossword **/
       parsePuzzle(string) {
         var xw_constructor = new JSCrossword();
@@ -581,46 +620,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         var clueMapping = {};
         // we handle them differently for coded crosswords
         if (this.crossword_type === 'coded') {
-          // initialize the across and down groups
-          var across_group = new CluesGroup(this, {
-            id: CLUES_TOP,
-            title: 'ACROSS',
-            clues: [],
-            words_ids: [],
-          });
-          var down_group = new CluesGroup(this, {
-            id: CLUES_BOTTOM,
-            title: 'DOWN',
-            clues: [],
-            words_ids: [],
-          });
-          // Determine which word is an across and which is a down
-          // We do this by comparing the entry to the set of across entries
-          var thisGrid = new xwGrid(puzzle.cells);
-          var acrossEntries = thisGrid.acrossEntries();
-          var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
-          var entry_mapping = puzzle.get_entry_mapping();
-          Object.keys(entry_mapping).forEach(function (id) {
-            var thisClue = {word: id, number: id, text: '--'};
-            var entry = entry_mapping[id];
-            if (acrossSet.has(entry)) {
-              across_group.clues.push(thisClue);
-              across_group.words_ids.push(id);
-              clueMapping[id] = thisClue;
-            } else {
-              down_group.clues.push(thisClue);
-              down_group.words_ids.push(id);
-              clueMapping[id] = thisClue;
-            }
-          });
-          this.clues_top = across_group;
-          this.clues_bottom = down_group;
+          var default_clues = this.defaultClues();
+          this.clues_top = default_clues['across'];
+          this.clues_bottom = default_clues['down'];
+          clueMapping = default_clues['clueMapping'];
           // Also, in a coded crossword, there's no reason to show the clues
           $('div.cw-clues-holder').css({ display: 'none' });
           $('div.cw-top-text-wrapper').css({ display: 'none' });
           // Add some padding to the buttons holder
           $('div.cw-buttons-holder').css({ padding: '0 10px' });
-
         } else { // not a coded crossword
           // we need to keep a mapping of word ID to clue
           puzzle.clues[0].clue.forEach( function (clue) {
@@ -657,6 +665,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         }
         /* words */
         this.words = {};
+        console.log(puzzle.words);
         for (var i=0; i<puzzle.words.length; i++) {
           var word = puzzle.words[i];
           this.words[word.id] = new Word(this, {
@@ -699,6 +708,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         }
         if (this.clues_bottom) {
           this.renderClues(this.clues_bottom, this.clues_bottom_container);
+        }
+        // if we have fake clues, do a switcheroo
+        if (this.jsxw.metadata.fakeclues) {
+          var default_clues = this.defaultClues();
+          this.clues_top = default_clues['across'];
+          this.clues_bottom = default_clues['down'];
+          this.renderClues(this.clues_top, this.fake_clues_top_container);
+          this.renderClues(this.clues_bottom, this.fake_clues_bottom_container);
         }
 
         this.addListeners();

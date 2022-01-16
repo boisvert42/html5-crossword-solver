@@ -32,6 +32,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
       color_hilite: '#fff5d7',
       color_none: '#FFFFFF',
       background_color_clue: '#666666',
+      default_background_color: '#c2ed7e',
       font_color_clue: '#FFFFFF',
       color_block: '#000000',
       puzzle_file: null,
@@ -41,6 +42,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
       space_bar: 'space_clear',
       savegame_name: '',
       filled_clue_color: '#999999',
+      timer_autostart: false,
     };
 
     // constants
@@ -101,10 +103,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
               Open puzzle file
             </button>
             <div class="cw-open-puzzle-formats">
-              <b>Accepted formats:</b> PUZ, JPZ, XML, and iPUZ (partial)
+              <b>Accepted formats:</b> PUZ, JPZ, XML, CFP, and iPUZ (partial)
             </div>
           </div>
-          <input type="file" class="cw-open-jpz" accept=".puz,.xml,.jpz,.xpz,.ipuz">
+          <input type="file" class="cw-open-jpz" accept=".puz,.xml,.jpz,.xpz,.ipuz,.cfp">
         </div>
         <!-- End overlay -->
         <header class="cw-header"></header>
@@ -355,6 +357,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             }
           }
         }
+
         this.cell_size = 40;
         //this.top_text_height = 0;
         //this.bottom_text_height = 0;
@@ -605,6 +608,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             right: c['right-bar'] === true,
           };
           c.color = c['background-color'];
+          // if they tried to define a color but did it badly, use the default
+          if (c.color && !c.color.match('^#[A-Za-z0-9]{6}$')) {
+            c.color = this.default_background_color;
+            c['background-color'] = this.default_background_color;
+          }
           c.shape = c['background-shape'];
           this.cells[c.x][c.y] = c;
 
@@ -726,6 +734,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         var first_word = this.active_clues.getFirstWord();
         this.setActiveWord(first_word);
         this.setActiveCell(first_word.getFirstCell());
+
+        // Start the timer if necessary
+        if (this.config.timer_autostart) {
+          this.toggleTimer();
+        }
+
         //this.adjustPaddings();
         this.renderCells();
       }
@@ -1822,6 +1836,21 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
               </label>
             </div>
           </div>
+
+          <!-- Timer -->
+          <div class="settings-setting">
+            <div class="settings-description">
+              Timer
+            </div>
+            <div class="settings-option">
+              <label class="settings-label">
+                <input id="timer_autostart" checked="" type="checkbox" name="timer_autostart" class="settings-changer">
+                  Start timer on puzzle open
+                </input>
+              </label>
+            </div>
+          </div>
+
         </div>
         `;
         this.createModalBox('Settings', settingsHTML);

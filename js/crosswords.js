@@ -535,26 +535,24 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           clues: [],
           words_ids: [],
         });
+        var clueGroups = {'across': across_group, 'down': down_group};
         // Determine which word is an across and which is a down
         // We do this by comparing the entry to the set of across entries
         var thisGrid = new xwGrid(puzzle.cells);
-        var acrossEntries = thisGrid.acrossEntries();
-        var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
-        var entry_mapping = puzzle.get_entry_mapping();
-        Object.keys(entry_mapping).forEach(function (id) {
-          var thisClue = {word: id, number: id, text: '--'};
-          var entry = entry_mapping[id];
-          if (acrossSet.has(entry)) {
-            across_group.clues.push(thisClue);
-            across_group.words_ids.push(id);
+
+        var entries = {'across': thisGrid.acrossEntries(), 'down': thisGrid.downEntries()};
+
+        Object.keys(entries).forEach(function (dir) {
+          Object.keys(entries[dir]).forEach(function (num) {
+            var entry = entries[dir][num];
+            var id = entry.id;
+            var thisClue = {word: id, number: '', text: ''};
+            clueGroups[dir].clues.push(thisClue);
+            clueGroups[dir].words_ids.push(id);
             clueMapping[id] = thisClue;
-          } else {
-            down_group.clues.push(thisClue);
-            down_group.words_ids.push(id);
-            clueMapping[id] = thisClue;
-          }
+          });
         });
-        return {'across': across_group, 'down': down_group, 'clueMapping': clueMapping};
+        return {'across': clueGroups['across'], 'down': clueGroups['down'], 'clueMapping': clueMapping};
       }
 
       /** Parse a puzzle using JSCrossword **/
@@ -673,7 +671,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         }
         /* words */
         this.words = {};
-        console.log(puzzle.words);
         for (var i=0; i<puzzle.words.length; i++) {
           var word = puzzle.words[i];
           this.words[word.id] = new Word(this, {
@@ -682,7 +679,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
               var obj = {x: (c[0] + 1).toString(), y: (c[1] + 1).toString()};
               return obj;
             }),
-            clue: clueMapping[word.id]
+            clue: clueMapping[word.id] || {"word": word.id, "number": '', "text": ''}
           });
         }
         console.log(this);
@@ -709,8 +706,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
         this.notepad_icon = this.root.find('.cw-button-notepad');
 
-        this.changeActiveClues();
-
         if (this.clues_top) {
           this.renderClues(this.clues_top, this.clues_top_container);
         }
@@ -720,11 +715,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         // if we have fake clues, do a switcheroo
         if (this.jsxw.metadata.fakeclues) {
           var default_clues = this.defaultClues();
+          console.log(default_clues);
           this.clues_top = default_clues['across'];
           this.clues_bottom = default_clues['down'];
           this.renderClues(this.clues_top, this.fake_clues_top_container);
           this.renderClues(this.clues_bottom, this.fake_clues_bottom_container);
         }
+
+        this.changeActiveClues();
 
         this.addListeners();
 

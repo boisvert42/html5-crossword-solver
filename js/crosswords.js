@@ -424,9 +424,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         // function to process uploaded files
         function processFiles(files) {
           loadFromFile(files[0], FILE_PUZ).then(
-              parsePUZZLE_callback,
-              error_callback
-            );
+            parsePUZZLE_callback,
+            error_callback
+          );
         }
 
         // preload one puzzle
@@ -435,12 +435,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           this.config.puzzle_file.hasOwnProperty('url') &&
           this.config.puzzle_file.hasOwnProperty('type')
         ) {
-            this.root.addClass('loading');
-            var loaded_callback = parsePUZZLE_callback;
-            loadFileFromServer(
-              this.config.puzzle_file.url,
-              this.config.puzzle_file.type
-            ).then(loaded_callback, error_callback);
+          this.root.addClass('loading');
+          var loaded_callback = parsePUZZLE_callback;
+          loadFileFromServer(
+            this.config.puzzle_file.url,
+            this.config.puzzle_file.type
+          ).then(loaded_callback, error_callback);
         } else {
           // shows open button
           var i, puzzle_file, el;
@@ -540,15 +540,16 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         this.msg_solved = puzzle.metadata.completion_message || MSG_SOLVED;
         /* cells */
         this.cells = {};
-        for (var i=0; i < puzzle.cells.length; i++) {
-          var c = { ...puzzle.cells[i]}; // make a copy
+        for (var i = 0; i < puzzle.cells.length; i++) {
+          var c = { ...puzzle.cells[i] }; // make a copy
           c.x = c.x + 1;
           c.y = c.y + 1;
           if (!this.cells[c.x]) {
             this.cells[c.x] = {};
           }
-          c.empty = (c.type === 'block' || c.type === 'void' || c.type === 'clue');
-          c.clue = (c.type === 'clue');
+          c.empty =
+            c.type === 'block' || c.type === 'void' || c.type === 'clue';
+          c.clue = c.type === 'clue';
           c.bar = {
             top: c['top-bar'] === true,
             bottom: c['bottom-bar'] === true,
@@ -594,10 +595,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           var thisGrid = new xwGrid(puzzle.cells);
           var acrossEntries = thisGrid.acrossEntries();
           var acrossEntries = thisGrid.acrossEntries();
-          var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
+          var acrossSet = new Set(
+            Object.keys(acrossEntries).map(function (x) {
+              return acrossEntries[x].word;
+            })
+          );
           var entry_mapping = puzzle.get_entry_mapping();
           Object.keys(entry_mapping).forEach(function (id) {
-            var thisClue = {word: id, number: id, text: '--'};
+            var thisClue = { word: id, number: id, text: '--' };
             var entry = entry_mapping[id];
             if (acrossSet.has(entry)) {
               across_group.clues.push(thisClue);
@@ -616,10 +621,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           $('div.cw-top-text-wrapper').css({ display: 'none' });
           // Add some padding to the buttons holder
           $('div.cw-buttons-holder').css({ padding: '0 10px' });
-
-        } else { // not a coded crossword
+        } else {
+          // not a coded crossword
           // we need to keep a mapping of word ID to clue
-          puzzle.clues[0].clue.forEach( function (clue) {
+          puzzle.clues[0].clue.forEach(function (clue) {
             clueMapping[clue.word] = clue;
           });
           var words_ids_top = puzzle.clues[0].clue.map(function (key) {
@@ -629,11 +634,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             id: CLUES_TOP,
             title: puzzle.clues[0]['title'],
             clues: puzzle.clues[0].clue,
-            words_ids: words_ids_top
+            words_ids: words_ids_top,
           });
           // only do a second clue list if we have one
           if (puzzle.clues.length > 1) {
-            puzzle.clues[1].clue.forEach( function (clue) {
+            puzzle.clues[1].clue.forEach(function (clue) {
               clueMapping[clue.word] = clue;
             });
             this.clues_bottom = new CluesGroup(this, {
@@ -642,7 +647,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
               clues: puzzle.clues[1].clue,
               words_ids: puzzle.clues[1].clue.map(function (key) {
                 return key.word;
-              })
+              }),
             });
           } else {
             // hide the bottom clues
@@ -653,21 +658,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         }
         /* words */
         this.words = {};
-        for (var i=0; i<puzzle.words.length; i++) {
+        for (var i = 0; i < puzzle.words.length; i++) {
           var word = puzzle.words[i];
           this.words[word.id] = new Word(this, {
             id: word.id,
             cell_ranges: word.cells.map(function (c) {
-              var obj = {x: (c[0] + 1).toString(), y: (c[1] + 1).toString()};
+              var obj = { x: (c[0] + 1).toString(), y: (c[1] + 1).toString() };
               return obj;
             }),
-            clue: clueMapping[word.id]
+            clue: clueMapping[word.id],
           });
         }
         console.log(this);
 
         this.completeLoad();
-
       }
 
       completeLoad() {
@@ -1913,9 +1917,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           if (!my_cells[i].solution) {
             continue;
           }
-          if (
-            !isCorrect(my_cells[i].letter, my_cells[i].solution)
-          ) {
+          if (!isCorrect(my_cells[i].letter, my_cells[i].solution)) {
             if (reveal_or_check == 'reveal') {
               my_cells[i].letter = my_cells[i].solution;
               my_cells[i].revealed = true;

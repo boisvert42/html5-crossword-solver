@@ -114,50 +114,52 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           <!-- Placeholder for modal boxes -->
           <div class="cw-modal"></div>
           <div class="cw-left">
-            <div class="cw-buttons-holder">
-              <div class="cw-menu-container">
-                <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🗄️</span> File
-                  <span class="cw-arrow"></span>
-                </button>
-                <div class="cw-menu">
-                  <button class="cw-menu-item cw-file-info">Info</button>
-                  <button class="cw-menu-item cw-file-notepad">Notepad</button>
-                  <button class="cw-menu-item cw-file-print">Print</button>
+            <div class="cw-subheader">
+              <div class="cw-buttons-holder">
+                <div class="cw-menu-container">
+                  <button type="button" class="cw-button">
+                    <span class="cw-button-icon">🗄️</span> File
+                    <span class="cw-arrow"></span>
+                  </button>
+                  <div class="cw-menu">
+                    <button class="cw-menu-item cw-file-info">Info</button>
+                    <button class="cw-menu-item cw-file-notepad">Notepad</button>
+                    <button class="cw-menu-item cw-file-print">Print</button>
+                  </div>
                 </div>
-              </div>
-              <div class="cw-menu-container cw-check">
-                <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🔍</span> Check
-                  <span class="cw-arrow"></span>
-                </button>
-                <div class="cw-menu">
-                  <button class="cw-menu-item cw-check-letter">Letter</button>
-                  <button class="cw-menu-item cw-check-word">Word</button>
-                  <button class="cw-menu-item cw-check-puzzle">Puzzle</button>
+                <div class="cw-menu-container cw-check">
+                  <button type="button" class="cw-button">
+                    <span class="cw-button-icon">🔍</span> Check
+                    <span class="cw-arrow"></span>
+                  </button>
+                  <div class="cw-menu">
+                    <button class="cw-menu-item cw-check-letter">Letter</button>
+                    <button class="cw-menu-item cw-check-word">Word</button>
+                    <button class="cw-menu-item cw-check-puzzle">Puzzle</button>
+                  </div>
                 </div>
-              </div>
-              <div class="cw-menu-container cw-reveal">
-                <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🎱</span> Reveal
-                  <span class="cw-arrow"></span>
-                </button>
-                <div class="cw-menu">
-                  <button class="cw-menu-item cw-reveal-letter">Letter</button>
-                  <button class="cw-menu-item cw-reveal-word">Word</button>
-                  <button class="cw-menu-item cw-reveal-puzzle">Puzzle</button>
+                <div class="cw-menu-container cw-reveal">
+                  <button type="button" class="cw-button">
+                    <span class="cw-button-icon">🎱</span> Reveal
+                    <span class="cw-arrow"></span>
+                  </button>
+                  <div class="cw-menu">
+                    <button class="cw-menu-item cw-reveal-letter">Letter</button>
+                    <button class="cw-menu-item cw-reveal-word">Word</button>
+                    <button class="cw-menu-item cw-reveal-puzzle">Puzzle</button>
+                  </div>
                 </div>
+                <button type="button" class="cw-button cw-settings-button">
+                  <span class="cw-button-icon">⚙️</span> Settings
+                </button>
+                <span class="cw-flex-spacer"></span>
+                <button type="button" class="cw-button cw-button-timer">00:00</button>
               </div>
-              <button type="button" class="cw-button cw-settings-button">
-                <span class="cw-button-icon">⚙️</span> Settings
-              </button>
-              <span class="cw-flex-spacer"></span>
-              <button type="button" class="cw-button cw-button-timer">00:00</button>
-            </div>
-            <div class="cw-top-text-wrapper">
-              <div class="cw-top-text">
-                <span class="cw-clue-number">1</span>
-                <span class="cw-clue-text">Clue</span>
+              <div class="cw-top-text-wrapper">
+                <div class="cw-top-text">
+                  <span class="cw-clue-number">1</span>
+                  <span class="cw-clue-text">Clue</span>
+                </div>
               </div>
             </div>
             <input type="text" class="cw-hidden-input">

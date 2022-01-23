@@ -155,6 +155,7 @@ input.cw-hidden-input {
     flex-direction: column;
     min-width: 300px;
     position: relative;
+    overflow-y: auto;
 }
 
 .cw-canvas {
@@ -186,6 +187,13 @@ input.cw-hidden-input {
     margin-left: 10px;
     min-height: 1px;
     min-width: 1px;
+}
+
+.cw-subheader {
+    background-color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .cw-buttons-holder {

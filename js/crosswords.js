@@ -156,10 +156,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
                 <button type="button" class="cw-button cw-button-timer">00:00</button>
               </div>
               <div class="cw-top-text-wrapper">
+                <button class="cw-clue-arrow-btn-left"><div></div></button>
                 <div class="cw-top-text">
                   <span class="cw-clue-number">1</span>
                   <span class="cw-clue-text">Clue</span>
                 </div>
+                <button class="cw-clue-arrow-btn-right"><div></div></button>
               </div>
             </div>
             <input type="text" class="cw-hidden-input">
@@ -422,6 +424,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
         this.timer_button = this.root.find('.cw-button-timer');
         this.xw_timer_seconds = 0;
+
+        this.prev_clue = this.root.find('.cw-clue-arrow-btn-left');
+        this.next_clue = this.root.find('.cw-clue-arrow-btn-right');
 
         // function to process uploaded files
         function processFiles(files) {
@@ -755,6 +760,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
         this.hidden_input.off('input');
         this.hidden_input.off('keydown');
+
+        this.prev_clue.off('click');
+        this.next_clue.off('click');
       }
 
       addListeners() {
@@ -832,6 +840,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           this.notepad_btn.show();
         }
         this.notepad_btn.on('click', $.proxy(this.showNotepad, this));
+
+        // CLUE ARROWS
+        this.prev_clue.on('click', $.proxy(this.moveToNextWord, this, true));
+        this.next_clue.on('click', $.proxy(this.moveToNextWord, this, false));
 
         this.hidden_input.on(
           'input',
@@ -943,6 +955,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             <span class="cw-clue-text">
               ${escape(word.clue.text)}
             </span>
+            <div class="cw-flex-spacer"></div>
           `);
           resizeText(this.root, this.top_text);
         }

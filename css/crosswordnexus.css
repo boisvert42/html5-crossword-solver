@@ -473,7 +473,7 @@ input.cw-hidden-input {
     font-weight: 600;
     margin-right: 0.8em;
     text-align: right;
-    min-width: 24px;
+    min-width: 1.5em;
 }
 .cw-clue-text {
     flex: 1 1 auto;
@@ -503,6 +503,53 @@ input.cw-hidden-input {
     flex-grow: 1;
 }
 
+.cw-clue-arrow-btn-left,
+.cw-clue-arrow-btn-right {
+    align-items: center;
+    align-self: center;
+    background: none;
+    border-radius: 0.4em;
+    border: none;
+    box-shadow: none;
+    color: #6f623c;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    margin: 0 0.25em;
+    padding: 0.75em;
+}
+
+.cw-clue-arrow-btn-left:hover,
+.cw-clue-arrow-btn-right:hover {
+    background-color: #f7eed0;
+}
+
+.cw-clue-arrow-btn-left:active,
+.cw-clue-arrow-btn-right:active {
+    position: relative;
+    top: 0.0625em;
+}
+
+.cw-clue-arrow-btn-left > div,
+.cw-clue-arrow-btn-right > div {
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  padding: 0.25em;
+  display: inline-block;
+}
+
+.cw-clue-arrow-btn-left > div {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+  margin-right: -0.2em;
+}
+
+.cw-clue-arrow-btn-right > div {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  margin-left: -0.2em;
+}
+
 /**
 * Size-dependent styles
 * NOTE: We don't use media queries here because we need to base the responsive
@@ -528,8 +575,9 @@ input.cw-hidden-input {
 .cw-top-text {
     align-items: flex-start;
     display: flex;
-    padding: 6px 15px 6px 15px;
+    padding: 6px 0;
     line-height: 1.2;
+    flex-grow: 1;
 }
 .cw-clues-title {
     align-items: flex-end;
@@ -557,7 +605,7 @@ input.cw-hidden-input {
     height: 55px;
 }
 .cw-max-width-1200 .cw-top-text {
-    padding: 5px 10px 5px 10px;
+    padding: 5px 0;
 }
 .cw-max-width-1200 .cw-clues {
     width: 300px;
@@ -573,7 +621,7 @@ input.cw-hidden-input {
     height: 45px;
 }
 .cw-max-width-1080 .cw-top-text {
-    padding: 4px 8px 4px 8px;
+    padding: 4px 0;
 }
 .cw-max-width-1080 .cw-clues {
     width: 220px;
@@ -587,7 +635,7 @@ input.cw-hidden-input {
     font-size: 14px;
 }
 .cw-max-width-600 .cw-top-text {
-    padding: 3px 5px 3px 5px;
+    padding: 3px 0;
 }
 .cw-max-width-600 .cw-clues-holder {
     display: none;

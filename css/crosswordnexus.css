@@ -578,6 +578,7 @@ input.cw-hidden-input {
     padding: 6px 0;
     line-height: 1.2;
     flex-grow: 1;
+    cursor: pointer;
 }
 .cw-clues-title {
     align-items: flex-end;

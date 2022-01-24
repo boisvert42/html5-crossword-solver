@@ -761,6 +761,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         this.hidden_input.off('input');
         this.hidden_input.off('keydown');
 
+        this.top_text.off('click');
         this.prev_clue.off('click');
         this.next_clue.off('click');
       }
@@ -841,7 +842,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         }
         this.notepad_btn.on('click', $.proxy(this.showNotepad, this));
 
-        // CLUE ARROWS
+        // CLUE CONTROLS
+        this.top_text.on('click', $.proxy(this.toggleDirection, this));
         this.prev_clue.on('click', $.proxy(this.moveToNextWord, this, true));
         this.next_clue.on('click', $.proxy(this.moveToNextWord, this, false));
 
@@ -1360,18 +1362,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             if (this.selected_cell && this.selected_word) {
               // change the behavior based on the config
               if (this.config.space_bar === 'space_switch') {
-                // check that there is a word in the other direction
-                // if there's not, we just don't do anything
-                var selectedCellInactiveWord =
-                  this.inactive_clues.getMatchingWord(
-                    this.selected_cell.x,
-                    this.selected_cell.y,
-                    true
-                  );
-                if (selectedCellInactiveWord) {
-                  this.setActiveWord(selectedCellInactiveWord);
-                  this.changeActiveClues();
-                }
+                this.toggleDirection();
               } else {
                 this.selected_cell.letter = '';
                 this.selected_cell.checked = false;
@@ -1381,9 +1372,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
                   this.selected_cell.y
                 );
                 this.setActiveCell(next_cell);
+                this.renderCells();
               }
             }
-            this.renderCells();
             break;
           case 27: // escape -- pulls up a rebus entry
             if (this.selected_cell && this.selected_word) {
@@ -1715,6 +1706,22 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             );
           }
           this.setActiveCell(new_cell);
+          this.renderCells();
+        }
+      }
+
+      toggleDirection() {
+        // check that there is a word in the other direction
+        // if there's not, we just don't do anything
+        const selectedCellInactiveWord =
+          this.inactive_clues.getMatchingWord(
+            this.selected_cell.x,
+            this.selected_cell.y,
+            true
+          );
+        if (selectedCellInactiveWord) {
+          this.setActiveWord(selectedCellInactiveWord);
+          this.changeActiveClues();
           this.renderCells();
         }
       }

@@ -454,6 +454,12 @@ input.cw-hidden-input {
     cursor: pointer;
     display: flex;
 }
+
+/* Clues for filled-in words */
+.cw-clue.filled {
+  color: #ABABAB;
+}
+
 .cw-clue.active {
     background: #fee300;
 }

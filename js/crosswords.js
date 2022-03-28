@@ -30,10 +30,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
       color_selected: '#FF4136',
       color_word: '#FEE300',
       color_hilite: '#F8E473',
-      color_none: '#FFFFFF',
+      color_none: '#808080',
       background_color_clue: '#666666',
       default_background_color: '#c2ed7e',
-      font_color_clue: '#FFFFFF',
+      font_color_clue: '#808080',
       color_block: '#000000',
       puzzle_file: null,
       puzzles: null,
@@ -1034,6 +1034,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         );
         // set the fill style
         this.context.fillStyle = this.config.color_block;
+
+        console.log(this.config);
 
         for (x in this.cells) {
           for (y in this.cells[x]) {

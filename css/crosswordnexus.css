@@ -16,6 +16,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 **/
 /* CSS for using the Crossword Nexus HTML5 Crossword Solver */
 
+:root {
+  color-scheme: dark;
+}
+
 .cw-main,
 .cw-main * {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -42,7 +46,7 @@ div.cw-overflow {
     left: 0;
     height: 100%;
     width: 100%;
-    background: white;
+    background: #757575;
     z-index: -1;
 }
 div.cw-main.loading div.cw-open-holder,
@@ -74,7 +78,7 @@ div.cw-main.loaded div.cw-open-holder {
 
 /* drag-and-drop style */
 div.has-advanced-upload {
-    outline: 2px dashed gray;
+    outline: 2px dashed black;
     outline-offset: -10px;
 }
 
@@ -167,7 +171,7 @@ input.cw-hidden-input {
 }
 
 .cw-top-text-wrapper {
-    background: #fff5d7;
+    background: #EBBC4E;
     flex-shrink: 0;
     /* font-size: 20px; */
 }
@@ -455,10 +459,10 @@ input.cw-hidden-input {
     display: flex;
 }
 .cw-clue.active {
-    background: #fee300;
+    background: #EBBC4E;
 }
 .cw-clue.passive {
-    background: #eee;
+    background: #9a9a9a;
 }
 .cw-clue-number {
     flex-shrink: 0;
@@ -539,7 +543,7 @@ input.cw-hidden-input {
     padding: 5px 10px;
 }
 .cw-clue:not(.active):not(.passive):hover {
-    background: #eee;
+    background: #999;
 }
 
 .cw-max-width-1200.cw-main {

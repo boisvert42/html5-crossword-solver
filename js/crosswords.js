@@ -784,6 +784,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           this.createModalBox("An Awakening", beginning_content);
         }
 
+        this.cp1 = false;
+        this.cp2 = false;
+        this.hasFailed = false;
+
         // Save the initial state
         this.saveGame();
 
@@ -1571,9 +1575,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
           this.setActiveCell(next_cell);
           this.renderCells();
-          this.checkIfSolved();
 
           this.applyCheckpoints();
+          this.checkIfSolved();
 
         }
         this.hidden_input.val('');
@@ -1633,9 +1637,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         // show completion message
         var solvedMessage = escape(this.msg_solved).replaceAll('\n', '<br />');
         this.createModalBox('🎉🎉🎉', solvedMessage);
-        this.cp1 = false;
-        this.cp2 = false;
-        this.hasFailed = false;
+
+        this.cp1 = true;
+        this.cp2 = true;
+        this.hasFailed = true;
+
       }
 
       // callback for shift+arrows

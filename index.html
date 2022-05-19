@@ -36,17 +36,7 @@
     (function(){
         // Grab puzzle from query string if available
         var url = new URL(window.location.href);
-        var puzzle = url.searchParams.get("puzzle");
-        if (!puzzle) puzzle = url.searchParams.get("file");
-        var params = {};
-        if (puzzle) {
-            params = {
-                puzzle_file: {
-                    url: puzzle,
-                    type: puzzle.slice(puzzle.lastIndexOf('.') + 1)
-                }
-            };
-        }
+        var params = {url: '/downloads/site_puzzles/TwoByTwo.jpz', type: 'jpz'};
         CrosswordNexus.createCrossword($('div.crossword'), params);
     })();
 </script>

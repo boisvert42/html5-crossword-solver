@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<crossword-compiler
+	xmlns="http://crossword.info/xml/crossword-compiler">
+	<rectangular-puzzle
+		xmlns="http://crossword.info/xml/rectangular-puzzle" alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ">
+		<metadata>
+			<title>Two by Two</title>
+			<creator>Alex Boisvert</creator>
+			<copyright>© 2011-2022 Crossword Nexus. CC BY 4.0 License.</copyright>
+			<description></description>
+		</metadata>
+		<crossword>
+			<grid width="15" height="15">
+				<grid-look numbering-scheme="normal" cell-size-in-pixels="39" clue-square-divider-width="0.7"></grid-look>
+				<cell x="1" y="1" solution="S" number="1"></cell>
+				<cell x="1" y="2" solution="A" number="14"></cell>
+				<cell x="1" y="3" solution="C" number="17" background-color="#BCBCBC"></cell>
+				<cell x="1" y="4" type="block"></cell>
+				<cell x="1" y="5" solution="I" number="22"></cell>
+				<cell x="1" y="6" solution="M" number="27"></cell>
+				<cell x="1" y="7" solution="P" number="30"></cell>
+				<cell x="1" y="8" type="block"></cell>
+				<cell x="1" y="9" solution="C" number="36"></cell>
+				<cell x="1" y="10" solution="A" number="44"></cell>
+				<cell x="1" y="11" solution="B" number="47" background-color="#BCBCBC"></cell>
+				<cell x="1" y="12" solution="A" number="50"></cell>
+				<cell x="1" y="13" solution="R" number="52"></cell>
+				<cell x="1" y="14" solution="E" number="58"></cell>
+				<cell x="1" y="15" solution="T" number="61"></cell>
+				<cell x="2" y="1" solution="P" number="2"></cell>
+				<cell x="2" y="2" solution="R"></cell>
+				<cell x="2" y="3" solution="O" background-color="#BCBCBC"></cell>
+				<cell x="2" y="4" type="block"></cell>
+				<cell x="2" y="5" solution="N" number="23"></cell>
+				<cell x="2" y="6" solution="Y"></cell>
+				<cell x="2" y="7" solution="E"></cell>
+				<cell x="2" y="8" type="block"></cell>
+				<cell x="2" y="9" solution="E" number="37"></cell>
+				<cell x="2" y="10" solution="L"></cell>
+				<cell x="2" y="11" solution="U" background-color="#BCBCBC"></cell>
+				<cell x="2" y="12" solution="S"></cell>
+				<cell x="2" y="13" solution="I"></cell>
+				<cell x="2" y="14" solution="V"></cell>
+				<cell x="2" y="15" solution="E"></cell>
+				<cell x="3" y="1" solution="I" number="3"></cell>
+				<cell x="3" y="2" solution="L"></cell>
+				<cell x="3" y="3" solution="L" background-color="#BCBCBC"></cell>
+				<cell x="3" y="4" type="block"></cell>
+				<cell x="3" y="5" solution="K" number="24"></cell>
+				<cell x="3" y="6" solution="F"></cell>
+				<cell x="3" y="7" solution="C"></cell>
+				<cell x="3" y="8" type="block"></cell>
+				<cell x="3" y="9" solution="L" number="38"></cell>
+				<cell x="3" y="10" solution="I"></cell>
+				<cell x="3" y="11" solution="G" background-color="#BCBCBC"></cell>
+				<cell x="3" y="12" solution="H"></cell>
+				<cell x="3" y="13" solution="T"></cell>
+				<cell x="3" y="14" solution="E"></cell>
+				<cell x="3" y="15" solution="N"></cell>
+				<cell x="4" y="1" solution="N" number="4"></cell>
+				<cell x="4" y="2" solution="O"></cell>
+				<cell x="4" y="3" solution="T" background-color="#BCBCBC"></cell>
+				<cell x="4" y="4" solution="E" number="20"></cell>
+				<cell x="4" y="5" solution="B"></cell>
+				<cell x="4" y="6" solution="O"></cell>
+				<cell x="4" y="7" solution="O"></cell>
+				<cell x="4" y="8" solution="K" number="33" background-color="#BCBCBC"></cell>
+				<cell x="4" y="9" solution="S"></cell>
+				<cell x="4" y="10" type="block"></cell>
+				<cell x="4" y="11" solution="B" number="48" background-color="#BCBCBC"></cell>
+				<cell x="4" y="12" solution="E"></cell>
+				<cell x="4" y="13" solution="A"></cell>
+				<cell x="4" y="14" solution="N"></cell>
+				<cell x="4" y="15" solution="S"></cell>
+				<cell x="5" y="1" type="block"></cell>
+				<cell x="5" y="2" type="block"></cell>
+				<cell x="5" y="3" solution="P" number="18" background-color="#BCBCBC"></cell>
+				<cell x="5" y="4" solution="E"></cell>
+				<cell x="5" y="5" solution="L"></cell>
+				<cell x="5" y="6" solution="O"></cell>
+				<cell x="5" y="7" solution="S"></cell>
+				<cell x="5" y="8" solution="I" background-color="#BCBCBC"></cell>
+				<cell x="5" y="9" type="block"></cell>
+				<cell x="5" y="10" solution="A" number="45"></cell>
+				<cell x="5" y="11" solution="E" background-color="#BCBCBC"></cell>
+				<cell x="5" y="12" solution="R"></cell>
+				<cell x="5" y="13" type="block"></cell>
+				<cell x="5" y="14" type="block"></cell>
+				<cell x="5" y="15" type="block"></cell>
+				<cell x="6" y="1" solution="D" number="5"></cell>
+				<cell x="6" y="2" solution="R" number="15"></cell>
+				<cell x="6" y="3" solution="Y" background-color="#BCBCBC"></cell>
+				<cell x="6" y="4" solution="R"></cell>
+				<cell x="6" y="5" solution="O"></cell>
+				<cell x="6" y="6" solution="T"></cell>
+				<cell x="6" y="7" type="block"></cell>
+				<cell x="6" y="8" solution="T" number="34" background-color="#BCBCBC"></cell>
+				<cell x="6" y="9" solution="Y" number="39"></cell>
+				<cell x="6" y="10" solution="R"></cell>
+				<cell x="6" y="11" solution="A" background-color="#BCBCBC"></cell>
+				<cell x="6" y="12" type="block"></cell>
+				<cell x="6" y="13" solution="C" number="53" background-color="#BCBCBC"></cell>
+				<cell x="6" y="14" solution="F" number="59"></cell>
+				<cell x="6" y="15" solution="O" number="62"></cell>
+				<cell x="7" y="1" solution="E" number="6"></cell>
+				<cell x="7" y="2" solution="A"></cell>
+				<cell x="7" y="3" solution="T" background-color="#BCBCBC"></cell>
+				<cell x="7" y="4" solution="I"></cell>
+				<cell x="7" y="5" solution="T"></cell>
+				<cell x="7" y="6" type="block"></cell>
+				<cell x="7" y="7" solution="S" number="31"></cell>
+				<cell x="7" y="8" solution="T" background-color="#BCBCBC"></cell>
+				<cell x="7" y="9" solution="A"></cell>
+				<cell x="7" y="10" solution="I"></cell>
+				<cell x="7" y="11" solution="R" background-color="#BCBCBC"></cell>
+				<cell x="7" y="12" type="block"></cell>
+				<cell x="7" y="13" solution="R" number="54" background-color="#BCBCBC"></cell>
+				<cell x="7" y="14" solution="A"></cell>
+				<cell x="7" y="15" solution="M"></cell>
+				<cell x="8" y="1" solution="A" number="7"></cell>
+				<cell x="8" y="2" solution="C"></cell>
+				<cell x="8" y="3" solution="H" background-color="#BCBCBC"></cell>
+				<cell x="8" y="4" solution="E"></cell>
+				<cell x="8" y="5" type="block"></cell>
+				<cell x="8" y="6" solution="H" number="28"></cell>
+				<cell x="8" y="7" solution="E"></cell>
+				<cell x="8" y="8" solution="Y" background-color="#BCBCBC"></cell>
+				<cell x="8" y="9" solution="Y"></cell>
+				<cell x="8" y="10" solution="A"></cell>
+				<cell x="8" y="11" type="block"></cell>
+				<cell x="8" y="12" solution="S" number="51"></cell>
+				<cell x="8" y="13" solution="I" background-color="#BCBCBC"></cell>
+				<cell x="8" y="14" solution="R"></cell>
+				<cell x="8" y="15" solution="I"></cell>
+				<cell x="9" y="1" solution="L" number="8"></cell>
+				<cell x="9" y="2" solution="E"></cell>
+				<cell x="9" y="3" solution="O" background-color="#BCBCBC"></cell>
+				<cell x="9" y="4" type="block"></cell>
+				<cell x="9" y="5" solution="B" number="25" background-color="#BCBCBC"></cell>
+				<cell x="9" y="6" solution="A"></cell>
+				<cell x="9" y="7" solution="T"></cell>
+				<cell x="9" y="8" solution="H" background-color="#BCBCBC"></cell>
+				<cell x="9" y="9" solution="S"></cell>
+				<cell x="9" y="10" type="block"></cell>
+				<cell x="9" y="11" solution="E" number="49"></cell>
+				<cell x="9" y="12" solution="P"></cell>
+				<cell x="9" y="13" solution="C" background-color="#BCBCBC"></cell>
+				<cell x="9" y="14" solution="O"></cell>
+				<cell x="9" y="15" solution="T"></cell>
+				<cell x="10" y="1" solution="S" number="9"></cell>
+				<cell x="10" y="2" solution="S"></cell>
+				<cell x="10" y="3" solution="N" background-color="#BCBCBC"></cell>
+				<cell x="10" y="4" type="block"></cell>
+				<cell x="10" y="5" solution="I" number="26" background-color="#BCBCBC"></cell>
+				<cell x="10" y="6" solution="L"></cell>
+				<cell x="10" y="7" solution="S"></cell>
+				<cell x="10" y="8" solution="A" background-color="#BCBCBC"></cell>
+				<cell x="10" y="9" type="block"></cell>
+				<cell x="10" y="10" solution="S" number="46"></cell>
+				<cell x="10" y="11" solution="N"></cell>
+				<cell x="10" y="12" solution="A"></cell>
+				<cell x="10" y="13" solution="K" background-color="#BCBCBC"></cell>
+				<cell x="10" y="14" solution="E"></cell>
+				<cell x="10" y="15" solution="S"></cell>
+				<cell x="11" y="1" type="block"></cell>
+				<cell x="11" y="2" type="block"></cell>
+				<cell x="11" y="3" type="block"></cell>
+				<cell x="11" y="4" solution="F" number="21"></cell>
+				<cell x="11" y="5" solution="R" background-color="#BCBCBC"></cell>
+				<cell x="11" y="6" solution="O"></cell>
+				<cell x="11" y="7" type="block"></cell>
+				<cell x="11" y="8" solution="W" number="35" background-color="#BCBCBC"></cell>
+				<cell x="11" y="9" solution="R" number="40"></cell>
+				<cell x="11" y="10" solution="I"></cell>
+				<cell x="11" y="11" solution="T"></cell>
+				<cell x="11" y="12" solution="H"></cell>
+				<cell x="11" y="13" solution="E" background-color="#BCBCBC"></cell>
+				<cell x="11" y="14" type="block"></cell>
+				<cell x="11" y="15" type="block"></cell>
+				<cell x="12" y="1" solution="S" number="10"></cell>
+				<cell x="12" y="2" solution="P" number="16"></cell>
+				<cell x="12" y="3" solution="E" number="19"></cell>
+				<cell x="12" y="4" solution="E"></cell>
+				<cell x="12" y="5" solution="D" background-color="#BCBCBC"></cell>
+				<cell x="12" y="6" type="block"></cell>
+				<cell x="12" y="7" solution="S" number="32"></cell>
+				<cell x="12" y="8" solution="K" background-color="#BCBCBC"></cell>
+				<cell x="12" y="9" solution="I"></cell>
+				<cell x="12" y="10" solution="P"></cell>
+				<cell x="12" y="11" solution="I"></cell>
+				<cell x="12" y="12" solution="N"></cell>
+				<cell x="12" y="13" solution="T" background-color="#BCBCBC"></cell>
+				<cell x="12" y="14" solution="R" number="60"></cell>
+				<cell x="12" y="15" solution="O" number="63"></cell>
+				<cell x="13" y="1" solution="H" number="11"></cell>
+				<cell x="13" y="2" solution="O"></cell>
+				<cell x="13" y="3" solution="L"></cell>
+				<cell x="13" y="4" solution="E"></cell>
+				<cell x="13" y="5" solution="D" background-color="#BCBCBC"></cell>
+				<cell x="13" y="6" solution="U" number="29"></cell>
+				<cell x="13" y="7" solution="P"></cell>
+				<cell x="13" y="8" type="block"></cell>
+				<cell x="13" y="9" solution="O" number="41"></cell>
+				<cell x="13" y="10" solution="T"></cell>
+				<cell x="13" y="11" solution="C"></cell>
+				<cell x="13" y="12" type="block"></cell>
+				<cell x="13" y="13" solution="B" number="55" background-color="#BCBCBC"></cell>
+				<cell x="13" y="14" solution="A"></cell>
+				<cell x="13" y="15" solution="N"></cell>
+				<cell x="14" y="1" solution="A" number="12"></cell>
+				<cell x="14" y="2" solution="L"></cell>
+				<cell x="14" y="3" solution="L"></cell>
+				<cell x="14" y="4" solution="D"></cell>
+				<cell x="14" y="5" solution="O" background-color="#BCBCBC"></cell>
+				<cell x="14" y="6" solution="N"></cell>
+				<cell x="14" y="7" solution="E"></cell>
+				<cell x="14" y="8" type="block"></cell>
+				<cell x="14" y="9" solution="T" number="42"></cell>
+				<cell x="14" y="10" solution="E"></cell>
+				<cell x="14" y="11" solution="E"></cell>
+				<cell x="14" y="12" type="block"></cell>
+				<cell x="14" y="13" solution="A" number="56" background-color="#BCBCBC"></cell>
+				<cell x="14" y="14" solution="W"></cell>
+				<cell x="14" y="15" solution="L"></cell>
+				<cell x="15" y="1" solution="G" number="13"></cell>
+				<cell x="15" y="2" solution="L"></cell>
+				<cell x="15" y="3" solution="A"></cell>
+				<cell x="15" y="4" solution="S"></cell>
+				<cell x="15" y="5" solution="G" background-color="#BCBCBC"></cell>
+				<cell x="15" y="6" solution="O"></cell>
+				<cell x="15" y="7" solution="W"></cell>
+				<cell x="15" y="8" type="block"></cell>
+				<cell x="15" y="9" solution="S" number="43"></cell>
+				<cell x="15" y="10" solution="A"></cell>
+				<cell x="15" y="11" solution="D"></cell>
+				<cell x="15" y="12" type="block"></cell>
+				<cell x="15" y="13" solution="T" number="57" background-color="#BCBCBC"></cell>
+				<cell x="15" y="14" solution="R"></cell>
+				<cell x="15" y="15" solution="Y"></cell>
+			</grid>
+			<word id="1" x="1-4" y="1"></word>
+			<word id="2" x="6-10" y="1"></word>
+			<word id="3" x="12-15" y="1"></word>
+			<word id="4" x="1-4" y="2"></word>
+			<word id="5" x="6-10" y="2"></word>
+			<word id="6" x="12-15" y="2"></word>
+			<word id="7" x="1-10" y="3"></word>
+			<word id="8" x="12-15" y="3"></word>
+			<word id="9" x="4-8" y="4"></word>
+			<word id="10" x="11-15" y="4"></word>
+			<word id="11" x="1-7" y="5"></word>
+			<word id="12" x="9-15" y="5"></word>
+			<word id="13" x="1-6" y="6"></word>
+			<word id="14" x="8-11" y="6"></word>
+			<word id="15" x="13-15" y="6"></word>
+			<word id="16" x="1-5" y="7"></word>
+			<word id="17" x="7-10" y="7"></word>
+			<word id="18" x="12-15" y="7"></word>
+			<word id="19" x="4-12" y="8"></word>
+			<word id="20" x="1-4" y="9"></word>
+			<word id="21" x="6-9" y="9"></word>
+			<word id="22" x="11-15" y="9"></word>
+			<word id="23" x="1-3" y="10"></word>
+			<word id="24" x="5-8" y="10"></word>
+			<word id="25" x="10-15" y="10"></word>
+			<word id="26" x="1-7" y="11"></word>
+			<word id="27" x="9-15" y="11"></word>
+			<word id="28" x="1-5" y="12"></word>
+			<word id="29" x="8-12" y="12"></word>
+			<word id="30" x="1-4" y="13"></word>
+			<word id="31" x="6-15" y="13"></word>
+			<word id="32" x="1-4" y="14"></word>
+			<word id="33" x="6-10" y="14"></word>
+			<word id="34" x="12-15" y="14"></word>
+			<word id="35" x="1-4" y="15"></word>
+			<word id="36" x="6-10" y="15"></word>
+			<word id="37" x="12-15" y="15"></word>
+			<word id="38" x="1" y="1-3"></word>
+			<word id="39" x="2" y="1-3"></word>
+			<word id="40" x="3" y="1-3"></word>
+			<word id="41" x="4" y="1-9"></word>
+			<word id="42" x="6" y="1-6"></word>
+			<word id="43" x="7" y="1-5"></word>
+			<word id="44" x="8" y="1-4"></word>
+			<word id="45" x="9" y="1-3"></word>
+			<word id="46" x="10" y="1-3"></word>
+			<word id="47" x="12" y="1-5"></word>
+			<word id="48" x="13" y="1-7"></word>
+			<word id="49" x="14" y="1-7"></word>
+			<word id="50" x="15" y="1-7"></word>
+			<word id="51" x="5" y="3-8"></word>
+			<word id="52" x="11" y="4-6"></word>
+			<word id="53" x="1" y="5-7"></word>
+			<word id="54" x="2" y="5-7"></word>
+			<word id="55" x="3" y="5-7"></word>
+			<word id="56" x="9" y="5-9"></word>
+			<word id="57" x="10" y="5-8"></word>
+			<word id="58" x="8" y="6-10"></word>
+			<word id="59" x="7" y="7-11"></word>
+			<word id="60" x="12" y="7-15"></word>
+			<word id="61" x="6" y="8-11"></word>
+			<word id="62" x="11" y="8-13"></word>
+			<word id="63" x="1" y="9-15"></word>
+			<word id="64" x="2" y="9-15"></word>
+			<word id="65" x="3" y="9-15"></word>
+			<word id="66" x="13" y="9-11"></word>
+			<word id="67" x="14" y="9-11"></word>
+			<word id="68" x="15" y="9-11"></word>
+			<word id="69" x="5" y="10-12"></word>
+			<word id="70" x="10" y="10-15"></word>
+			<word id="71" x="4" y="11-15"></word>
+			<word id="72" x="9" y="11-15"></word>
+			<word id="73" x="8" y="12-15"></word>
+			<word id="74" x="6" y="13-15"></word>
+			<word id="75" x="7" y="13-15"></word>
+			<word id="76" x="13" y="13-15"></word>
+			<word id="77" x="14" y="13-15"></word>
+			<word id="78" x="15" y="13-15"></word>
+			<clues ordering="normal">
+				<title>
+					<b>Across</b>
+				</title>
+				<clue word="1" number="1" >Washing machine cycle</clue>
+				<clue word="2" number="5" >Groupon.com offerings</clue>
+				<clue word="3" number="10" >Carpet type</clue>
+				<clue word="4" number="14" >Woody and Marjorie&#39;s son</clue>
+				<clue word="5" number="15" >Churchill Downs events</clue>
+				<clue word="6" number="16" >Gallup specialty</clue>
+				<clue word="7" number="17" >Classic handgun sometimes called the &#34;Rolls Royce of revolvers&#34;</clue>
+				<clue word="8" number="19" >1969 jazz album</clue>
+				<clue word="9" number="20" >Freaky-deaky</clue>
+				<clue word="10" number="21" >Provides sustenance for</clue>
+				<clue word="11" number="22" >Rorschach pattern</clue>
+				<clue word="12" number="25" >Follow persistently</clue>
+				<clue word="13" number="27" >&#34;Yeah, right!&#34;</clue>
+				<clue word="14" number="28" >Angelic ring</clue>
+				<clue word="15" number="29" >Mattel card game that&#39;s a great way to lose your friends</clue>
+				<clue word="16" number="30" >Legendary cowboy ___ Bill</clue>
+				<clue word="17" number="31" >Tennis frames</clue>
+				<clue word="18" number="32" >Barf</clue>
+				<clue word="19" number="33" >North Carolina town in 1903 news</clue>
+				<clue word="20" number="36" >Animation units</clue>
+				<clue word="21" number="39" >Pep rally cheers</clue>
+				<clue word="22" number="40" >Raises some serious ruckus</clue>
+				<clue word="23" number="44" ><span>Actor Mahershala of </span><i>Green Book</i><span></span></clue>
+				<clue word="24" number="45" >Opera solo</clue>
+				<clue word="25" number="46" >Spread some gossip</clue>
+				<clue word="26" number="47" >Source of irritation</clue>
+				<clue word="27" number="49" >Was alluring</clue>
+				<clue word="28" number="50" ><span>Actor Angel of </span><i>Shazam!</i><span></span></clue>
+				<clue word="29" number="51" >Legendary Braves pitcher Warren</clue>
+				<clue word="30" number="52" ><span>Actress Hayworth of </span><i>Gilda</i><span></span></clue>
+				<clue word="31" number="53" >Sports equipment usually made of willow wood</clue>
+				<clue word="32" number="58" >Divisible by two</clue>
+				<clue word="33" number="59" >___ Islands (North Atlantic archipelago)</clue>
+				<clue word="34" number="60" >[I am a scary lil furball]</clue>
+				<clue word="35" number="61" >Hamiltons, in the line &#34;You can call us Aaron Burr from the way we&#39;re dropping Hamiltons&#34;</clue>
+				<clue word="36" number="62" >Leaves out</clue>
+				<clue word="37" number="63" ><i>___ Murders in the Bulding</i><span> (TV show starring Steve Martin, Martin Short, and S̶h̶o̶r̶t̶ ̶S̶t̶e̶v̶e̶ Selena Gomez)</span></clue>
+			</clues>
+			<clues ordering="normal">
+				<title>
+					<b>Down</b>
+				</title>
+				<clue word="38" number="1" >Biological pouch</clue>
+				<clue word="39" number="2" >Con&#39;s opposite</clue>
+				<clue word="40" number="3" >Ailing</clue>
+				<clue word="41" number="4" >Students&#39; purchases</clue>
+				<clue word="42" number="5" >Timber fungus</clue>
+				<clue word="43" number="6" >&#34;Weird&#34; Al Yankovic parody</clue>
+				<clue word="44" number="7" >Feel pain</clue>
+				<clue word="45" number="8" >Name of thirteen Popes</clue>
+				<clue word="46" number="9" >Datum on a 1040-EZ</clue>
+				<clue word="47" number="10" >1994 Keanu Reeves film</clue>
+				<clue word="48" number="11" >Hid</clue>
+				<clue word="49" number="12" >&#34;Finished!&#34;</clue>
+				<clue word="50" number="13" >Largest Scottish city</clue>
+				<clue word="51" number="18" >First woman to be Speaker of the House</clue>
+				<clue word="52" number="21" >To and ___</clue>
+				<clue word="53" number="22" >Mischievous pixie</clue>
+				<clue word="54" number="23" >Bill ___, the Science Guy</clue>
+				<clue word="55" number="24" >Restaurant that features the &#34;Double Down&#34;</clue>
+				<clue word="56" number="25" >Tubs</clue>
+				<clue word="57" number="26" >Ingrid&#39;s &#34;Casablanca&#34; role</clue>
+				<clue word="58" number="28" >Ubiquitous 2003 hit</clue>
+				<clue word="59" number="31" >Part of a flight</clue>
+				<clue word="60" number="32" >Netflix feature whose creator deserves a Nobel Prize or something</clue>
+				<clue word="61" number="34" >Banks who founded the &#34;Fierce&#34; awards</clue>
+				<clue word="62" number="35" >Squirm like crazy</clue>
+				<clue word="63" number="36" >Musical based on the play &#34;I Am a Camera&#34;</clue>
+				<clue word="64" number="37" >Hard to grasp</clue>
+				<clue word="65" number="38" >&#34;Pornographic film actors were the first to undergo the anal bleaching process, in an effort to ___ the color of their anuses to match the rest of their skin.&#34; (thanks Wikipedia)</clue>
+				<clue word="66" number="41" >Not prescription, briefly</clue>
+				<clue word="67" number="42" >Concrete box that begins a disc golf hole</clue>
+				<clue word="68" number="43" >Blue</clue>
+				<clue word="69" number="45" >___ Lingus</clue>
+				<clue word="70" number="46" ><i>___ on a Plane</i><span> (possibly Kenan Thompson&#39;s best movie, which, hmm)</span></clue>
+				<clue word="71" number="48" >Black-eyed peas and chickpeas, for two</clue>
+				<clue word="72" number="49" >Site of &#34;Spaceship Earth&#34;</clue>
+				<clue word="73" number="51" >&#34;Hey ___, I don&#39;t suppose you can help me write crossword clues&#34;</clue>
+				<clue word="74" number="53" >Money expert, in a startup (Abbr.)</clue>
+				<clue word="75" number="54" >L.A. athlete</clue>
+				<clue word="76" number="55" >Disallow completely</clue>
+				<clue word="77" number="56" >Poking tool</clue>
+				<clue word="78" number="57" >Rugby analogue of a touchdown</clue>
+			</clues>
+		</crossword>
+	</rectangular-puzzle>
+</crossword-compiler>

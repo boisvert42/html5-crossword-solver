@@ -4,7 +4,7 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="HandheldFriendly" content="True">
-    <title>Crossword Nexus Solver</title>
+    <title>Death Loop | Crossword Nexus Solver</title>
     <link href="css/crosswordnexus.css" rel="stylesheet">
 
     <!-- the main crossword JavaScript -->
@@ -32,14 +32,24 @@
 <body>
     <div class="crossword"></div>
 
-<script>
-    (function(){
-        // Grab puzzle from query string if available
-        var url = new URL(window.location.href);
-        var params = {url: '/downloads/site_puzzles/TwoByTwo.jpz', type: 'jpz'};
-        CrosswordNexus.createCrossword($('div.crossword'), params);
-    })();
-</script>
+    <script>
+        (function(){
+            // Grab puzzle from query string if available
+            var url = new URL(window.location.href);
+            var puzzle = 'TwoByTwo.jpz';
+            if (!puzzle) puzzle = url.searchParams.get("file");
+            var params = {};
+            if (puzzle) {
+                params = {
+                    puzzle_file: {
+                        url: puzzle,
+                        type: puzzle.slice(puzzle.lastIndexOf('.') + 1)
+                    }
+                };
+            }
+            CrosswordNexus.createCrossword($('div.crossword'), params);
+        })();
+    </script>
 
 </body>
 </html>

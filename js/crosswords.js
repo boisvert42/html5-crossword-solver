@@ -125,12 +125,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
                 <div class="cw-menu">
                   <button class="cw-menu-item cw-file-info">Info</button>
                   <button class="cw-menu-item cw-file-notepad">Notepad</button>
+                  <!--
                   <button class="cw-menu-item cw-file-print">Print</button>
                   <hr />
                   <button class="cw-menu-item cw-file-save">Save Progress</button>
                   <button class="cw-menu-item cw-file-load">Load Progress</button>
                   <hr />
                   <button class="cw-menu-item cw-file-download">Export JPZ</button>
+                  -->
                 </div>
               </div>
               <div class="cw-menu-container cw-check">

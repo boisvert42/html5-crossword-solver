@@ -1592,12 +1592,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             }
           }
         }
-        if (correctCells >= 20 && !this.cp1) {
+        if (correctCells >= 60 && !this.cp1) {
           this.cp1 = true;
           this.saveGame();
           this.createModalBox('Checkpoint 1', `You hear a distinct click as something locks into place. You think you can start to see a way out, a way to break the cycle... if you're careful.`);
         }
-        else if (correctCells >= 40 && this.cp1 && !this.cp2) {
+        else if (correctCells >= 120 && this.cp1 && !this.cp2) {
           this.cp2 = true;
           this.saveGame();
           this.createModalBox('Checkpoint 2', `You breathe a sigh of relief as a familiar click resounds. Surely victory is close at hand?`);

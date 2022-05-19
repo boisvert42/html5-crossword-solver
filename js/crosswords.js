@@ -726,7 +726,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             clue: clueMapping[word.id]
           });
         }
-        console.log(this);
+        //console.log(this);
 
         this.completeLoad();
 
@@ -774,6 +774,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
         //this.adjustPaddings();
         this.renderCells();
+
+        // Show the opening dialogue
+        if (!this.hasFailed) {
+          const beginning_content = `
+          You awaken with bleary eyes and a pounding head.
+          Your surroundings look familiar—have you been here before?
+          You try to focus your gaze until the walls stop shifting, and begin making your way out...`;
+          this.createModalBox("An Awakening", beginning_content);
+        }
+
+        // Save the initial state
+        this.saveGame();
+
       }
 
       remove() {
@@ -1522,6 +1535,16 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           }
           this.selected_cell.checked = false;
 
+          // If an incorrect letter was entered, load a checkpoint
+          var cell = this.selected_cell;
+          if (!isCorrect(cell.letter, cell.solution)) {
+            if (!this.hasFailed) {
+              this.hasFailed = true;
+              this.createModalBox('A Setback', `Wait. Wasn't that just...? Okay. Time to step carefully. You think you can remember the way...`);
+            }
+            this.loadGame();
+          }
+
           // If this is a coded or acrostic
           // find all cells with this number
           // and fill them with the same letter
@@ -1549,8 +1572,37 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           this.setActiveCell(next_cell);
           this.renderCells();
           this.checkIfSolved();
+
+          this.applyCheckpoints();
+
         }
         this.hidden_input.val('');
+      }
+
+      applyCheckpoints() {
+        // see if we need to save or load
+        var i, j, cell;
+        var correctCells = 0;
+        for (i in this.cells) {
+          for (j in this.cells[i]) {
+            cell = this.cells[i][j];
+            // if found cell without letter or with incorrect letter - return
+            if (!cell.empty && isCorrect(cell.letter, cell.solution)) {
+              correctCells += 1;
+            }
+          }
+        }
+        if (correctCells >= 20 && !this.cp1) {
+          this.cp1 = true;
+          this.saveGame();
+          this.createModalBox('Checkpoint 1', `You hear a distinct click as something locks into place. You think you can start to see a way out, a way to break the cycle... if you're careful.`);
+        }
+        else if (correctCells >= 40 && this.cp1 && !this.cp2) {
+          this.cp2 = true;
+          this.saveGame();
+          this.createModalBox('Checkpoint 2', `You breathe a sigh of relief as a familiar click resounds. Surely victory is close at hand?`);
+        }
+
       }
 
       checkIfSolved(do_reveal=true) {
@@ -1581,6 +1633,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         // show completion message
         var solvedMessage = escape(this.msg_solved).replaceAll('\n', '<br />');
         this.createModalBox('🎉🎉🎉', solvedMessage);
+        this.cp1 = false;
+        this.cp2 = false;
+        this.hasFailed = false;
       }
 
       // callback for shift+arrows
@@ -1987,7 +2042,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         //const savegame_name = STORAGE_KEY + this.title + ' • ' + this.author;
         const savegame_name = STORAGE_KEY;
         localStorage.setItem(savegame_name, jsxw_str);
-        this.createModalBox('💾', 'Progress saved.');
+        //this.createModalBox('💾', 'Progress saved.');
       }
 
       /* Show "load game" menu" */

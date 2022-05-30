@@ -473,6 +473,11 @@ input.cw-hidden-input {
     word-wrap: break-word;
 }
 
+/* clue hints are hidden by default */
+.clue-hint {
+  display: none;
+}
+
 /* Settings */
 .settings-setting {
     padding-top: 5px;

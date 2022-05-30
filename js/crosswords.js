@@ -44,7 +44,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
       savegame_name: '',
       filled_clue_color: '#999999',
       timer_autostart: false,
-      tab_key: 'tab_noskip'
+      tab_key: 'tab_noskip',
+      show_clue_hints: false
     };
 
     // constants
@@ -770,6 +771,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           this.toggleTimer();
         }
 
+        /* show clue hints if necessary */
+        if (this.config.show_clue_hints) {
+          $(".clue-hint").css("display", "block");
+        } else {
+          $(".clue-hint").css("display", "none");
+        }
+
         //this.adjustPaddings();
         this.renderCells();
       }
@@ -1035,6 +1043,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           title = clues_container.find('div.cw-clues-title'),
           items = clues_container.find('div.cw-clues-items');
         items.find('div.cw-clue').remove();
+
         for (i = 0; (clue = clues_group.clues[i]); i++) {
           clue_el = $(`
             <div>
@@ -1924,6 +1933,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             </div>
           </div>
 
+          <!-- Clue Hints -->
+          <div class="settings-setting">
+            <div class="settings-description">
+              Clue Hints
+            </div>
+            <div class="settings-option">
+              <label class="settings-label">
+                <input id="show_clue_hints" checked="" type="checkbox" name="show_clue_hints" class="settings-changer">
+                  Show clue hints
+                </input>
+              </label>
+            </div>
+          </div>
+
         </div>
         `;
         this.createModalBox('Settings', settingsHTML);
@@ -1973,6 +1996,14 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           SETTINGS_STORAGE_KEY,
           JSON.stringify(savedSettings)
         );
+
+        /* show clue hints if necessary */
+        if (this.config.show_clue_hints) {
+          $(".clue-hint").css("display", "block");
+        } else {
+          $(".clue-hint").css("display", "none");
+        }
+
       }
 
       /* Save the game to local storage */

@@ -1508,6 +1508,75 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         }
       }
 
+      // given a solution string and clue string, change the data
+      populateCluesAndLetters(soln, clues_top, clues_bottom) {
+        // solution
+        var ctr = 0;
+        var i;
+        console.log(soln);
+        for (i in this.cells) {
+          for (var j in this.cells[i]) {
+            var cell = this.cells[i][j];
+            if (cell.solution) {
+              cell.solution = soln[ctr];
+            }
+            ctr += 1;
+          }
+        }
+
+        // clues_top
+        for (i=0; i < this.clues_top.clues.length; i++) {
+          this.clues_top.clues[i].text = clues_top[i];
+        }
+        // clues_bottom
+        for (i=0; i < this.clues_bottom.clues.length; i++) {
+          this.clues_bottom.clues[i].text = clues_bottom[i];
+        }
+
+        this.renderClues(this.clues_top, this.clues_top_container);
+        this.renderClues(this.clues_bottom, this.clues_bottom_container);
+
+        this.setActiveWord(this.selected_word);
+
+      }
+
+      // repopulate clues and letters based on values in certain squares
+      repopulateVerseJumping() {
+        //qweqwe
+        var cell = this.selected_cell;
+        // make changes based on the contents of the two cells
+        var cell1 = this.getCell(4, 1).letter;
+        var cell2 = this.getCell(11, 1).letter;
+        var bothCells = cell1 + cell2;
+        console.log(cell1);
+        var soln, clues_top, clues_bottom;
+        switch (bothCells) {
+          case 'MK':
+            soln = ["P", "E", "G", "G", "E", "D", null, null, "S", "T", "A", "N", "C", "E", "S", "O", "R", "I", "O", "L", "E", null, null, "H", "A", "N", "D", "A", "X", "E", "E", "I", "F", "F", "E", "L", null, "P", "I", "T", "T", "A", "N", "C", "E", "M", "E", "S", "O", "N", null, "L", "A", "S", "T", null, "S", "T", "O", "P", null, null, null, "R", "A", "G", "E", "R", "O", "O", "M", null, "I", "N", "S", "C", "O", "M", "B", null, "O", "A", "T", null, "O", "A", "F", null, null, null, "L", "I", "A", "R", null, "O", "V", "I", "D", null, "P", "E", "S", "K", "Y", "A", "L", "S", "O", null, "P", "E", "C", "O", "S", null, "M", "A", "Y", "O", "M", "Y", "K", "K", "I", null, "S", "L", "O", "E", null, "A", "R", "I", "D", null, null, null, "E", "T", "A", null, "E", "V", "E", null, "L", "A", "V", "A", "K", "I", "D", null, "S", "U", "B", "M", "E", "R", "G", "E", null, null, null, "E", "N", "O", "S", null, "S", "O", "A", "R", null, "A", "L", "T", "A", "R", "A", "L", "W", "A", "Y", "S", "O", "N", null, "A", "T", "E", "A", "S", "E", "T", "A", "S", "T", "E", "I", "T", null, null, "G", "O", "A", "L", "I", "E", "S", "W", "E", "E", "N", "E", "Y", null, null, "O", "R", "D", "E", "A", "L"];
+            clues_top = ["One with verses", "Proverbially happy creature", "Famed creator of verse", "Kevin Jerome Everson film set near a Great Lake", "Hard to grasp, maybe", "Acquired family member", "Motion pictures?", "Disguise", "Pseudoscientifically search for water", "Leave nothing on the table", "Fill up", "\"Massacre in Mexico\" author Poniatowska", "Like ___ going out of style", "Pachinko parlor currency", "Ctrl-Alt-___", "Fudge that failed to set, say", "Person throwing shrimp on the barbie, maybe", "Fall fallers", "What a peach emoji represents", "They Might Be Giants song that asks \"When he's underwater does he get wet? Or does the water get him instead?\"", "Herb in many Japanese dishes", "Mulligan", "Moby has one that says \"vegan for life\"", "Forward-looking type", "In the past", "Peppermint hater", "Graphic in many a fantasy novel", "Lemon:lemonade::___:___ade (analogy that doesn't work)", "Documents protecting confidentiality, for short", "Performer eligible for Best Actress", "\"Pretty please?\"", "Ram\u00edrez in \"Madam Secretary\"", "Campfire relation", "One who's finished a stretch", "Capital of Ukraine", "Region with many -stans", "Moves like molasses", "Teacher of Mace Windu", "React to shocking news"];
+            clues_bottom = ["Used a strap-on, in a way", "Camden Yards athlete", "Tower despised by Guy de Maupassant", "Quark + antiquark", "Tool that's sometimes hot", "\"That's not true!\"", "\"One more thing...\"", "Blanco influenced by Lil' Kim", "Word after \"scene\" or \"90s\"", "Chimp who went to space in 1961", "Never taking a break", "\"Try some!\"", "Fictional meat supplier", "Place to smash things", "\"What time will you be here?\"", "Dunk in milk, e.g.", "Component of the drink avena", "He wrote \"My soul is wrought to sing of forms transformed to bodies new and strange\"", "Folk hero ___ Bill", "Go really high", "After all else", "Blackthorn fruit", "Trifling payment", "\"One more sleep\" time", "Swingers' positions", "Prehistoric tool", "Clumsy galoot", "\"You can relax now\"", "Networker?", "Harrowing experience", "Bothersome", "Spot for a public display of affection", "Heed a red light", "Florida town that temporarily changed its name to Miracle Whip as an advertising stunt", "Atacama-esque", "Molten chocolate, in a cake", "Useful connections"];
+            break;
+          case 'MY':
+            soln = ["P", "E", "L", "L", "E", "T", null, null, "S", "H", "A", "D", "O", "W", "S", "O", "N", "E", "I", "S", "H", null, null, "C", "O", "N", "E", "B", "R", "A", "E", "V", "E", "N", "S", "O", null, "B", "A", "B", "Y", "F", "O", "O", "D", "M", "Y", "K", "K", "I", null, "B", "A", "R", "N", null, "Y", "E", "T", "I", null, null, null, "M", "E", "G", "A", "N", "F", "O", "X", null, "S", "E", "E", "T", "O", "N", "I", null, "O", "R", "G", null, "B", "T", "W", null, null, null, "A", "R", "I", "D", null, "A", "R", "E", "A", null, "C", "I", "N", "C", "H", "S", "E", "N", "D", null, "T", "O", "R", "C", "H", null, "E", "E", "U", "U", "K", "O", "A", "L", "A", null, "W", "I", "R", "E", null, "N", "O", "R", "M", null, null, null, "E", "R", "G", null, "N", "O", "R", null, "E", "N", "D", "S", "Y", "A", "M", null, "T", "E", "N", "D", "S", "B", "A", "R", null, null, null, "E", "L", "A", "L", null, "T", "O", "E", "S", null, "B", "R", "O", "W", "S", "A", "F", "T", "E", "R", "S", "E", "X", null, "C", "A", "I", "M", "A", "N", "T", "R", "E", "F", "O", "I", "L", null, null, "U", "S", "N", "A", "V", "I", "S", "E", "S", "T", "E", "T", "S", null, null, "R", "E", "G", "R", "E", "T"];
+            clues_top = ["One with verses", "What you gotta do", "Famed creator of verse", "The green-eyed monster", "___ Mini (treat that my toddler calls \"tiny cookie\")", "\"Crooklyn\" star Woodard", "Relative of the Welsh onion", "\"The Amazing ___ Simone\"", "Aussie buddies", "The stuff between the dots in a URL?", "It's just not right", "Nail polish brand with a \"swoon in the lagoon\" color", "Plato considered it a dangerous form of imitation", "Fish eggs", "Letter bank for \"otoh,\" aptly", "Best ever", "Understands the assignment", "Follower of \"wheel\" or \"Clyde\"", "Christmas carols", "List of all the best tracks on an album?", "Cold-weather accessory", "Appropriate direction for this answer", "Rub elbows", "Parsley, sage, rosemary or thyme", "Canine scoundrel", "\"Need ___ help?\"", "Band whose name sounds like an emotion", "Humble or humiliate", "Refuse to obey", "Certain toy, to someone who's afraid to say the word \"cock\"?", "Pair in a classical orchestra", "Gas in a sign", "Politician/Twitch streamer Ilhan", "Penned", "Bit of cheese in poutine", "Period in ska music or feminism", "Video diarist Benning", "Runs smoothly", "Annoyed state"];
+            clues_bottom = ["Bit of fish food", "Imprecise lunch date suggestion", "\"Nevertheless...\"", "Blanco with the EP \"Cosmic Angel: The Illuminati Prince/ss\"", "Creator of Sula and Sethe", "Desertlike", "Button you might hover over before clicking", "Animal on some Australian coins", "Food that's often candied", "Airline with kosher meals", "Postcoital", "Clover-shaped Girl Scout cookie", "Parts of sonnets", "Actress who got engaged to Machine Gun Kelly in 2022", "Rowing machine", "Slings drinks", "archive.___", "It can be expressed in oxgangs", "Flashlight, in Britain", "They might curl in pleasure", "Certain dance venue", "Mob informant's device", "Bib decoration", "\"Neither\" partner", "Cinematographic staples of film noir", "Iconic Madonna garment", "\"On that note...\"", "Close relative of the alligator", "\"In the Heights\" protagonist", "Feeling after a missed connection, maybe", "Piece of cake", "Things you might furrow", "Animal that eats you at the end of the game SkiFree", "U.S., in Spanish", "Standard", "Fades to black, e.g.", "\"I told you so!\""];
+            break;
+          case 'TK':
+            soln = ["P", "L", "E", "D", "G", "E", null, null, "E", "F", "F", "A", "C", "E", "D", "O", "I", "L", "E", "R", "S", null, null, "P", "R", "O", "F", "A", "N", "E", "E", "M", "O", "R", "A", "P", null, "A", "C", "E", "P", "R", "I", "D", "E", "T", "O", "N", "E", "D", null, "S", "L", "O", "E", null, "O", "N", "I", "T", null, null, null, "K", "E", "E", "P", "I", "T", "P", "G", null, "E", "T", "S", "G", "O", "L", "F", null, "A", "R", "C", null, "R", "A", "J", null, null, null, "E", "V", "I", "L", null, "R", "E", "E", "K", null, "P", "E", "D", "R", "O", "C", "A", "M", "I", null, "L", "A", "M", "A", "R", null, "N", "E", "O", "N", "S", "L", "A", "N", "G", null, "D", "A", "N", "E", null, "N", "E", "A", "T", null, null, null, "T", "O", "N", null, "R", "O", "D", null, "Y", "M", "M", "V", "K", "I", "T", null, "B", "O", "M", "B", "P", "O", "P", "S", null, null, null, "E", "N", "O", "S", null, "L", "I", "L", "Y", null, "A", "L", "A", "C", "K", "A", "U", "T", "O", "T", "U", "N", "E", null, "O", "P", "A", "Q", "U", "E", "T", "I", "E", "B", "A", "C", "K", null, null, "R", "E", "T", "U", "R", "N", "S", "T", "M", "A", "R", "K", "S", null, null, "B", "R", "E", "A", "S", "T"];
+            clues_top = ["One with verses", "100 ___ (\"xXXi_wud_nvrst\u00f8p_\u00fcXXx\" band)", "Famed creator of verse", "Car with a large turning radius", "Shape of some gems", "Leona Aglukkaq and Tanya Tagaq", "University near Burlington", "City known for its historic balconies", "Sacred emblem", "Espionage agent played by James Coburn", "Noodles eaten on New Year's Eve", "A/B/C/D/F, e.g.", "Sailor, slangily", "Sailor, slangily", "In particular, for short", "ToeJam's partner", "Comment after a failed search", "Luxurious meal laid out on a table", "Cousins of ferrets", "World #1 tennis player who was supposedly shot during a car chase in the Swiss Alps while she was working as a spy", "Theme park designed by Imagineers", "Streaming service offered through libraries", "Your ad slogan getting turned into a meme, e.g.", "Refurbish", "Crystal ball being pondered by a sage, for example", "Dandyish stock character in English drama", "Hiatus", "Plane material", "___ puffs", "She plays a dog-wielding villain in \"Everything Everywhere All at Once\"", "Actor Michael whose wife is named Shakira", "Judge", "\"Barbie Girl\" band", "Send a Dear John letter, say", "Leave the coverage area", "Junkyard dogs", "Info", "Airing for viewers", "Brockman who welcomes our new insect overlords"];
+            clues_bottom = ["New member of a sorority", "NHL team in the Battle of Alberta rivalry", "Juice Wrld genre", "With defined muscles", "Activity with lots of hazards", "Good's opponent", "Babydoll relative", "Informal language", "Collection of drums", "Bible character who lives to the age of 905", "Technology that helps with pitching?", "Secure with a rubber band, maybe", "Venice basilica with many mosaics", "\"Nothing too racy, okay?\"", "Huge amount", "Red, white and blue treats", "Character's journey", "Elicit a \"P U!\"", "\"The Heart Part 5\" rapper Kendrick", "Flower painted by Georgia O'Keeffe", "Fruit in patxaran", "Hamlet, e.g.", "What a black/gray/white/purple flag represents", "Something bent by a circus performer", "Apt rhyme for \"erased\"", "Like this fucking clue", "\"Awaara\" star Kapoor", "Clear as mud", "Bring back to the library", "Boob", "Either emperor of Brazil", "\"Alas and ___!\"", "Doing the task", "Kind of lighting in many 2010s films", "Pretty cool", "\"...but that's just me,\" online", "TOEFL administrator"];
+            break;
+          case 'TY':
+            soln = ["P", "A", "S", "H", "A", "S", null, null, "I", "G", "O", "O", "F", "E", "D", "O", "N", "E", "A", "R", "T", null, null, "M", "E", "D", "U", "L", "L", "A", "E", "Y", "E", "L", "I", "D", null, "H", "A", "N", "D", "R", "A", "I", "L", "T", "A", "S", "T", "E", null, "M", "I", "N", "E", null, "S", "I", "Z", "E", null, null, null, "E", "L", "E", "C", "T", "I", "V", "E", null, "R", "A", "S", "S", "T", "A", "R", null, "C", "D", "S", null, "A", "I", "D", null, null, null, "P", "A", "C", "T", null, "R", "U", "T", "S", null, "D", "O", "T", "E", "S", "E", "L", "M", "O", null, "U", "C", "H", "I", "S", null, "U", "R", "G", "E", "W", "E", "E", "P", "Y", null, "K", "E", "L", "P", null, "B", "E", "G", "A", null, null, null, "S", "E", "T", null, "S", "K", "A", null, "L", "E", "S", "S", "Y", "A", "K", null, "S", "U", "S", "P", "E", "N", "S", "E", null, null, null, "E", "W", "E", "R", null, "N", "E", "O", "N", null, "U", "P", "D", "O", "S", "A", "F", "R", "O", "B", "E", "A", "T", null, "A", "T", "O", "A", "S", "T", "T", "U", "R", "M", "O", "I", "L", null, null, "M", "R", "S", "W", "H", "O", "S", "L", "I", "P", "O", "N", "S", null, null, "C", "A", "T", "N", "A", "P"];
+            clues_top = ["One with verses", "Erupt like a volcano", "Famed creator of verse", "Taylor-Joy who will voice Princess Peach in an upcoming Mario film", "\"The ___ of the Bamboo Cutter\"", "Just horrible", "Catches, as a movie", "Detective agency that pursues Carmen Sandiego", "Strug on the Magnificent Seven gymnastics team", "Back-baring blouses", "Playful bout of sex", "Atlantica native in a Disney film", "\"Exactly!\"", "\"Get off the stage!\"", "Health class subject, for short", "Beige-like color", "Enjoy some radio", "Scrooge's last name", "Signs of approval", "Is perfectly satisfying", "\"Looking for Lorraine\" author Perry", "Like some luxurious PJs", "Jean-Jacques Rousseau's home", "Go all the way across", "\"We come to ___ Theatres to laugh, to cry, to care\" (Nicole Kidman)", "Like socks after laundry day, often", "Holiday when gifts are given to children", "Follower of \"Kama\" or \"Kalpa\"", "My group's", "Faux pas on some forums", "Natural knack", "\"The Overstory\" organism", "\"Fickle\" time of day in Joanna Newsom's \"Only Skin\"", "She played Faith on \"Buffy\"", "I keep all of mine in one convenient basket", "Agcy. in the Frances Perkins Building", "Valleys", "They're big and wet", "Sign that's \"spun\" at the end of this puzzle's theme entries"];
+            clues_bottom = ["Ottoman officials", "Elizabeth Bishop work that commands \"lose something every day\"", "It's often closed for the night", "Good quality for a critic", "*", "Agreement to get married if you're both still single at 30, e.g.", "Muppet related to Funella Furchester and Furgus Fuzz", "Like a tearjerker", "Tibetan animal", "Fancy pitcher", "Genre for Fela Kuti", "Major confusion", "Untied shoes?", "Class that's not required for your major", "{what, this, clue, represents}", "\"The ___ is killing me!\"", "90s music store purchases", "Unvaried existences", "Kali with the album \"Isolation\"", "\"___ Genesis Evangelion\"", "\"Dibs!\"", "Part of an underwater forest", "Flight safety feature", "Jimmy Cliff genre", "\"My bad\"", "Part of the brainstem", "Financial assistance", "Words while raising a glass", "Immortal character in \"A Wrinkle in Time\"", "Little bit of shuteye", "Oozes affection", "Neck-baring styles", "Fitting consideration", "Primal desire", "Ugandan-Italian-German singer of \"Mambo No. 5\"", "It's the opposite of more, despite what Mies van der Rohe would have you believe", "Dorm party poopers, often"];
+            break;
+          default:
+            return;
+        }
+        this.populateCluesAndLetters(soln, clues_top, clues_bottom);
+      }
+
       // Detects user inputs to hidden input element
       hiddenInputChanged(rebus_string) {
         var mychar = this.hidden_input.val().slice(0, 1).toUpperCase(),
@@ -1519,6 +1588,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
             this.selected_cell.letter = rebus_string.toUpperCase();
           }
           this.selected_cell.checked = false;
+
+          // Take action if this is one of the kealoa cells
+          var cell = this.selected_cell;
+          if ( (cell.y == 1) && (cell.x == 4 || cell.x == 11)) {
+            this.repopulateVerseJumping();
+          }
 
           // If this is a coded or acrostic
           // find all cells with this number

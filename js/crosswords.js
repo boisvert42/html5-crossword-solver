@@ -772,6 +772,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
         //this.adjustPaddings();
         this.renderCells();
+
+        // VJ-specific stuff
+        // globals for savestates
+        //qweqwe
+        this.saveInfo = {
+          'MK': {'fill': null}
+        , 'MY': {'fill': null}
+        , 'TK': {'fill': null}
+        , 'TY': {'fill': null}
+        };
+        this.currentPuzzle = null;
+
       }
 
       remove() {
@@ -1513,7 +1525,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         // solution
         var ctr = 0;
         var i;
-        console.log(soln);
         for (i in this.cells) {
           for (var j in this.cells[i]) {
             var cell = this.cells[i][j];
@@ -1533,11 +1544,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
           this.clues_bottom.clues[i].text = clues_bottom[i];
         }
 
+        // show sidebar clues
         this.renderClues(this.clues_top, this.clues_top_container);
         this.renderClues(this.clues_bottom, this.clues_bottom_container);
-
+        // show top clue
         this.setActiveWord(this.selected_word);
-
+        // show a welcome message
         this.createModalBox("Welcome!", `Welcome to the ${universe}!`);
 
       }
@@ -1550,7 +1562,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         var cell1 = this.getCell(4, 1).letter;
         var cell2 = this.getCell(11, 1).letter;
         var bothCells = cell1 + cell2;
-        console.log(cell1);
         var soln, clues_top, clues_bottom, universe;
         switch (bothCells) {
           case 'MK':
@@ -1583,20 +1594,78 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         this.populateCluesAndLetters(soln, clues_top, clues_bottom, universe);
       }
 
+      populateFill(puzzleKey) {
+        var i, j;
+        //console.log(this.saveInfo);
+        //console.log(this.currentPuzzle);
+        // restore a save state, maybe
+        // qweqwe
+        const DEFAULT_FILL = ["P", null, null, null, null, null, null, null, null, null, null, null, null, null, null, "O", null, null, null, null, null, null, null, null, null, null, null, null, null, null, "E", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, "E", null, null, null, null, null, null, null, null, null, null, null, null, null, null, "A", null, null, null, null, null, null, null, null, null, null, null, null, null, null, "T", null, null, null, null, null, null, null, null, null, null, null, null, null, null, "S", null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+
+        // replace some of the above values based on our puzzleKey
+        var thisDefaultFill = DEFAULT_FILL;
+
+        var thisPuzzle = this.currentPuzzle;
+        // save the current progress
+        var currentFill = [];
+        for (i in this.cells) {
+          for (j in this.cells[i]) {
+            currentFill.push(this.cells[i][j].letter);
+          }
+        }
+
+        // save our progress if "thisPuzzle" is a thing
+        if (thisPuzzle) {
+          this.saveInfo[thisPuzzle]['fill'] = currentFill;
+        }
+
+        // restore the previously saved fill
+        var newFill = this.saveInfo[puzzleKey]['fill'] || thisDefaultFill;
+        newFill[45] = puzzleKey.charAt(0);
+        newFill[150] = puzzleKey.charAt(1);
+        var ctr = 0;
+        for (i in this.cells) {
+          for (j in this.cells[i]) {
+            this.cells[i][j].letter = newFill[ctr];
+            ctr += 1;
+          }
+        }
+
+        // mark which puzzle is current
+        this.currentPuzzle = puzzleKey;
+
+        // render cells
+        this.renderCells();
+      }
+
       // Detects user inputs to hidden input element
       hiddenInputChanged(rebus_string) {
         var mychar = this.hidden_input.val().slice(0, 1).toUpperCase(),
           next_cell;
+        var prevLetter;
+
         if (this.selected_word && this.selected_cell) {
           if (mychar) {
+            prevLetter = this.selected_cell.letter;
             this.selected_cell.letter = mychar;
           } else if (rebus_string) {
             this.selected_cell.letter = rebus_string.toUpperCase();
           }
           this.selected_cell.checked = false;
 
-          // Take action if this is one of the kealoa cells
           var cell = this.selected_cell;
+          // restore and make save states if this is a kealoa cell
+          if ( (cell.y == 1) && (cell.x == 4 || cell.x == 11)) {
+            var cell1 = this.getCell(4, 1).letter;
+            var cell2 = this.getCell(11, 1).letter;
+            var puzzleKey = cell1 + cell2;
+            const goodPuzzleKeys = new Set(["MK", "MY", "TK", "TY"]);
+            if (goodPuzzleKeys.has(puzzleKey)) {
+              this.populateFill(puzzleKey);
+            }
+          }
+
+          // Take action if this is one of the kealoa cells
           if ( (cell.y == 1) && (cell.x == 4 || cell.x == 11)) {
             this.repopulateVerseJumping();
           }

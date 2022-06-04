@@ -127,28 +127,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
                   <button class="cw-menu-item cw-file-notepad">Notepad</button>
                 </div>
               </div>
-              <div class="cw-menu-container cw-check">
-                <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🔍</span> Check
-                  <span class="cw-arrow"></span>
-                </button>
-                <div class="cw-menu">
-                  <button class="cw-menu-item cw-check-letter">Letter</button>
-                  <button class="cw-menu-item cw-check-word">Word</button>
-                  <button class="cw-menu-item cw-check-puzzle">Puzzle</button>
-                </div>
-              </div>
-              <div class="cw-menu-container cw-reveal">
-                <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🎱</span> Reveal
-                  <span class="cw-arrow"></span>
-                </button>
-                <div class="cw-menu">
-                  <button class="cw-menu-item cw-reveal-letter">Letter</button>
-                  <button class="cw-menu-item cw-reveal-word">Word</button>
-                  <button class="cw-menu-item cw-reveal-puzzle">Puzzle</button>
-                </div>
-              </div>
+              
               <button type="button" class="cw-button cw-settings-button">
                 <span class="cw-button-icon">⚙️</span> Settings
               </button>

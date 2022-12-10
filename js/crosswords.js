@@ -339,23 +339,23 @@ function adjustColor(color, amount) {
 
     // Function to check if a cell is solved correctly
     // const REBUS_ACCEPT = {"ANY": 0, "BLANK": 1, "FIRST": 2, "STRICT": 3};
-    function isCorrect(entry, solution) {
+    function isCorrect(entry, solution, rebus_handling={}) {
       // rebus
       if (!solution || solution.length > 1 || /[^A-Za-z]/.test(solution)) {
-        if (this.config.rebus_handling == REBUS_ACCEPT.ANY) {
-          // return true if there's anything in the box
-          return !!entry;
-        } else if (this.config.rebus_handling == REBUS_ACCEPT.ANY) {
+        if (rebus_handling == REBUS_ACCEPT.STRICT) {
+          // only mark correct if it's exactly right
+          return (!!entry && (entry == solution));
+        } else if (rebus_handling == REBUS_ACCEPT.ANY) {
           // always return true
           return true;
-        } else if (this.config.rebus_handling == REBUS_ACCEPT.FIRST) {
+        } else if (rebus_handling == REBUS_ACCEPT.FIRST) {
           // check if the first letters are the same
           if (!entry) {return false;}
           if (!solution) {return true;} // not actually sure about this case
           return (entry.charAt(0) == solution.charAt(0));
         } else {
-          // only mark correct if it's exactly right
-          return (!!entry && (entry == solution));
+          // return true if there's anything in the box
+          return !!entry;
         }
       }
       // if non-rebus, only mark as okay if we have an exact match
@@ -1635,7 +1635,7 @@ function adjustColor(color, amount) {
           for (j in this.cells[i]) {
             cell = this.cells[i][j];
             // if found cell with incorrect letter - return
-            if (!isCorrect(cell.letter, cell.solution)) {
+            if (!isCorrect(cell.letter, cell.solution, this.rebus_handling)) {
               this.isSolved = false;
               return;
             }
@@ -2212,7 +2212,7 @@ function adjustColor(color, amount) {
             continue;
           }
           if (
-            !isCorrect(my_cells[i].letter, my_cells[i].solution)
+            !isCorrect(my_cells[i].letter, my_cells[i].solution, this.rebus_handling)
           ) {
             if (reveal_or_check == 'reveal') {
               my_cells[i].letter = my_cells[i].solution;

@@ -23,6 +23,8 @@ const CONFIGURABLE_SETTINGS = [
 , "dark_mode_enabled"
 ];
 
+const REBUS_ACCEPT = {"ANY": 0, "BLANK": 1, "FIRST": 2, "STRICT": 3};
+
 /**
 * Helper functions
 * mostly for colors
@@ -102,7 +104,8 @@ function adjustColor(color, amount) {
       filled_clue_color: '#999999',
       timer_autostart: false,
       dark_mode_enabled: false,
-      tab_key: 'tab_noskip'
+      tab_key: 'tab_noskip',
+      rebus_handling: 0
     };
 
     // constants
@@ -335,14 +338,29 @@ function adjustColor(color, amount) {
     }
 
     // Function to check if a cell is solved correctly
+    // const REBUS_ACCEPT = {"ANY": 0, "BLANK": 1, "FIRST": 2, "STRICT": 3};
     function isCorrect(entry, solution) {
-      // if we have a rebus or non-alpha solution or no solution, accept anything
-      if (entry && (!solution || solution.length > 1 || /[^A-Za-z]/.test(solution))) {
-        return true;
+      // rebus
+      if (!solution || solution.length > 1 || /[^A-Za-z]/.test(solution)) {
+        if (this.config.rebus_handling == REBUS_ACCEPT.ANY) {
+          // return true if there's anything in the box
+          return !!entry;
+        } else if (this.config.rebus_handling == REBUS_ACCEPT.ANY) {
+          // always return true
+          return true;
+        } else if (this.config.rebus_handling == REBUS_ACCEPT.FIRST) {
+          // check if the first letters are the same
+          if (!entry) {return false;}
+          if (!solution) {return true;} // not actually sure about this case
+          return (entry.charAt(0) == solution.charAt(0));
+        } else {
+          // only mark correct if it's exactly right
+          return (!!entry && (entry == solution));
+        }
       }
-      // otherwise, only mark as okay if we have an exact match
+      // if non-rebus, only mark as okay if we have an exact match
       else {
-        return entry == solution;
+        return (!!entry && (entry == solution));
       }
     }
 
@@ -1616,11 +1634,8 @@ function adjustColor(color, amount) {
         for (i in this.cells) {
           for (j in this.cells[i]) {
             cell = this.cells[i][j];
-            // if found cell without letter or with incorrect letter - return
-            if (
-              !cell.empty &&
-              (!cell.letter || !isCorrect(cell.letter, cell.solution))
-            ) {
+            // if found cell with incorrect letter - return
+            if (!isCorrect(cell.letter, cell.solution)) {
               this.isSolved = false;
               return;
             }

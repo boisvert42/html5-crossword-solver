@@ -90,6 +90,7 @@ function adjustColor(color, amount) {
       color_none: '#FFFFFF',
       background_color_clue: '#666666',
       default_background_color: '#c2ed7e',
+      color_secondary: '#fff7b7',
       font_color_clue: '#FFFFFF',
       font_color_fill: '#000000',
       color_block: '#000000',
@@ -750,6 +751,8 @@ function adjustColor(color, amount) {
           var word = puzzle.words[i];
           this.words[word.id] = new Word(this, {
             id: word.id,
+            dir: word.dir,
+            refs_raw: null,
             cell_ranges: word.cells.map(function (c) {
               var obj = {x: (c[0] + 1).toString(), y: (c[1] + 1).toString()};
               return obj;
@@ -1132,6 +1135,21 @@ function adjustColor(color, amount) {
         // set the fill style
         this.context.fillStyle = this.config.color_block;
 
+        // if the word has references to any others
+        var secondary_highlight_cells = [];
+        /**
+        if (this.selected_word.refs_raw) {
+          // only support one reference per clue for now
+          var search_num = this.selected_word.refs_raw[0].number;
+          var search_dir = this.selected_word.refs_raw[0].direction.toLowerCase();
+          for (var i in this.words) {
+            if (this.words[i].clue.number == search_num && this.words[i].dir == search_dir) {
+              var secondary_highlight_cells = this.words[i].cell_ranges;
+            }
+          }
+        }
+        **/
+
         var color;
         for (x in this.cells) {
           for (y in this.cells[x]) {
@@ -1146,6 +1164,13 @@ function adjustColor(color, amount) {
                 this.hilited_word.hasCell(cell.x, cell.y)
               ) {
                 //color = this.config.color_hilite;
+              }
+              if (
+                secondary_highlight_cells &&
+                secondary_highlight_cells.some(c => c.x == cell.x) &&
+                secondary_highlight_cells.some(c => c.y == cell.y)
+              ) {
+                color = this.config.color_secondary;
               }
               if (
                 this.selected_word &&
@@ -1281,9 +1306,10 @@ function adjustColor(color, amount) {
                     this.context.beginPath();
                     this.context.moveTo(bar_start[key][0], bar_start[key][1]);
                     this.context.lineTo(bar_end[key][0], bar_end[key][1]);
-                    this.context.lineWidth = 3;
+                    const eps = Math.random()/10000;
+                    this.context.lineWidth = 3 + eps;
                     this.context.stroke();
-                    this.context.lineWidth = 1;
+                    this.context.lineWidth = 1 + eps;
                   }
                 }
               }
@@ -1629,7 +1655,17 @@ function adjustColor(color, amount) {
         // Puzzle is solved!
         this.isSolved = true;
         // stop the timer
+        var timerMessage = '';
         if (this.timer_running) {
+          // prepare message based on time
+          var display_seconds = xw_timer_seconds % 60;
+          var display_minutes = (xw_timer_seconds - display_seconds) / 60;
+          var minDisplay = display_minutes == 1 ? 'minute' : 'minutes';
+          var secDisplay = display_seconds == 1 ? 'second' : 'seconds';
+          var allMin = display_minutes > 0 ? `${display_minutes} ${minDisplay} ` : '';
+          timerMessage = `<br /><br />You solved the puzzle in ${allMin} ${display_seconds} ${secDisplay}.`;
+          
+          // stop the timer
           clearTimeout(xw_timer);
           this.timer_button.removeClass('running');
           this.timer_running = false;
@@ -1640,7 +1676,9 @@ function adjustColor(color, amount) {
         }
         // show completion message if newly solved
         if (!wasSolved) {
-          var solvedMessage = escape(this.msg_solved).replaceAll('\n', '<br />');
+          var solvedMessage = escape(this.msg_solved).trim().replaceAll('\n', '<br />');
+          solvedMessage += timerMessage;
+          
           this.createModalBox('🎉🎉🎉', solvedMessage);
         }
       }
@@ -2416,19 +2454,25 @@ function adjustColor(color, amount) {
     class Word {
       constructor(crossword, data) {
         this.id = '';
+        this.dir = '';
         this.cell_ranges = [];
         this.cells = [];
         this.clue = {};
+        this.refs_raw = [];
         this.crossword = crossword;
         if (data) {
           if (
             data.hasOwnProperty('id') &&
+            data.hasOwnProperty('dir') &&
             data.hasOwnProperty('cell_ranges') &&
-            data.hasOwnProperty('clue')
+            data.hasOwnProperty('clue') &&
+            data.hasOwnProperty('refs_raw')
           ) {
             this.id = data.id;
+            this.dir = data.dir;
             this.cell_ranges = data.cell_ranges;
             this.clue = data.clue;
+            this.refs_raw = data.clue.refs;
             this.parseRanges();
           } else {
             load_error = true;

@@ -190,11 +190,8 @@ function adjustColor(color, amount) {
                 <div class="cw-menu">
                   <button class="cw-menu-item cw-file-info">Info</button>
                   <button class="cw-menu-item cw-file-notepad">Notepad</button>
-                  <button class="cw-menu-item cw-file-print">Print</button>
                   <hr />
                   <button class="cw-menu-item cw-file-clear">Clear</button>
-                  <hr />
-                  <button class="cw-menu-item cw-file-download">Export JPZ</button>
                 </div>
               </div>
               <div class="cw-menu-container cw-check">

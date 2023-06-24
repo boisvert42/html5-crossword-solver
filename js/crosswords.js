@@ -13,6 +13,8 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
+const SPLIT_CHAR = '@';
+
 // Settings that we can save
 const CONFIGURABLE_SETTINGS = [
   "skip_filled_letters"
@@ -692,7 +694,8 @@ function adjustColor(color, amount) {
         }
 
         /* clues */
-        var clueMapping = {};
+        var clueMappingTerse = {};
+        var clueMappingFull = {};
         // we handle them differently for coded crosswords
         if (this.crossword_type === 'coded') {
           // initialize the across and down groups
@@ -738,7 +741,10 @@ function adjustColor(color, amount) {
         } else { // not a coded crossword
           // we need to keep a mapping of word ID to clue
           puzzle.clues[0].clue.forEach( function (clue) {
-            clueMapping[clue.word] = clue;
+            var clueTerse = {"word": clue.word, "number": clue.number, "text": clue.text.split(SPLIT_CHAR)[0]};
+            var clueFull = {"word": clue.word, "number": clue.number, "text": clue.text.split(SPLIT_CHAR)[1]};
+            clueMappingTerse[clue.word] = clueTerse;
+            clueMappingFull[clue.word] = clueFull;
           });
           var words_ids_top = puzzle.clues[0].clue.map(function (key) {
             return key.word;
@@ -752,7 +758,10 @@ function adjustColor(color, amount) {
           // only do a second clue list if we have one
           if (puzzle.clues.length > 1) {
             puzzle.clues[1].clue.forEach( function (clue) {
-              clueMapping[clue.word] = clue;
+              var clueTerse = {"word": clue.word, "number": clue.number, "text": clue.text.split(SPLIT_CHAR)[0]};
+              var clueFull = {"word": clue.word, "number": clue.number, "text": clue.text.split(SPLIT_CHAR)[1]};
+              clueMappingTerse[clue.word] = clueTerse;
+              clueMappingFull[clue.word] = clueFull;
             });
             this.clues_bottom = new CluesGroup(this, {
               id: CLUES_BOTTOM,
@@ -781,7 +790,9 @@ function adjustColor(color, amount) {
               var obj = {x: (c[0] + 1).toString(), y: (c[1] + 1).toString()};
               return obj;
             }),
-            clue: clueMapping[word.id]
+            clue: clueMappingTerse[word.id],
+            clueTerse: clueMappingTerse[word.id],
+            clueFull: clueMappingFull[word.id]
           });
         }
         console.log(this);
@@ -1108,13 +1119,15 @@ function adjustColor(color, amount) {
           items = clues_container.find('div.cw-clues-items');
         items.find('div.cw-clue').remove();
         for (i = 0; (clue = clues_group.clues[i]); i++) {
+          // show the full clue, to start
+          var clueText = clue.text.split(SPLIT_CHAR)[1];
           clue_el = $(`
             <div>
               <span class="cw-clue-number">
                 ${escape(clue.number)}
               </span>
               <span class="cw-clue-text">
-                ${escape(clue.text)}
+                ${escape(clueText)}
               </span>
             </div>
           `);
@@ -2430,12 +2443,34 @@ function adjustColor(color, amount) {
       }
 
       // in clues list, marks clue for word that has cell with given coordinates
+      //qweqwe
       markActive(x, y, is_passive) {
         var classname = is_passive ? 'passive' : 'active',
           word = this.getMatchingWord(x, y),
           clue_el,
           clue_position,
           clue_height;
+
+        // for the currently active clue, we need to revert its clue
+        var currentlyActiveClueEl = this.clues_container.find('div.cw-clue.active')[0];
+        if (currentlyActiveClueEl) {
+          var word_id;
+          currentlyActiveClueEl.classList.forEach(function(x) {
+            if (x.startsWith('word-')) {
+              word_id = x.split('-')[1];
+            }
+          });
+          var currentlyActiveWord = this.crossword.words[word_id];
+          currentlyActiveClueEl.innerHTML = `
+              <span class="cw-clue-number">
+                ${escape(currentlyActiveWord.clue.number)}
+              </span>
+              <span class="cw-clue-text">
+                ${escape(currentlyActiveWord.clueFull.text)}
+              </span>
+          `;
+        }
+
         this.clues_container.find('div.cw-clue.active').removeClass('active');
         this.clues_container.find('div.cw-clue.passive').removeClass('passive');
         if (word) {
@@ -2443,6 +2478,21 @@ function adjustColor(color, amount) {
             'div.cw-clue.word-' + word.id
           );
           clue_el.addClass(classname);
+
+          // change the content depending on if this is active or passive
+          var newClue = word.clueTerse.text;
+          if (is_passive) {
+            newClue = word.clueFull.text;
+          }
+          clue_el[0].innerHTML = `
+              <span class="cw-clue-number">
+                ${escape(word.clue.number)}
+              </span>
+              <span class="cw-clue-text">
+                ${escape(newClue)}
+              </span>
+          `;
+
           const clueRect = clue_el.get(0).getBoundingClientRect();
 
           const scrollContainer = clue_el.closest('.cw-clues-items');
@@ -2498,6 +2548,8 @@ function adjustColor(color, amount) {
         this.cell_ranges = [];
         this.cells = [];
         this.clue = {};
+        this.clueTerse = {};
+        this.clueFull = {};
         this.refs_raw = [];
         this.crossword = crossword;
         if (data) {
@@ -2506,12 +2558,16 @@ function adjustColor(color, amount) {
             data.hasOwnProperty('dir') &&
             data.hasOwnProperty('cell_ranges') &&
             data.hasOwnProperty('clue') &&
+            data.hasOwnProperty('clueFull') &&
+            data.hasOwnProperty('clueTerse') &&
             data.hasOwnProperty('refs_raw')
           ) {
             this.id = data.id;
             this.dir = data.dir;
             this.cell_ranges = data.cell_ranges;
             this.clue = data.clue;
+            this.clueFull = data.clueFull;
+            this.clueTerse = data.clueTerse;
             this.refs_raw = data.clue.refs;
             this.parseRanges();
           } else {

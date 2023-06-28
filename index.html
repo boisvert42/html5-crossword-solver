@@ -39,7 +39,7 @@
     (function(){
         // Grab puzzle from query string if available
         var url = new URL(window.location.href);
-        var puzzle = "ObserverTest.ipuz";
+        var puzzle = url.searchParams.get("puzzle");
         if (!puzzle) puzzle = url.searchParams.get("file");
         var b64config = url.searchParams.get("config");
         var params = {};

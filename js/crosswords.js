@@ -636,6 +636,7 @@ function adjustColor(color, amount) {
         this.copyright = puzzle.metadata.copyright || '';
         this.crossword_type = puzzle.metadata.crossword_type;
         this.fakeclues = puzzle.metadata.fakeclues || false;
+        this.word_locations = puzzle.metadata.word_locations || false;
 
         // don't show the top text if fakeclues
         if (this.fakeclues) {
@@ -728,14 +729,25 @@ function adjustColor(color, amount) {
           });
           // Determine which word is an across and which is a down
           // We do this by comparing the entry to the set of across entries
-          var thisGrid = new xwGrid(puzzle.cells);
-          var acrossEntries = thisGrid.acrossEntries();
-          var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
-          var entry_mapping = puzzle.get_entry_mapping();
+          var acrossSet = new Set();
+          var entry_mapping = {};
+          if (!puzzle.metadata.word_locations) {
+            // automatically determine the words
+            var thisGrid = new xwGrid(puzzle.cells);
+            var acrossEntries = thisGrid.acrossEntries();
+            acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return JSON.stringify(acrossEntries[x].cells);}))
+            entry_mapping = puzzle.get_entry_mapping(true);
+          } else {
+            // populate from words
+            acrossSet = new Set(puzzle.words.filter(x => x.dir == 'across').map(x=>JSON.stringify(x.cells)));
+            puzzle.words.forEach(function (x) {
+              entry_mapping[x.id] = x.cells;
+            });
+          }
           Object.keys(entry_mapping).forEach(function (id) {
             var thisClue = {word: id, number: id, text: '--'};
-            var entry = entry_mapping[id];
-            if (acrossSet.has(entry)) {
+            var myCells = JSON.stringify(entry_mapping[id]);
+            if (acrossSet.has(myCells)) {
               across_group.clues.push(thisClue);
               across_group.words_ids.push(id);
               clueMapping[id] = thisClue;
@@ -745,6 +757,9 @@ function adjustColor(color, amount) {
               clueMapping[id] = thisClue;
             }
           });
+          if (!down_group.clues.length) {
+            down_group = null;
+          }
           return {'across_group': across_group, 'down_group': down_group, 'clue_mapping': clueMapping};
         }
 
@@ -797,11 +812,11 @@ function adjustColor(color, amount) {
           }
         }
 
-        // If "fakeclues" and the number of words and clues don't match
-        // we need to make special "display" clues
+        // If "fakeclues" and the number of words and we don't have "fakewords"
+        // we need to make special "fake" clues
         var num_words = puzzle.words.length;
         var num_clues = puzzle.clues.map(x=>x.clue).flat().length;
-        if (this.fakeclues && num_words != num_clues) {
+        if (this.fakeclues) {
           this.display_clues_top = this.clues_top;
           this.display_clues_bottom = this.clues_bottom;
           var fake_clue_obj = this.make_fake_clues(puzzle);

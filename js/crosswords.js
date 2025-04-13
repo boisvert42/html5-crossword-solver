@@ -757,7 +757,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.fakeclues = puzzle.metadata.fakeclues || false;
 
         // found letters
-        this.foundLetters = new Set('abcde');
+        this.foundLetters = new Set('east');
 
         // don't show the top text if fakeclues
         if (this.fakeclues) {

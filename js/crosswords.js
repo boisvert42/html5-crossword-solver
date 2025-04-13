@@ -741,6 +741,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         const myHash = simpleHash(JSON.stringify(this.jsxw));
         this.savegame_name = STORAGE_KEY + '_' + myHash;
 
+        // found letters
+        this.foundLetters = new Set('east');
+
         // if this savegame name exists, load it
         var jsxw2_cells = this.loadGame();
         if (jsxw2_cells) {
@@ -755,9 +758,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.copyright = puzzle.metadata.copyright || '';
         this.crossword_type = puzzle.metadata.crossword_type;
         this.fakeclues = puzzle.metadata.fakeclues || false;
-
-        // found letters
-        this.foundLetters = new Set('east');
 
         // don't show the top text if fakeclues
         if (this.fakeclues) {
@@ -2487,11 +2487,18 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           const jsxw_str = JSON.stringify(this.jsxw.cells);
           // We set this to expire in about 7 days
           lscache.set(this.savegame_name, this.jsxw.cells, 10000);
+
+          const foundLetters_str = JSON.stringify(this.foundLetters.keys().toArray());
+          lscache.set("XW_FOUND_LETTERS", foundLetters_str, 10000);
+
         }, 0);
       }
 
       /* Load a game from local storage */
       loadGame() {
+        var found_letters = lscache.get("XW_FOUND_LETTERS");
+        this.foundLetters = new Set(JSON.parse(found_letters));
+
         var jsxw_cells = lscache.get(this.savegame_name);
         // don't actually *load* it, just return the jsxw
         return jsxw_cells;

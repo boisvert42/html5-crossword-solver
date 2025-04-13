@@ -756,6 +756,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.crossword_type = puzzle.metadata.crossword_type;
         this.fakeclues = puzzle.metadata.fakeclues || false;
 
+        // found letters
+        this.foundLetters = new Set('abcde');
+
         // don't show the top text if fakeclues
         if (this.fakeclues) {
           $('div.cw-top-text-wrapper').css({ display: 'none' });
@@ -997,6 +1000,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         //this.adjustPaddings();
         this.renderCells();
+
+        // hangmanify
+        this.hangmanifyAll();
 
       }
 
@@ -1277,6 +1283,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           `);
           resizeText(this.root, this.top_text);
         }
+        this.hangmanifyAll();
       }
 
       setActiveCell(cell) {
@@ -1340,9 +1347,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // Add event listeners for editing
         items.find('.cw-clue').on('mouseenter', function() {
           var clueElement = $(this).closest('.cw-clue');
-          if (clueElement.find('.cw-input').val().trim().length === 0) {
-            $(this).find('.cw-cluenote-button').show();
-          }
+          //if (clueElement.find('.cw-input').val().trim().length === 0) {
+          //  $(this).find('.cw-cluenote-button').show();
+          //}
         });
 
         items.find('.cw-clue').on('mouseleave', function() {
@@ -1818,6 +1825,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                   this.setActiveCell(this.getCell(this.selected_cell.x, this.selected_cell.y));
                 }
               } else {
+                this.foundLetters.delete(this.selected_cell.letter.toLowerCase());
+                this.hangmanifyAll();
                 this.selected_cell.letter = '';
                 this.selected_cell.checked = false;
                 this.autofill();
@@ -1832,6 +1841,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             // Update this.isSolved
             this.checkIfSolved();
             break;
+          /** We don't deal with rebuses
           case 27: // escape -- pulls up a rebus entry
             if (e.shiftKey) {
               e.preventDefault();
@@ -1849,8 +1859,11 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               this.hiddenInputChanged(rebus_entry);
             }
             break;
+          **/
           case 46: // delete
             if (this.selected_cell) {
+              this.foundLetters.delete(this.selected_cell.letter.toLowerCase());
+              this.hangmanifyAll();
               this.selected_cell.letter = '';
               this.selected_cell.checked = false;
               this.autofill();
@@ -1861,6 +1874,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             break;
           case 8: // backspace
             if (this.selected_cell && this.selected_word) {
+              this.foundLetters.delete(this.selected_cell.letter.toLowerCase());
+              this.hangmanifyAll();
               this.selected_cell.letter = '';
               this.selected_cell.checked = false;
               this.autofill();
@@ -1916,8 +1931,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         var mychar = this.hidden_input.val().slice(0, 1).toUpperCase(),
           next_cell;
         if (this.selected_word && this.selected_cell) {
-          if (mychar) {
+          if (mychar == this.selected_cell.solution) {
             this.selected_cell.letter = mychar;
+            this.foundLetters.add(mychar.toLowerCase());
+            this.hangmanifyAll();
           } else if (rebus_string) {
             this.selected_cell.letter = rebus_string.toUpperCase();
           }
@@ -2580,6 +2597,28 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // fill JSXW
         this.fillJsXw();
         jscrossword_to_pdf(this.jsxw);
+      }
+
+      hangmanify($el, allowedSet, replacement = '⍰') {
+        // remove any letters that aren't a part of the set
+        const original = $el.data('original') || $el.text();
+
+        if (!$el.data('original')) $el.data('original', original);
+
+        const masked = [...original].map(char => {
+          if (!/[a-z]/i.test(char)) return char;
+          return allowedSet.has(char.toLowerCase()) ? char : replacement;
+        }).join('');
+
+        $el.text(masked);
+      }
+
+      hangmanifyAll() {
+        const _hangmanify = this.hangmanify;
+        const allowedSet = this.foundLetters;
+        $('span.cw-clue-text').each(function() {
+          _hangmanify($(this), allowedSet);
+        });
       }
 
       updateClueAppearance(word) {

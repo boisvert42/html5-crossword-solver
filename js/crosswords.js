@@ -2625,7 +2625,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           return allowedSet.has(char.toLowerCase()) ? char : replacement;
         }).join('');
 
-        const regex = new RegExp(`([^a-zA-Z\\${replacement}])(\\${replacement}+)([^a-zA-Z\\${replacement}])`, 'g');
+        const regex = new RegExp(`([^a-zA-Z\\${replacement}])(\\${replacement}{2,})([^a-zA-Z\\${replacement}])`, 'g');
 
         const masked2 = masked.replace(regex, '$1🔠$3');
 

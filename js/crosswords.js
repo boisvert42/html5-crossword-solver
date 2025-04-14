@@ -742,7 +742,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.savegame_name = STORAGE_KEY + '_' + myHash;
 
         // found letters
-        this.foundLetters = new Set('east');
+        this.foundLetters = 'alaskanmalamute'.split('');
+        console.log(this.foundLetters);
 
         // if this savegame name exists, load it
         var jsxw2_cells = this.loadGame();
@@ -1825,7 +1826,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                   this.setActiveCell(this.getCell(this.selected_cell.x, this.selected_cell.y));
                 }
               } else {
-                this.foundLetters.delete(this.selected_cell.letter.toLowerCase());
+                this.removeFromFoundLetters(this.selected_cell.letter.toLowerCase());
                 this.hangmanifyAll();
                 this.selected_cell.letter = '';
                 this.selected_cell.checked = false;
@@ -1862,7 +1863,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           **/
           case 46: // delete
             if (this.selected_cell) {
-              this.foundLetters.delete(this.selected_cell.letter.toLowerCase());
+              this.removeFromFoundLetters(this.selected_cell.letter.toLowerCase());
               this.hangmanifyAll();
               this.selected_cell.letter = '';
               this.selected_cell.checked = false;
@@ -1874,7 +1875,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             break;
           case 8: // backspace
             if (this.selected_cell && this.selected_word) {
-              this.foundLetters.delete(this.selected_cell.letter.toLowerCase());
+              this.removeFromFoundLetters(this.selected_cell.letter.toLowerCase());
               this.hangmanifyAll();
               this.selected_cell.letter = '';
               this.selected_cell.checked = false;
@@ -1933,7 +1934,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         if (this.selected_word && this.selected_cell) {
           if (mychar == this.selected_cell.solution) {
             this.selected_cell.letter = mychar;
-            this.foundLetters.add(mychar.toLowerCase());
+            this.foundLetters.push(mychar.toLowerCase());
             this.hangmanifyAll();
           } else if (rebus_string) {
             this.selected_cell.letter = rebus_string.toUpperCase();
@@ -2488,7 +2489,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           // We set this to expire in about 7 days
           lscache.set(this.savegame_name, this.jsxw.cells, 10000);
 
-          const foundLetters_str = JSON.stringify(this.foundLetters.keys().toArray());
+          const foundLetters_str = JSON.stringify(this.foundLetters);
           lscache.set("XW_FOUND_LETTERS", foundLetters_str, 10000);
 
         }, 0);
@@ -2497,7 +2498,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       /* Load a game from local storage */
       loadGame() {
         var found_letters = lscache.get("XW_FOUND_LETTERS");
-        this.foundLetters = new Set(JSON.parse(found_letters));
+        if (found_letters) {
+          this.foundLetters = JSON.parse(found_letters);
+        }
 
         var jsxw_cells = lscache.get(this.savegame_name);
         // don't actually *load* it, just return the jsxw
@@ -2606,7 +2609,12 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         jscrossword_to_pdf(this.jsxw);
       }
 
-      hangmanify($el, allowedSet, replacement = '⍰') {
+      removeFromFoundLetters(letter) {
+        const ix = this.foundLetters.indexOf(letter.toLowerCase());
+        if (ix !== -1) this.foundLetters.splice(ix, 1);
+      }
+
+      hangmanify($el, allowedSet, replacement = '?', wordReplacement = '🔠') {
         // remove any letters that aren't a part of the set
         const original = $el.data('original') || $el.text();
 
@@ -2617,12 +2625,16 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           return allowedSet.has(char.toLowerCase()) ? char : replacement;
         }).join('');
 
-        $el.text(masked);
+        const regex = new RegExp(`([^a-zA-Z\\${replacement}])(\\${replacement}+)([^a-zA-Z\\${replacement}])`, 'g');
+
+        const masked2 = masked.replace(regex, '$1🔠$3');
+
+        $el.text(masked2);
       }
 
       hangmanifyAll() {
         const _hangmanify = this.hangmanify;
-        const allowedSet = this.foundLetters;
+        const allowedSet = new Set(this.foundLetters);
         $('span.cw-clue-text').each(function() {
           _hangmanify($(this), allowedSet);
         });

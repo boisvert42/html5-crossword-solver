@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2015-2021, Crossword Nexus
+Copyright (c) 2025, Crossword Nexus & Crossweird LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -16,29 +16,30 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 // Settings that we can save
 const CONFIGURABLE_SETTINGS = [
   "skip_filled_letters"
-, "arrow_direction"
-, "space_bar"
-, "tab_key"
-, "timer_autostart"
-, "dark_mode_enabled"
+  , "arrow_direction"
+  , "space_bar"
+  , "tab_key"
+  , "timer_autostart"
+  , "dark_mode_enabled"
+  , "gray_completed_clues"
 ];
+(function () {
+  const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+})();
 
 // Since DarkReader is an external library, make sure it exists
-try {DarkReader} catch {DarkReader = false;}
+try { DarkReader } catch { DarkReader = false; }
 
 /**
 * Helper functions
 * mostly for colors
 **/
 
-// confetti code from https://gist.github.com/elrumo/3055a9163fd2d0d19f323db744b0a094
-var confetti={maxCount:150,speed:2,frameInterval:15,alpha:1,gradient:!1,start:null,stop:null,toggle:null,pause:null,resume:null,togglePause:null,remove:null,isPaused:null,isRunning:null};!function(){confetti.start=s,confetti.stop=w,confetti.toggle=function(){e?w():s()},confetti.pause=u,confetti.resume=m,confetti.togglePause=function(){i?m():u()},confetti.isPaused=function(){return i},confetti.remove=function(){stop(),i=!1,a=[]},confetti.isRunning=function(){return e};var t=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.oRequestAnimationFrame||window.msRequestAnimationFrame,n=["rgba(30,144,255,","rgba(107,142,35,","rgba(255,215,0,","rgba(255,192,203,","rgba(106,90,205,","rgba(173,216,230,","rgba(238,130,238,","rgba(152,251,152,","rgba(70,130,180,","rgba(244,164,96,","rgba(210,105,30,","rgba(220,20,60,"],e=!1,i=!1,o=Date.now(),a=[],r=0,l=null;function d(t,e,i){return t.color=n[Math.random()*n.length|0]+(confetti.alpha+")"),t.color2=n[Math.random()*n.length|0]+(confetti.alpha+")"),t.x=Math.random()*e,t.y=Math.random()*i-i,t.diameter=10*Math.random()+5,t.tilt=10*Math.random()-10,t.tiltAngleIncrement=.07*Math.random()+.05,t.tiltAngle=Math.random()*Math.PI,t}function u(){i=!0}function m(){i=!1,c()}function c(){if(!i)if(0===a.length)l.clearRect(0,0,window.innerWidth,window.innerHeight),null;else{var n=Date.now(),u=n-o;(!t||u>confetti.frameInterval)&&(l.clearRect(0,0,window.innerWidth,window.innerHeight),function(){var t,n=window.innerWidth,i=window.innerHeight;r+=.01;for(var o=0;o<a.length;o++)t=a[o],!e&&t.y<-15?t.y=i+100:(t.tiltAngle+=t.tiltAngleIncrement,t.x+=Math.sin(r)-.5,t.y+=.5*(Math.cos(r)+t.diameter+confetti.speed),t.tilt=15*Math.sin(t.tiltAngle)),(t.x>n+20||t.x<-20||t.y>i)&&(e&&a.length<=confetti.maxCount?d(t,n,i):(a.splice(o,1),o--))}(),function(t){for(var n,e,i,o,r=0;r<a.length;r++){if(n=a[r],t.beginPath(),t.lineWidth=n.diameter,e=(i=n.x+n.tilt)+n.diameter/2,o=n.y+n.tilt+n.diameter/2,confetti.gradient){var l=t.createLinearGradient(e,n.y,i,o);l.addColorStop("0",n.color),l.addColorStop("1.0",n.color2),t.strokeStyle=l}else t.strokeStyle=n.color;t.moveTo(e,n.y),t.lineTo(i,o),t.stroke()}}(l),o=n-u%confetti.frameInterval),requestAnimationFrame(c)}}function s(t,n,o){var r=window.innerWidth,u=window.innerHeight;window.requestAnimationFrame=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.oRequestAnimationFrame||window.msRequestAnimationFrame||function(t){return window.setTimeout(t,confetti.frameInterval)};var m=document.getElementById("confetti-canvas");null===m?((m=document.createElement("canvas")).setAttribute("id","confetti-canvas"),m.setAttribute("style","display:block;z-index:999999;pointer-events:none;position:fixed;top:0"),document.body.prepend(m),m.width=r,m.height=u,window.addEventListener("resize",(function(){m.width=window.innerWidth,m.height=window.innerHeight}),!0),l=m.getContext("2d")):null===l&&(l=m.getContext("2d"));var s=confetti.maxCount;if(n)if(o)if(n==o)s=a.length+o;else{if(n>o){var f=n;n=o,o=f}s=a.length+(Math.random()*(o-n)+n|0)}else s=a.length+n;else o&&(s=a.length+o);for(;a.length<s;)a.push(d({},r,u));e=!0,i=!1,c(),t&&window.setTimeout(w,t)}function w(){e=!1}}();
-
 // hex string to RGB array and vice versa
 // thanks https://stackoverflow.com/a/39077686
 const hexToRgb = hex =>
   hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i
-             ,(m, r, g, b) => '#' + r + r + g + g + b + b)
+    , (m, r, g, b) => '#' + r + r + g + g + b + b)
     .substring(1).match(/.{2}/g)
     .map(x => parseInt(x, 16));
 
@@ -46,6 +47,16 @@ const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
   const hex = x.toString(16)
   return hex.length === 1 ? '0' + hex : hex
 }).join('');
+
+const isMobile = (() => {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  return (
+    /android/i.test(ua) ||
+    /iphone|ipad|ipod/i.test(ua) ||
+    /mobile/i.test(ua) ||
+    window.innerWidth <= 768
+  );
+})();
 
 // perceived brightness of a color on a scale of 0-255
 // via wx-xword
@@ -62,68 +73,68 @@ function componentAvg(c1, c2, weight) {
 }
 // helper function to take the "average" of two RGB strings
 // thanks https://stackoverflow.com/a/29576746
-function averageColors(c1, c2, weight=0.5) {
+function averageColors(c1, c2, weight = 0.5) {
   var r1 = hexToRgb(c1);
   var r2 = hexToRgb(c2);
   var newColor = [componentAvg(r1[0], r2[0], weight),
-    componentAvg(r1[1], r2[1], weight),
-    componentAvg(r1[2], r2[2], weight)]
+  componentAvg(r1[1], r2[1], weight),
+  componentAvg(r1[2], r2[2], weight)]
   return rgbToHex(newColor[0], newColor[1], newColor[2]);
 }
 
 function adjustColor(color, amount) {
-  return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+  return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
 }
 
 // Helper function to draw an arrow in a square
 function drawArrow(context, top_x, top_y, square_size, direction = "right") {
-    const headlen = square_size / 5; // length of the arrowhead
-    const centerX = top_x + square_size / 2;
-    const centerY = top_y + square_size / 2;
-    let fromX, fromY, toX, toY;
+  const headlen = square_size / 5; // length of the arrowhead
+  const centerX = top_x + square_size / 2;
+  const centerY = top_y + square_size / 2;
+  let fromX, fromY, toX, toY;
 
-    switch(direction) {
-        case "right":
-            fromX = top_x + square_size / 4;
-            fromY = centerY;
-            toX = top_x + (3 * square_size) / 4;
-            toY = centerY;
-            break;
-        case "left":
-            fromX = top_x + (3 * square_size) / 4;
-            fromY = centerY;
-            toX = top_x + square_size / 4;
-            toY = centerY;
-            break;
-        case "up":
-            fromX = centerX;
-            fromY = top_y + (3 * square_size) / 4;
-            toX = centerX;
-            toY = top_y + square_size / 4;
-            break;
-        case "down":
-            fromX = centerX;
-            fromY = top_y + square_size / 4;
-            toX = centerX;
-            toY = top_y + (3 * square_size) / 4;
-            break;
-    }
+  switch(direction) {
+      case "right":
+          fromX = top_x + square_size / 4;
+          fromY = centerY;
+          toX = top_x + (3 * square_size) / 4;
+          toY = centerY;
+          break;
+      case "left":
+          fromX = top_x + (3 * square_size) / 4;
+          fromY = centerY;
+          toX = top_x + square_size / 4;
+          toY = centerY;
+          break;
+      case "up":
+          fromX = centerX;
+          fromY = top_y + (3 * square_size) / 4;
+          toX = centerX;
+          toY = top_y + square_size / 4;
+          break;
+      case "down":
+          fromX = centerX;
+          fromY = top_y + square_size / 4;
+          toX = centerX;
+          toY = top_y + (3 * square_size) / 4;
+          break;
+  }
 
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    const angle = Math.atan2(dy, dx);
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const angle = Math.atan2(dy, dx);
 
-    context.beginPath();
-    context.moveTo(fromX, fromY);
-    context.lineTo(toX, toY);
-    context.stroke();
+  context.beginPath();
+  context.moveTo(fromX, fromY);
+  context.lineTo(toX, toY);
+  context.stroke();
 
-    context.beginPath();
-    context.moveTo(toX, toY);
-    context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-    context.moveTo(toX, toY);
-    context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-    context.stroke();
+  context.beginPath();
+  context.moveTo(toX, toY);
+  context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+  context.moveTo(toX, toY);
+  context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+  context.stroke();
 }
 
 // Main crossword javascript for the Crossword Nexus HTML5 Solver
@@ -138,41 +149,31 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
   function (window, registerGlobal) {
     'use strict';
 
-    /* All of this is configurable via "params" when instantiating */
     var default_config = {
-      hover_enabled: false, // enables or disables cell hover effect
-      color_hover: '#FFFFAA', // color for hovered cell (if enabled)
-      color_selected: '#FF4136', // color for selected cell
-      color_word: '#FEE300', // color for selected word
-      color_hilite: '#F8E473', // color for corresponding cells (in acrostics and codewords)
-      color_none: '#FFFFFF', // color for "null" or "void" cells
-      background_color_clue: '#666666', // color for "clue" cells
-      default_background_color: '#c2ed7e', // color for shaded cells whose shade color is badly defined
-      color_secondary: '#fff7b7', // color for cross-referenced cells (currently unused)
-      font_color_clue: '#FFFFFF', // color for text in "clue" cells
-      font_color_fill: '#000000', // color for letters typed in the grid
-      color_block: '#000000', // color of "black" squares
-      puzzle_file: null, // puzzle file to load
-      puzzles: null, // multiple puzzles from dropdown
-      bar_linewidth: 3.5, // how thick to make the bars
-      /*
-      * The below are user-configurable in settings.
-      * Here you can specify your preferred default values.
-      */
-      skip_filled_letters: true, // skip over already-filled letters
-      // behavior of arrow keys in a new direction:
-      // you can move always or only when a cell is filled
-      arrow_direction: 'arrow_move_filled', // arrow_move or arrow_move_filled
-      // behavior of the space bar: delete a letter or switch directions
-      space_bar: 'space_clear', // space_clear or space_switch
-      timer_autostart: false, // should the timer start automatically
-      dark_mode_enabled: false, // should dark mode be the default
-      strike_completed_clues: true, // whether to grey out completed clues
-      // behavior of the "tab" key
-      // "tab_noskip" moves to the next word
-      // "tab_skip" moves to the next unfilled word
-      tab_key: 'tab_noskip',
-      confetti_enabled: true
+      hover_enabled: false,
+      color_hover: '#FFFFAA',
+      color_selected: '#506E85',
+      color_word: '#D7E9F5',
+      color_hilite: '#506E85',
+      /*color_word_shade: '#BAAB56',*/
+      color_none: '#FFFFFF',
+      background_color_clue: '#666666',
+      default_background_color: '#c2ed7e',
+      color_secondary: '#d7e1ec',
+      font_color_clue: '#FFFFFF',
+      font_color_fill: '#000000',
+      color_block: '#212121',
+      puzzle_file: null,
+      puzzles: null,
+      skip_filled_letters: true,
+      arrow_direction: 'arrow_stay',
+      space_bar: 'space_switch',
+      filled_clue_color: '#999999',
+      timer_autostart: false,
+      dark_mode_enabled: false,
+      tab_key: 'tab_skip',
+      bar_linewidth: 2.5,
+      gray_completed_clues: false,
     };
 
     // constants
@@ -192,7 +193,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
     // messages
     var MSG_SAVED = 'Crossword saved';
     var MSG_LOADED = 'Crossword loaded';
-    var MSG_SOLVED = 'Crossword solved! Congratulations!';
+    var MSG_SOLVED = '<center>Way to go!</center>';
 
     var MAX_CLUES_LENGTH = 2;
 
@@ -223,7 +224,11 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       <div class="cw-main auto normal">
         <!-- Overlay for opening puzzles -->
         <div class="cw-open-holder">
-          <div class="cw-overflow"></div>
+          <div class="cw-overflow" style="
+          
+          background-position: center;
+          background-size: 40%;
+          background-repeat: no-repeat;"></div>
           <div class="cw-open-puzzle">
             <div class="cw-open-puzzle-instructions">
               Drag and drop a file here, or click the button to choose a file
@@ -239,15 +244,22 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           <input type="file" class="cw-open-jpz" accept=".puz,.xml,.jpz,.xpz,.ipuz,.cfp">
         </div>
         <!-- End overlay -->
-        <header class="cw-header"></header>
+        <div class="cw-header">
+          <div class="cw-header-box">
+            <div class="cw-header-content">
+              <div class="cw-title" id="cw-title"></div>
+                <div class="cw-author" id="cw-author"></div>
+            </div>
+          </div>
+        </div>
         <div class="cw-content">
           <!-- Placeholder for modal boxes -->
           <div class="cw-modal"></div>
-          <div class="cw-left">
-            <div class="cw-buttons-holder">
-              <div class="cw-menu-container">
-                <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🗄️</span> File
+            <div class="cw-grid">
+                <div class="cw-buttons-holder">
+                <div class="cw-menu-container">
+                  <button type="button" class="cw-button">
+                   File
                   <span class="cw-arrow"></span>
                 </button>
                 <div class="cw-menu">
@@ -262,7 +274,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               </div>
               <div class="cw-menu-container cw-check">
                 <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🔍</span> Check
+                   Check
                   <span class="cw-arrow"></span>
                 </button>
                 <div class="cw-menu">
@@ -273,7 +285,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               </div>
               <div class="cw-menu-container cw-reveal">
                 <button type="button" class="cw-button">
-                  <span class="cw-button-icon">🎱</span> Reveal
+                   Reveal
                   <span class="cw-arrow"></span>
                 </button>
                 <div class="cw-menu">
@@ -282,23 +294,49 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                   <button class="cw-menu-item cw-reveal-puzzle">Puzzle</button>
                 </div>
               </div>
+              <div class="cw-menu-container cw-theme">
+                <button type="button" class="cw-button">
+                   Theme
+                  <span class="cw-arrow"></span>
+                </button>
+                <div class="cw-menu">
+                  <button class="cw-menu-item cw-theme-barbie">Barbie</button>
+                  <button class="cw-menu-item cw-theme-cherry-blossom">Cherry Blossom</button>
+                  <button class="cw-menu-item cw-theme-cryptic-crossweird">Cryptic Crossweird</button>
+                  <button class="cw-menu-item cw-theme-dark">Dark</button>
+                  <button class="cw-menu-item cw-theme-earth-tones">Earth Tones</button>
+                  <button class="cw-menu-item cw-theme-frost">Frost</button>
+                  <button class="cw-menu-item cw-theme-grape-soda">Grape Soda</button>
+                  <button class="cw-menu-item cw-theme-light-blue">Light Blue</button>
+                  <button class="cw-menu-item cw-theme-light-green">Light Green</button>
+                  <button class="cw-menu-item cw-theme-momos-nail-corner">Momo's Nail Corner</button>
+                  <button class="cw-menu-item cw-theme-pumpkin-spice">Pumpkin Spice</button>
+                  <button class="cw-menu-item cw-theme-spring-pastels">Spring Pastels</button>
+                  <button class="cw-menu-item cw-theme-taco-bell">Taco Bell</button>
+                </div>
+              </div>
               <button type="button" class="cw-button cw-settings-button">
-                <span class="cw-button-icon">⚙️</span> Settings
+                 Settings
               </button>
+              <span class="cw-flex-spacer"></span>
+              <button type="button" class="cw-button cw-button-notepad">Notes</button>
               <span class="cw-flex-spacer"></span>
               <button type="button" class="cw-button cw-button-timer">00:00</button>
             </div>
-            <div class="cw-top-text-wrapper">
-              <div class="cw-top-text">
-                <span class="cw-clue-number"></span>
-                <span class="cw-clue-text"></span>
+
+            <input type="text" class="cw-hidden-input">
+              <div class="cw-canvas">
+                <div class="cw-puzzle-container">
+                  <div class="cw-top-text-wrapper">
+                    <div class="cw-top-text">
+                      <span class="cw-clue-number"></span>
+                      <span class="cw-clue-text"></span>
+                    </div>
+                  </div>
+                  <svg id="cw-puzzle-grid"></svg>
+                </div>
               </div>
             </div>
-            <input type="text" class="cw-hidden-input">
-            <div class="cw-canvas">
-              <canvas></canvas>
-            </div>
-          </div>
           <div class="cw-clues-holder">
             <div class="cw-clues cw-clues-top">
               <div class="cw-clues-title"></div>
@@ -354,12 +392,12 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
     const maxClueSizes = [
       [1080, 15],
       [1200, 17],
-      [Infinity, 19],
+      [Infinity, 21],
     ];
 
     /** Function to resize text **/
     function resizeText(rootElement, nodeList) {
-      const minSize = 9;
+      const minSize = 7;
       const rootWidth = rootElement.width();
       const maxSize = maxClueSizes.find(
         (breakpoint) => breakpoint[0] > rootWidth
@@ -415,96 +453,29 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
     }
 
-    /** Sanitize an HTML string so it is safe to add it to the DOM. */
-    function sanitizeHTML(html) {
-      const unsanitized = new DOMParser().parseFromString(html, "text/html");
-      const div = document.createElement("div");
-      div.appendChild(sanitizeChildNodes(unsanitized.body));
-      return div.innerHTML;
-    }
-
-    function sanitizeChildNodes(node) {
-      const sanitized = document.createDocumentFragment();
-      for (const child of node.childNodes) {
-        if (child.nodeType === Node.ELEMENT_NODE) {
-          sanitized.appendChild(sanitizeElement(child));
-        } else if (child.nodeType === Node.TEXT_NODE) {
-          sanitized.appendChild(document.createTextNode(child.nodeValue));
-        }
-      }
-      return sanitized;
-    }
-
-    function sanitizeElement(element) {
-      if (isValidElement(element)) {
-        const sanitized = document.createElementNS(element.namespaceURI, element.nodeName);
-        for (const attribute of element.attributes) {
-          if (isValidAttribute(element.namespaceURI, attribute)) {
-            sanitized.setAttribute(attribute.name, attribute.value);
-          }
-        }
-        sanitized.appendChild(sanitizeChildNodes(element));
-        return sanitized;
-      } else {
-        return document.createDocumentFragment();
-      }
-    }
-
-    function isValidElement(element) {
-      switch (element.namespaceURI) {
-        case "http://www.w3.org/1999/xhtml":
-          return [
-            "A", "ABBR", "ADDRESS", "AREA", "ARTICLE", "ASIDE", "AUDIO", "B", "BDI", "BDO",
-            "BLOCKQUOTE", "BR", "CAPTION", "CITE", "CODE", "COL", "COLGROUP", "DATA", "DD", "DEL",
-            "DETAILS", "DFN", "DIV", "DL", "DT", "EM", "FIELDSET", "FIGCAPTION", "FIGURE", "FOOTER",
-            "H1", "H2", "H3", "H4", "H5", "H6", "HEADER", "HGROUP", "HR", "I",
-            "IMG", "INS", "KBD", "LABEL", "LEGEND", "LI", "MAIN", "MAP", "MARK", "MENU",
-            "METER", "NAV", "OL", "P", "PICTURE", "PRE", "PROGRESS", "Q", "RP", "RT",
-            "RUBY", "S", "SAMP", "SECTION", "SMALL", "SOURCE", "SPAN", "STRONG", "SUB", "SUMMARY",
-            "SUP", "TABLE", "TBODY", "TD", "TFOOT", "TH", "THEAD", "TIME", "TR", "TRACK",
-            "U", "UL", "VAR", "VIDEO", "WBR"
-          ].includes(element.tagName);
-
-        case "http://www.w3.org/1998/Math/MathML":
-          return [
-            "annotation", "annotation-xml", "math", "merror", "mfrac", "mi", "mmultiscripts", "mn", "mo", "mover",
-            "mpadded", "mphantom", "mprescripts", "mroot", "mrow", "ms", "mspace", "msqrt", "mstyle", "msub",
-            "msubsup", "msup", "mtable", "mtd", "mtext", "mtr", "munder", "munderover", "semantics"
-          ].includes(element.tagName);
-
-        default:
-          return false;
-        }
-      }
-
-    function isValidAttribute(namespaceURI, attribute) {
-      if (attribute.name === "href") {
-        return !!attribute.value.match(/^(?:https?|mailto):/);
-      }
-      if (attribute.name.startsWith("aria-")) {
-        return true;
-      }
-      switch (namespaceURI) {
-        case "http://www.w3.org/1999/xhtml":
-          return [
-            "abbr", "alt", "autoplay", "cite", "colspan", "controls", "controlslist", "coords", "datetime", "decoding",
-            "default", "dir", "disablepictureinpicture", "disableremoteplayback", "download", "elementtiming", "fetchpriority", "for", "headers", "height",
-            "high", "hreflang", "ismap", "kind", "label", "lang", "loading", "loop", "low", "max",
-            "media", "min", "muted", "name", "open", "optimum", "playsinline", "poster", "preload", "referrerpolicy",
-            "rel", "reversed", "role", "rowspan", "scope", "shape", "sizes", "span", "src", "srclang",
-            "srcset", "start", "style", "title", "translate", "type", "usemap", "value", "width"
-          ].includes(attribute.name);
-
-        case "http://www.w3.org/1998/Math/MathML":
-          return [
-            "accent", "accentunder", "columnspan", "depth", "dir", "display", "displaystyle", "encoding", "fence", "form",
-            "height", "largeop", "linethickness", "lspace", "mathbackground", "mathcolor", "mathsize", "mathvariant", "maxsize", "minsize",
-            "movablelimits", "rowspan", "rspace", "scriptlevel", "separator", "stretchy", "style", "symmetric", "voffset", "width"
-          ].includes(attribute.name);
-
-        default:
-          return false;
-      }
+    /**
+     * Sanitize HTML in the given string, except the simplest no-attribute
+     * formatting tags.
+     */
+    const entityMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;',
+      '`': '&#x60;',
+      '=': '&#x3D;',
+    };
+    const escapeRegex = new RegExp(
+      `</?(i|b|em|strong|span|br|p)>|[&<>"'\`=\\/]`,
+      'g'
+    );
+    function escape(string) {
+      //return String(string).replace(escapeRegex, (s) =>
+      //  s.length > 1 ? s : entityMap[s]
+      //);
+      return string;
     }
 
     var CrosswordNexus = {
@@ -530,7 +501,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // Load solver config
         var saved_settings = {};
         try {
-          saved_settings = lscache.get(SETTINGS_STORAGE_KEY);
+          saved_settings = JSON.parse(
+            localStorage.getItem(SETTINGS_STORAGE_KEY)
+          );
         } catch (error) {
           console.log(error);
         }
@@ -555,10 +528,12 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           DarkReader.enable({
             brightness: 100,
             contrast: 90,
-            sepia: 10
+            sepia: 55
           });
-          this.config.color_none = '#404040';
-          this.config.font_color_fill = '#ddd4c5';
+          this.config.color_none = '#F2F2F2';
+          this.config.color_selected = '#5C5C42';
+          this.config.color_word = '#9E9E77';
+          //this.config.font_color_fill = '#ddd4c5';
         }
 
         this.cell_size = 40;
@@ -577,12 +552,12 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.selected_word = null;
         this.hilited_word = null;
         this.selected_cell = null;
-        this.solved_open = false;
+        this.settings_open = false;
         // TIMER
         this.timer_running = false;
 
-        // Solution message
-        this.msg_solved = MSG_SOLVED;
+        /*// Solution message
+        this.msg_solved = MSG_SOLVED;*/
 
         // whether to show the reveal button
         this.has_reveal = true;
@@ -608,17 +583,31 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.clues_holder = this.root.find('div.cw-clues-holder');
         this.clues_top_container = this.root.find('div.cw-clues-top');
         this.clues_bottom_container = this.root.find('div.cw-clues-bottom');
-        this.canvas_holder = this.root.find('div.cw-canvas');
-        this.canvas = this.root.find('canvas');
-        this.context = this.canvas[0].getContext('2d');
+
+        this.toptext = this.root.find('.cw-top-text-wrapper');
+        this.notes = new Map();
 
         this.settings_btn = this.root.find('.cw-settings-button');
 
         this.hidden_input = this.root.find('input.cw-hidden-input');
-
         this.reveal_letter = this.root.find('.cw-reveal-letter');
         this.reveal_word = this.root.find('.cw-reveal-word');
         this.reveal_puzzle = this.root.find('.cw-reveal-puzzle');
+
+        // EDIT TO ADD THEME
+        this.theme_light_blue = this.root.find('.cw-theme-light-blue');
+        this.theme_light_green = this.root.find('.cw-theme-light-green');
+        this.theme_pumpkin_spice = this.root.find('.cw-theme-pumpkin-spice');
+        this.theme_dark = this.root.find('.cw-theme-dark');
+        this.theme_barbie = this.root.find('.cw-theme-barbie');
+        this.theme_taco_bell = this.root.find('.cw-theme-taco-bell');
+        this.theme_earth_tones = this.root.find('.cw-theme-earth-tones');
+        this.theme_grape_soda = this.root.find('.cw-theme-grape-soda');
+        this.theme_cherry_blossom = this.root.find('.cw-theme-cherry-blossom');
+        this.theme_momos_nail_corner = this.root.find('.cw-theme-momos-nail-corner');
+        this.theme_frost = this.root.find('.cw-theme-frost');
+        this.theme_cryptic_crossweird = this.root.find('.cw-theme-cryptic-crossweird');
+        this.theme_spring_pastels = this.root.find('.cw-theme-spring-pastels');
 
         this.check_letter = this.root.find('.cw-check-letter');
         this.check_word = this.root.find('.cw-check-word');
@@ -631,8 +620,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.save_btn = this.root.find('.cw-file-save');
         this.download_btn = this.root.find('.cw-file-download');
 
-        this.notes = new Map();
-
         // Notepad button is hidden by default
         this.notepad_btn = this.root.find('.cw-file-notepad');
         this.notepad_btn.hide();
@@ -643,9 +630,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // function to process uploaded files
         function processFiles(files) {
           loadFromFile(files[0], FILE_PUZ).then(
-              parsePUZZLE_callback,
-              error_callback
-            );
+            parsePUZZLE_callback,
+            error_callback
+          );
         }
 
         // preload one puzzle
@@ -654,12 +641,12 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.config.puzzle_file.hasOwnProperty('url') &&
           this.config.puzzle_file.hasOwnProperty('type')
         ) {
-            this.root.addClass('loading');
-            var loaded_callback = parsePUZZLE_callback;
-            loadFileFromServer(
-              this.config.puzzle_file.url,
-              this.config.puzzle_file.type
-            ).then(loaded_callback, error_callback);
+          this.root.addClass('loading');
+          var loaded_callback = parsePUZZLE_callback;
+          loadFileFromServer(
+            this.config.puzzle_file.url,
+            this.config.puzzle_file.type
+          ).then(loaded_callback, error_callback);
         } else {
           // shows open button
           var i, puzzle_file, el;
@@ -717,7 +704,20 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.is_autofill = false;
 
         this.root.appendTo(this.parent);
+        this.canvas_holder = this.root.find('div.cw-canvas');
+        // SVG setup (new)
+        this.svgNS = 'http://www.w3.org/2000/svg';
+        this.svgContainer = document.createElementNS(this.svgNS, 'svg');
+        this.svgContainer.setAttribute('id', 'cw-puzzle-grid');
+        // Preserve existing top text wrapper while replacing only the canvas
+        this.canvas_holder.find('#cw-puzzle-grid').remove();  // Remove old canvas only
+
+        this.canvas_holder.append(this.svgContainer);         // Add new SVG crossword
+        this.svg = $('#cw-puzzle-grid');
+
         setBreakpointClasses(this.root);
+            // Place this at the END of the init() method:
+        const svg = document.getElementById('cw-puzzle-grid');
       }
 
       error(message) {
@@ -728,7 +728,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       parsePuzzle(string) {
         // if "string" is actually an object assume it's already a jsxw
         var puzzle;
-        if (typeof(string) == "object") {
+        if (typeof (string) == "object") {
           puzzle = string;
         } else {
           var xw_constructor = new JSCrossword();
@@ -737,14 +737,20 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // we keep the original JSCrossword object as well
         this.jsxw = puzzle;
         // set the savegame_name
-        const simpleHash=t=>{let e=0;for(let r=0;r<t.length;r++){e=(e<<5)-e+t.charCodeAt(r),e&=e}return new Uint32Array([e])[0].toString(36)};
+        const simpleHash = t => { let e = 0; for (let r = 0; r < t.length; r++) { e = (e << 5) - e + t.charCodeAt(r), e &= e } return new Uint32Array([e])[0].toString(36) };
         const myHash = simpleHash(JSON.stringify(this.jsxw));
         this.savegame_name = STORAGE_KEY + '_' + myHash;
 
         // if this savegame name exists, load it
         var jsxw2_cells = this.loadGame();
         if (jsxw2_cells) {
-          console.log('Loading puzzle from local storage');
+          console.log('Loading puzzle from localStorage');
+          var noteObj = JSON.parse(localStorage.getItem(this.savegame_name + "_notes"));
+          if (noteObj && noteObj.length > 0) {
+            for (var entry of noteObj) {
+              this.notes.set(entry.key, entry.value);
+            }
+          }
           this.jsxw.cells = jsxw2_cells;
           puzzle.cells = jsxw2_cells;
         }
@@ -761,6 +767,11 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           $('div.cw-top-text-wrapper').css({ display: 'none' });
         }
 
+        // Change document title if necessary
+        if (this.title) {
+          document.title = this.title + ' | ' + document.title;
+        }
+
         // determine whether we should autofill
         if (
           this.crossword_type == 'acrostic' ||
@@ -769,23 +780,23 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.is_autofill = true;
         }
 
-        this.notepad = puzzle.metadata.description || puzzle.metadata.intro || '';
+        this.notepad = puzzle.metadata.description || '';
         this.grid_width = puzzle.metadata.width;
         this.grid_height = puzzle.metadata.height;
+
         // disable check and reveal in certain cases
-        if (puzzle.metadata.has_reveal === false) {
-          this.has_reveal = false;
-          $('.cw-reveal').css({ display: 'none' });
-        }
-        if (puzzle.metadata.has_check === false) {
-          this.has_check = false;
-          $('.cw-check').css({ display: 'none' });
-        }
-        this.msg_solved = puzzle.metadata.completion_message || MSG_SOLVED;
+        //if (puzzle.metadata.has_reveal === false) {
+        //  this.has_reveal = false;
+        //  $('.cw-reveal').css({ display: 'none' });
+        //}
+        //if (puzzle.metadata.has_check === false) {
+        //  this.has_check = false;
+        //  $('.cw-check').css({ display: 'none' });
+        //}
         /* cells */
         this.cells = {};
-        for (var i=0; i < puzzle.cells.length; i++) {
-          var c = { ...puzzle.cells[i]}; // make a copy
+        for (var i = 0; i < puzzle.cells.length; i++) {
+          var c = { ...puzzle.cells[i] }; // make a copy
           c.x = c.x + 1;
           c.y = c.y + 1;
           if (!this.cells[c.x]) {
@@ -825,7 +836,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         }
 
         // helper function for coded and fakeclues puzzles
-        this.make_fake_clues = function(puzzle) {
+        this.make_fake_clues = function (puzzle) {
           // initialize the across and down groups
           var clueMapping = {};
           var across_group = new CluesGroup(this, {
@@ -844,10 +855,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           // We do this by comparing the entry to the set of across entries
           var thisGrid = new xwGrid(puzzle.cells);
           var acrossEntries = thisGrid.acrossEntries();
-          var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) {return acrossEntries[x].word;}))
+          var acrossSet = new Set(Object.keys(acrossEntries).map(function (x) { return acrossEntries[x].word; }))
           var entry_mapping = puzzle.get_entry_mapping();
           Object.keys(entry_mapping).forEach(function (id) {
-            var thisClue = {word: id, number: id, text: '--'};
+            var thisClue = { word: id, number: id, text: '--' };
             var entry = entry_mapping[id];
             if (acrossSet.has(entry)) {
               across_group.clues.push(thisClue);
@@ -859,7 +870,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               clueMapping[id] = thisClue;
             }
           });
-          return {'across_group': across_group, 'down_group': down_group, 'clue_mapping': clueMapping};
+          return { 'across_group': across_group, 'down_group': down_group, 'clue_mapping': clueMapping };
         }
 
         /* clues */
@@ -870,6 +881,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.clues_top = fake_clue_obj.across_group;
           this.clues_bottom = fake_clue_obj.down_group;
           clueMapping = fake_clue_obj.clue_mapping;
+
           // Also, in a coded crossword, there's no reason to show the clues
           $('div.cw-clues-holder').css({ display: 'none' });
           $('div.cw-top-text-wrapper').css({ display: 'none' });
@@ -878,7 +890,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         } else { // not a coded crossword
           // we need to keep a mapping of word ID to clue
-          puzzle.clues[0].clue.forEach( function (clue) {
+          puzzle.clues[0].clue.forEach(function (clue) {
             clueMapping[clue.word] = clue;
           });
           var words_ids_top = puzzle.clues[0].clue.map(function (key) {
@@ -892,7 +904,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           });
           // only do a second clue list if we have one
           if (puzzle.clues.length > 1) {
-            puzzle.clues[1].clue.forEach( function (clue) {
+            puzzle.clues[1].clue.forEach(function (clue) {
               clueMapping[clue.word] = clue;
             });
             this.clues_bottom = new CluesGroup(this, {
@@ -914,7 +926,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // If "fakeclues" and the number of words and clues don't match
         // we need to make special "display" clues
         var num_words = puzzle.words.length;
-        var num_clues = puzzle.clues.map(x=>x.clue).flat().length;
+        var num_clues = puzzle.clues.map(x => x.clue).flat().length;
         if (this.fakeclues && num_words != num_clues) {
           this.display_clues_top = this.clues_top;
           this.display_clues_bottom = this.clues_bottom;
@@ -926,14 +938,14 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         /* words */
         this.words = {};
-        for (var i=0; i<puzzle.words.length; i++) {
+        for (var i = 0; i < puzzle.words.length; i++) {
           var word = puzzle.words[i];
           this.words[word.id] = new Word(this, {
             id: word.id,
             dir: word.dir,
             refs_raw: null,
             cell_ranges: word.cells.map(function (c) {
-              var obj = {x: (c[0] + 1).toString(), y: (c[1] + 1).toString()};
+              var obj = { x: (c[0] + 1).toString(), y: (c[1] + 1).toString() };
               return obj;
             }),
             clue: clueMapping[word.id]
@@ -942,34 +954,16 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         console.log(this);
 
         this.completeLoad();
-
+        this.loadSavedTheme();
       }
 
       completeLoad() {
-        $('.cw-header').html(`
-          <span class="cw-title">${sanitizeHTML(this.title)}</span>
-          <span class="cw-header-separator">&nbsp;•&nbsp;</span>
-          <span class="cw-author">${sanitizeHTML(this.author)}</span>
-          ${
-            this.notepad
-              ? `<button class="cw-button cw-button-notepad">
-                   <span class="cw-button-icon">📝</span> Notes
-                 </button>`
-              : ''
-          }
-          <span class="cw-flex-spacer"></span>
-          <span class="cw-copyright">${sanitizeHTML(this.copyright)}</span>
-        `);
-
-        // Change document title if necessary
-        if (this.title) {
-          document.title = $('.cw-title').text() + ' | ' + document.title;
-        }
+        $('#cw-title').text(this.title || 'Untitled Puzzle');
+        $('#cw-author').text(this.author ? `${this.author}` : '');
 
         this.notepad_icon = this.root.find('.cw-button-notepad');
 
         this.changeActiveClues();
-
         if (this.display_clues_top || this.clues_top) {
           this.renderClues(this.display_clues_top || this.clues_top, this.clues_top_container);
         }
@@ -990,14 +984,13 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.toggleTimer();
         }
 
-        // If there's an intro, show it
-        if (this.jsxw.metadata.intro) {
-          this.createModalBox('Intro', sanitizeHTML(this.jsxw.metadata.intro));
-        }
-
         //this.adjustPaddings();
-        this.renderCells();
+        this.canvas_holder.css('min-height', '300px');
 
+        setTimeout(() => {
+          this.renderCells();
+          this.syncTopTextWidth();
+        }, 200);
       }
 
       remove() {
@@ -1014,7 +1007,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.removeGlobalListeners();
         this.root.undelegate();
         this.clues_holder.undelegate('div.cw-clues-items span');
-        this.canvas.off('mousemove click');
+        this.svg.off('mousemove click');
 
         this.reveal_letter.off('click');
         this.reveal_word.off('click');
@@ -1023,6 +1016,22 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.check_letter.off('click');
         this.check_word.off('click');
         this.check_puzzle.off('click');
+
+        // EDIT TO ADD THEME
+        this.theme_barbie.off('click')
+        this.theme_dark.off('click')
+        this.theme_pumpkin_spice.off('click')
+        this.theme_light_green.off('click')
+        this.theme_light_blue.off('click')
+        this.theme_light_blue_pink.off('click')
+        this.theme_taco_bell.off('click')
+        this.theme_earth_tones.off('click')
+        this.theme_grape_soda.off('click')
+        this.theme_cherry_blossom.off('click')
+        this.theme_momos_nail_corner.off('click')
+        this.theme_frost.off('click')
+        this.theme_cryptic_crossweird.off('click')
+        this.theme_spring_pastels.off('click')
 
         this.print_btn.off('click');
         this.clear_btn.off('click');
@@ -1068,9 +1077,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         );
 
         if (this.config.hover_enabled) {
-          this.canvas.on('mousemove', $.proxy(this.mouseMoved, this));
+          this.svg.on('mousemove', $.proxy(this.mouseMoved, this));
         }
-        this.canvas.on('click', $.proxy(this.mouseClicked, this));
+        this.svg.on('click', $.proxy(this.mouseClicked, this));
 
         // REVEAL
         this.reveal_letter.on(
@@ -1100,6 +1109,249 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           $.proxy(this.check_reveal, this, 'puzzle', 'check')
         );
 
+        //EDIT TO ADD THEME
+        this.theme_light_blue.on(
+          'click',
+          $.proxy(this.set_theme, this, 'light-blue-theme')
+        );
+
+        this.theme_light_green.on(
+          'click',
+          $.proxy(this.set_theme, this, 'light-green-theme')
+        );
+
+        this.theme_dark.on(
+          'click',
+          $.proxy(this.set_theme, this, 'dark-theme')
+        );
+
+        this.theme_pumpkin_spice.on(
+          'click',
+          $.proxy(this.set_theme, this, 'pumpkin-spice-theme')
+        );
+
+        this.theme_barbie.on(
+          'click',
+          $.proxy(this.set_theme, this, 'barbie-theme')
+        );
+
+        this.theme_taco_bell.on(
+          'click',
+          $.proxy(this.set_theme, this, 'taco-bell-theme')
+        );
+
+        this.theme_earth_tones.on(
+          'click',
+          $.proxy(this.set_theme, this, 'earth-tones-theme')
+        );
+
+        this.theme_grape_soda.on(
+          'click',
+          $.proxy(this.set_theme, this, 'grape-soda-theme')
+        );
+
+        this.theme_cherry_blossom.on(
+          'click',
+          $.proxy(this.set_theme, this, 'cherry-blossom-theme')
+        );
+        this.theme_momos_nail_corner.on(
+          'click',
+          $.proxy(this.set_theme, this, 'momos-nail-corner-theme')
+        );
+        this.theme_frost.on(
+          'click',
+          $.proxy(this.set_theme, this, 'frost-theme')
+        );
+        this.theme_cryptic_crossweird.on(
+          'click',
+          $.proxy(this.set_theme, this, 'cryptic-crossweird-theme')
+        );
+        this.theme_spring_pastels.on(
+          'click',
+          $.proxy(this.set_theme, this, 'spring-pastels-theme')
+        );
+
+        // PREVIEW THEME ON HOVER
+        const previewTheme = (themeClass) => {
+          const root = document.querySelector('.crossword');
+
+          // Remove all other theme classes before adding the new one
+          const allThemeClasses = [
+            'dark-theme',
+            'earth-tones-theme',
+            'pumpkin-spice-theme',
+            'light-green-theme',
+            'light-blue-theme',
+            'barbie-theme',
+            'taco-bell-theme',
+            'grape-soda-theme',
+            'cherry-blossom-theme',
+            'momos-nail-corner-theme',
+            'frost-theme',
+            'cryptic-crossweird-theme',
+            'spring-pastels-theme'
+          ];
+          allThemeClasses.forEach(cls => root.classList.remove(cls));
+
+          root.classList.add(themeClass);
+          this.preview_theme = themeClass;
+
+          // TEMP CONFIG PREVIEW VALUES
+          const tempConfig = {
+            'dark-theme': {
+              color_selected: '#322533',
+              color_word: '#534A54',
+              color_block: '#212121',
+              color_none: '#3F4D59',
+              color_hilite: '#322533',
+              font_color_fill: '#FFFFFF',
+              font_color_clue: '#FFFFFF'
+            },
+            'pumpkin-spice-theme': {
+              color_selected: '#9e2a2b',
+              color_word: '#E3AF7B',
+              color_block: '#212121',
+              color_none: '#FFFFFF',
+              color_hilite: '#E3AF7B',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'earth-tones-theme': {
+              color_selected: '#754E42',
+              color_word: '#F7DFD0',
+              color_block: '#212121',
+              color_none: '#FFFFFF',
+              color_hilite: '#F7DFD0',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'light-green-theme': {
+              color_selected: '#9DB08F',
+              color_word: '#EFF5E9',
+              color_block: '#212121',
+              color_none: '#FFFFFF',
+              color_hilite: '#9DB08F',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'light-blue-theme': {
+              color_selected: '#506E85',
+              color_word: '#D7E9F5',
+              color_block: '#212121',
+              color_none: '#FFFFFF',
+              color_hilite: '#506E85',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'barbie-theme': {
+              color_selected: '#56D6FC',
+              color_word: '#FFCFE4',
+              color_block: '#212121',
+              color_none: '#FFE8F2',
+              color_hilite: '#56D6FC',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'taco-bell-theme': {
+              color_selected: '#289E94',
+              color_word: '#3DF2E3',
+              color_block: '#502859',
+              color_none: '#FFD4E6',
+              color_hilite: '#289E94',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'grape-soda-theme': {
+              color_selected: '#7976a4',
+              color_word: '#dfdfea',
+              color_block: '#2b256f',
+              color_none: '#FFFFFF',
+              color_hilite: '#289E94',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'cherry-blossom-theme': {
+              color_selected: '#F25477',
+              color_word: '#FFDCDC',
+              color_block: '#212121',
+              color_none: '#FFFFFF',
+              color_hilite: '#506E85',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'momos-nail-corner-theme': {
+              color_selected: '#98fdff',
+              color_word: '#d3feff',
+              color_block: '#abc837',
+              color_none: '#edf9c3',
+              color_hilite: '#289e94',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'frost-theme': {
+              color_selected: '#b0bef7',
+              color_word: '#e6eafc',
+              color_block: '#212121',
+              color_none: '#ffffff',
+              color_hilite: '#289e94',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'cryptic-crossweird-theme': {
+              color_selected: '#da854a',
+              color_word: '#eabc9b',
+              color_block: '#212121',
+              color_none: '#ffffff',
+              color_hilite: '#289e94',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            },
+            'spring-pastels-theme': {
+              color_selected: '#e3addd',
+              color_word: '#f7e8f5',
+              color_block: '#212121',
+              color_none: '#ffffff',
+              color_hilite: '#289e94',
+              font_color_fill: '#000000',
+              font_color_clue: '#000000'
+            }
+          };
+
+          const previewSettings = tempConfig[themeClass];
+          if (previewSettings) {
+            for (const [key, value] of Object.entries(previewSettings)) {
+              this.config[key] = value;
+            }
+          }
+
+          this.renderCells();
+        };
+
+        const revertTheme = () => {
+          const root = document.querySelector('.crossword');
+          const currentTheme = this.appliedThemeClass;
+
+          if (this.preview_theme && this.preview_theme !== currentTheme) {
+            root.classList.remove(this.preview_theme);
+            if (currentTheme) root.classList.add(currentTheme);
+            this.set_theme(currentTheme); // restores config too
+            this.renderCells();
+          }
+
+          this.preview_theme = null;
+        };
+
+        this.root.find('.cw-theme .cw-menu-item').each((_, el) => {
+          const themeClass = el.className
+            .split(' ')
+            .find(cls => cls.startsWith('cw-theme-'))
+            .replace('cw-theme-', '') + '-theme';
+
+          el.addEventListener('mouseenter', () => previewTheme(themeClass));
+          el.addEventListener('mouseleave', () => revertTheme());
+        });
+
+
         // PRINTER
         this.print_btn.on('click', $.proxy(this.printPuzzle, this));
 
@@ -1126,10 +1378,22 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // INFO
         this.info_btn.on('click', $.proxy(this.showInfo, this));
 
+        // PREV/NEXT BUTTONS FOR MOBILE
+        this.root.find('.cw-button-prev-clue').on('click', () => {
+          this.moveToNextWord(true, this.config.tab_key === 'tab_skip');
+          this.hidden_input.focus();
+        });
+        this.root.find('.cw-button-next-clue').on('click', () => {
+          this.moveToNextWord(false, this.config.tab_key === 'tab_skip');
+          this.hidden_input.focus();
+        });
+
         // NOTEPAD
         if (this.notepad) {
           this.notepad_icon.on('click', $.proxy(this.showNotepad, this));
           this.notepad_btn.show();
+        } else {
+          this.notepad_icon.hide();
         }
         this.notepad_btn.on('click', $.proxy(this.showNotepad, this));
 
@@ -1138,33 +1402,69 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           $.proxy(this.hiddenInputChanged, this, null)
         );
         this.hidden_input.on('keydown', $.proxy(this.keyPressed, this));
+
+        this.svgContainer.addEventListener('click', (e) => {
+          if (e.target.tagName === 'rect') {
+            const x = parseInt(e.target.getAttribute('data-x'));
+            const y = parseInt(e.target.getAttribute('data-y'));
+            const clickedCell = this.getCell(x, y);
+
+            if (!clickedCell.empty) {
+              const newActiveWord = this.active_clues.getMatchingWord(x, y, true)
+                                    || this.inactive_clues.getMatchingWord(x, y, true);
+
+              if (newActiveWord) {
+                this.setActiveWord(newActiveWord);
+                this.setActiveCell(clickedCell);
+                this.renderCells();
+              }
+            }
+          }
+        });
+
+        this.svgContainer.addEventListener('dblclick', (e) => {
+          if (e.target.tagName === 'rect') {
+            const x = parseInt(e.target.getAttribute('data-x'));
+            const y = parseInt(e.target.getAttribute('data-y'));
+            const clickedCell = this.getCell(x, y);
+
+            if (
+              !clickedCell.empty &&
+              this.selected_cell &&
+              this.selected_cell.x === x &&
+              this.selected_cell.y === y
+            ) {
+              this.changeActiveClues(); // toggle direction
+              this.renderCells(); // optionally re-render after direction switch
+            }
+          }
+        });
+
       }
 
       handleClickWindow(event) {
-        this.root.find('.cw-menu').hide();
+        this.root.find('.cw-menu').removeClass('open');
       }
 
       handleClickOpenMenu(event) {
-        const menuContainer = $(event.target).closest('.cw-menu-container');
-        const menu = menuContainer.find('.cw-menu');
-        if (!menu.is(':visible')) {
-          // This is horrible: delay opening the menu so that
-          // `handleClickWindow` can run first and close all previously-open
-          // menus
-          setTimeout(() => {
-            menu.show();
-          });
-        }
+          const menuContainer = $(event.target).closest('.cw-menu-container');
+          const menu = menuContainer.find('.cw-menu');
+          const isAlreadyOpen = menu.hasClass('open');
+
+          // Close all dropdowns first
+          this.root.find('.cw-menu').removeClass('open');
+
+          // If it wasn't already open, open this one
+          if (!isAlreadyOpen) {
+            setTimeout(() => {
+              menu.addClass('open');
+            });
+          }
       }
 
-      // Create a generic modal box with content
-      createModalBox(title, content, button_text = 'Close', solved_msg = false) {
-        // pause the timer if it was running
-        const timer_was_running = this.timer_running;
-        if (timer_was_running) {
-          this.toggleTimer();
-        }
 
+      // Create a generic modal box with content
+      createModalBox(title, content, button_text = 'Close') {
         // Set the contents of the modal box
         const modalContent = `
         <div class="modal-content">
@@ -1182,11 +1482,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // Set this to be the contents of the container modal div
         this.root.find('.cw-modal').html(modalContent);
 
-        // turn "solved_open" to true if necessary
-        if (solved_msg) {
-          this.solved_open = true;
-        }
-
         // Show the div
         var modal = this.root.find('.cw-modal').get(0);
         modal.style.display = 'block';
@@ -1194,36 +1489,35 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // Allow user to close the div
         const this_hidden_input = this.hidden_input;
         var span = this.root.find('.modal-close').get(0);
-
         // When the user clicks on <span> (x), close the modal
-        var toggleTimerBound = this.toggleTimer.bind(this);
         span.onclick = function () {
           modal.style.display = 'none';
-          this_hidden_input.focus();
-          if (timer_was_running) {
-            toggleTimerBound();
+          if (!isMobile) {
+            this_hidden_input.focus();
           }
         };
         // When the user clicks anywhere outside of the modal, close it
         window.onclick = function (event) {
           if (event.target == modal) {
             modal.style.display = 'none';
-            this_hidden_input.focus();
-            if (timer_was_running) {
-              toggleTimerBound();
+            if (!isMobile) {
+              this_hidden_input.focus();
             }
           }
         };
-
         // Clicking the button should close the modal
         var modalButton = document.getElementById('modal-button');
         modalButton.onclick = function () {
           modal.style.display = 'none';
-          this_hidden_input.focus();
-          if (timer_was_running) {
-            toggleTimerBound();
+          if (!isMobile) {
+            this_hidden_input.focus();
           }
         };
+      }
+
+      setConfig(name, value) {
+        this.config[name] = value;
+        console.log("name =" + name + ', value = ' + value);
       }
 
       // Function to switch the clues, generally from "ACROSS" to "DOWN"
@@ -1264,15 +1558,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           }
           this.top_text.html(`
             <span class="cw-clue-number">
-              ${sanitizeHTML(word.clue.number)}
+              ${escape(word.clue.number)}
             </span>
             <span class="cw-clue-text">
-              ${sanitizeHTML(word.clue.text)}
-              <div class="cw-edit-container" style="display: none;">
-                <input class="cw-input note-style" type="text">
-              </div>
-              <span class="cw-cluenote-button" style="display: none;" />
-              </span>
+              ${escape(word.clue.text)}
             </span>
           `);
           resizeText(this.root, this.top_text);
@@ -1280,7 +1569,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
 
       setActiveCell(cell) {
-        var offset = this.canvas.offset(),
+        var offset = this.svg.offset(),
           input_top,
           input_left;
         if (cell && !cell.empty) {
@@ -1292,7 +1581,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           input_left = offset.left + (cell.x - 1) * this.cell_size;
 
           this.hidden_input.css({ left: input_left, top: input_top });
-          this.hidden_input.focus();
+          if (!isMobile) {
+            this.hidden_input.focus();
+          }
+          this.renderCells();
         }
       }
 
@@ -1308,21 +1600,20 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           clue_el = $(`
             <div style="position: relative">
               <span class="cw-clue-number">
-                ${sanitizeHTML(clue.number)}
+                ${escape(clue.number)}
               </span>
               <span class="cw-clue-text">
-                ${sanitizeHTML(clue.text)}
+                ${escape(clue.text)}
                 <div class="cw-edit-container" style="display: none;">
-                  <input class="cw-input note-style" type="text">
-                </div>
-                <span class="cw-cluenote-button" style="display: none;" />
+                <input class="cw-input note-style" type="text">
+              </div>
+              <span class="cw-cluenote-button" style="display: none;" />
               </span>
-            </div>
+                  </div>
           `);
-
           // if there's any saved notes add them to their section
           let clueNote = notes.get(clue.word);
-          if (clueNote!==undefined) {
+          if (clueNote !== undefined) {
             clue_el.find('.cw-input').val(clueNote);
             clue_el.find('.cw-edit-container').show();
           }
@@ -1334,28 +1625,28 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           clue_el.addClass('word-' + clue.word);
           items.append(clue_el);
         }
-        title.html(sanitizeHTML(clues_group.title));
+        title.html(escape(clues_group.title));
         clues_group.clues_container = items;
 
         // Add event listeners for editing
-        items.find('.cw-clue').on('mouseenter', function() {
+        items.find('.cw-clue').on('mouseenter', function () {
           var clueElement = $(this).closest('.cw-clue');
           if (clueElement.find('.cw-input').val().trim().length === 0) {
             $(this).find('.cw-cluenote-button').show();
           }
         });
 
-        items.find('.cw-clue').on('mouseleave', function() {
+        items.find('.cw-clue').on('mouseleave', function () {
           $(this).find('.cw-cluenote-button').hide();
         });
 
-        items.find('.cw-input').on('click', function(event) {
+        items.find('.cw-input').on('click', function (event) {
           event.stopPropagation();
         });
 
-        var save = ()=>this.saveGame();
+        var save = () => this.saveGame();
 
-        items.find('.cw-cluenote-button').on('click', function(event) {
+        items.find('.cw-cluenote-button').on('click', function (event) {
           event.stopPropagation();
           var clueElement = $(this).closest('.cw-clue');
           clueElement.find('.cw-edit-container').show();
@@ -1363,11 +1654,11 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           $(this).hide();
         });
 
-        items.find('.cw-input').on('blur', function() {
+        items.find('.cw-input').on('blur', function () {
           var clueElement = $(this).closest('.cw-clue');
           var newText = clueElement.find('.cw-input').val().trim();
           if (newText.length > 0) {
-            notes.set(clueElement.data('word'),newText);
+            notes.set(clueElement.data('word'), newText);
           } else {
             clueElement.find('.cw-edit-container').hide();
             notes.delete(clueElement.data('word'));
@@ -1375,339 +1666,219 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           save()
         });
 
-        items.find('.cw-input').on('keydown', function(event) {
+        items.find('.cw-input').on('keydown', function (event) {
           if (event.keyCode === 13) { // Enter key
             var clueElement = $(this).closest('.cw-clue');
             clueElement.find('.cw-input').blur();
           }
         });
-
       }
 
       // Clears canvas and re-renders all cells
       renderCells() {
-        var x, y;
-        const SIZE_OFFSET = 4;
+        // Responsive SVG sizing
+        const canvasRect = this.canvas_holder.get(0).getBoundingClientRect();
+        const svgTopMargin = getComputedStyle(this.svgContainer).marginTop;
+        const maxHeight = canvasRect.height - parseInt(svgTopMargin, 10);
+        const maxWidth = canvasRect.width;
 
-        // Take care of the grid
-        const canvasRect = $('.cw-canvas').get(0).getBoundingClientRect();
-        const max_height = canvasRect.bottom - canvasRect.top;
-        const max_width = canvasRect.right - canvasRect.left;
-        this.cell_size = Math.min(
-          Math.floor(max_height / this.grid_height),
-          Math.floor(max_width / this.grid_width)
+        this.cell_size = Math.floor(
+          Math.min(
+            maxWidth / this.grid_width,
+            maxHeight / this.grid_height
+          )
         );
 
-        // Scale the grid so it is crisp on high-density screens.
-        /* CTFYC dps below */
-        var widthDps = this.grid_width * this.cell_size - 2 + SIZE_OFFSET;
-        var heightDps = this.grid_height * this.cell_size - 2 + SIZE_OFFSET;
-        var devicePixelRatio = window.devicePixelRatio || 1;
-        this.canvas[0].width = devicePixelRatio * widthDps;
-        this.canvas[0].height = devicePixelRatio * heightDps;
-        this.canvas[0].style.width = widthDps + 'px';
-        this.canvas[0].style.height = heightDps + 'px';
-        this.context.scale(devicePixelRatio, devicePixelRatio);
+        const svgWidth = this.grid_width * this.cell_size;
+        const svgHeight = this.grid_height * this.cell_size;
 
-        /* color in the entire canvas with the blank color */
-        this.context.clearRect(
-          0,
-          0,
-          this.canvas[0].width,
-          this.canvas[0].height
-        );
-        this.context.fillStyle = this.config.color_none;
-        this.context.fillRect(
-          0,
-          0,
-          this.canvas[0].width,
-          this.canvas[0].height
-        );
-        // set the fill style
-        this.context.fillStyle = this.config.color_block;
+        this.svgContainer.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+        this.svgContainer.setAttribute('width', svgWidth);
+        this.svgContainer.setAttribute('height', svgHeight);
 
-        // if the word has references to any others
-        var secondary_highlight_cells = [];
-        /**
-        if (this.selected_word.refs_raw) {
-          // only support one reference per clue for now
-          var search_num = this.selected_word.refs_raw[0].number;
-          var search_dir = this.selected_word.refs_raw[0].direction.toLowerCase();
-          for (var i in this.words) {
-            if (this.words[i].clue.number == search_num && this.words[i].dir == search_dir) {
-              var secondary_highlight_cells = this.words[i].cell_ranges;
-            }
-          }
+        if (this.toptext && this.toptext[0]) {
+          this.toptext[0].style.width = svgWidth + 'px';
         }
-        **/
 
-        var color;
-        for (x in this.cells) {
-          for (y in this.cells[x]) {
-            var cell = this.cells[x][y],
-              cell_x = (x - 1) * this.cell_size + 1,
-              cell_y = (y - 1) * this.cell_size + 1;
-            if (!cell.empty) {
-              // detect cell color
-              color = cell.color;
-              if (
-                this.hilited_word &&
-                this.hilited_word.hasCell(cell.x, cell.y)
-              ) {
-                //color = this.config.color_hilite;
-              }
-              if (
-                secondary_highlight_cells &&
-                secondary_highlight_cells.some(c => c.x == cell.x) &&
-                secondary_highlight_cells.some(c => c.y == cell.y)
-              ) {
-                color = this.config.color_secondary;
-              }
-              if (
-                this.selected_word &&
-                this.selected_word.hasCell(cell.x, cell.y)
-              ) {
-                // two cases here, depending on whether the cell is shaded
-                color = cell.shade_highlight_color || this.config.color_word;
-              }
-              if (
-                this.config.hover_enabled &&
-                x == this.hovered_x &&
-                y == this.hovered_y
-              ) {
-                color = this.config.color_hover;
-              }
-              if (
-                this.selected_cell &&
-                x == this.selected_cell.x &&
-                y == this.selected_cell.y
-              ) {
-                color = this.config.color_selected;
-              }
-              //this.context.fillStyle = this.config.color_block;
-              //this.context.fillRect(cell_x, cell_y, this.cell_size, this.cell_size);
-              // In an autofill puzzle (coded and acrostic), highlight all other cells
-              // with the same number as the selected cell
-              if (
-                this.is_autofill &&
-                cell.number == this.selected_cell.number &&
-                cell != this.selected_cell
-              ) {
-                color = this.config.color_hilite;
-              }
+        const SIZE = this.cell_size;
+        const svg = this.svgContainer;
+        svg.innerHTML = ''; // Clear SVG grid before redrawing
 
-              this.context.fillStyle = color;
+        const padding = 1;
+        svg.setAttribute(
+          'viewBox',
+          `-${padding} -${padding} ${this.grid_width * SIZE + padding * 2} ${this.grid_height * SIZE + padding * 2}`
+        );
 
-              // Don't bother filling if there's no color
-              if (color) {
-                this.context.fillRect(
-                  cell_x,
-                  cell_y,
-                  this.cell_size,
-                  this.cell_size
-                );
-              }
-              this.context.fillStyle = this.config.color_block;
+        for (let x in this.cells) {
+          for (let y in this.cells[x]) {
+            const cell = this.cells[x][y];
+            const shouldRender =
+              !cell.empty || cell.clue === true || cell.type === 'block';
 
-              // draw bounding box
-              this.context.strokeRect(
-                cell_x,
-                cell_y,
-                this.cell_size,
-                this.cell_size,
-                this.config.color_block
-              );
-            } else {
-              // cell is empty
-              if (cell.is_void) {
-                /* don't fill voids */
-              } else if (cell.clue) {
-                // fill
-                this.context.fillStyle = this.config.background_color_clue;
-                this.context.fillRect(
-                  cell_x,
-                  cell_y,
-                  this.cell_size,
-                  this.cell_size
-                );
-                // bounding box
-                this.context.strokeRect(
-                  cell_x,
-                  cell_y,
-                  this.cell_size,
-                  this.cell_size,
-                  this.config.color_block
-                );
-              } else {
-                // empty + not (void or clue) == block
-                // respect cell coloring, even for blocks
-                // don't fill if the cell's color is the "none" color
-                if (cell.color !== this.config.color_none) {
-                  this.context.fillStyle =
-                    cell.color || this.config.color_block;
-                  this.context.fillRect(
-                    cell_x,
-                    cell_y,
-                    this.cell_size,
-                    this.cell_size
-                  );
-                  // we want a bounding box for blocks
-                  if (cell.color != this.config.color_none) {
-                    this.context.strokeRect(
-                      cell_x,
-                      cell_y,
-                      this.cell_size,
-                      this.cell_size,
-                      this.config.color_block
-                    );
-                  }
-                }
-              }
-              // reset fill style
-              this.context.fillStyle = this.config.color_block;
+            if (!shouldRender) continue;
+
+            const cellX = (x - 1) * SIZE;
+            const cellY = (y - 1) * SIZE;
+
+            const rect = document.createElementNS(this.svgNS, 'rect');
+            rect.setAttribute('x', cellX);
+            rect.setAttribute('y', cellY);
+            rect.setAttribute('width', SIZE);
+            rect.setAttribute('height', SIZE);
+            rect.setAttribute('stroke', '#212121');
+            rect.setAttribute('data-x', cell.x);
+            rect.setAttribute('data-y', cell.y);
+            rect.setAttribute('class', 'cw-cell');
+
+            let fillColor = cell.type === 'block' ? this.config.color_block : this.config.color_none;
+            if (this.selected_cell && cell.x === this.selected_cell.x && cell.y === this.selected_cell.y) {
+              fillColor = this.config.color_selected;
+              rect.classList.add('selected');
+            } else if (this.selected_word && this.selected_word.hasCell(cell.x, cell.y)) {
+              fillColor = this.config.color_word;
+            } else if (cell.color) {
+              fillColor = cell.color;
             }
 
-            // draw a circle
+            rect.setAttribute('fill', fillColor);
+            svg.appendChild(rect);
+
             if (cell.shape === 'circle') {
-              var centerX = cell_x + this.cell_size / 2;
-              var centerY = cell_y + this.cell_size / 2;
-              var radius = this.cell_size / 2;
-              this.context.beginPath();
-              this.context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-              this.context.stroke();
+              const circle = document.createElementNS(this.svgNS, 'circle');
+              circle.setAttribute('cx', cellX + SIZE / 2);
+              circle.setAttribute('cy', cellY + SIZE / 2);
+
+              // Slightly bigger than cell, so edges are clipped
+              const inset = 0.3; // lower is bigger
+              const radius = SIZE / 2 + inset;
+
+              circle.setAttribute('r', radius);
+              circle.setAttribute('fill', 'none');
+              circle.setAttribute('stroke', this.config.color_block || '#212121');
+              circle.setAttribute('stroke-width', 1.1);
+              circle.setAttribute('pointer-events', 'none');
+              svg.appendChild(circle);
             }
 
-            // draw an arrow
-            if (cell.shape && cell.shape.includes('arrow')) {
-              var splitArr = cell.shape.split('-');
-              var arrowDir = splitArr[splitArr.length - 1].toLowerCase();
-              drawArrow(this.context, cell_x, cell_y, this.cell_size, arrowDir);
-            }
-
-            /* letters and numbers and such */
-            // select the font color
-            if (cell.clue) {
-              // "clue" cells get their own color
-              this.context.fillStyle = this.config.font_color_clue;
-            } else {
-              // we determine color from the background color
-              this.context.fillStyle = this.config.font_color_fill;
-              // we need to invert the fill color if the brightness is wrong
-              var bgBrightness = getBrightness(color || this.config.color_none);
-              var fgBrightness = getBrightness(this.config.font_color_fill);
-              if (Math.abs(bgBrightness - fgBrightness) < 125) {
-                // invert
-                var thisRGB = hexToRgb(this.config.font_color_fill);
-                var invertedRGB = thisRGB.map(x => 255 - x);
-                this.context.fillStyle = rgbToHex(invertedRGB[0], invertedRGB[1], invertedRGB[2]);
-              }
-            }
-
-            // bars
             if (cell.bar) {
-              var bar_start = {
-                top: [cell_x, cell_y + this.config.bar_linewidth/2],
-                left: [cell_x + this.config.bar_linewidth/2, cell_y],
-                right: [cell_x + this.cell_size - this.config.bar_linewidth/2, cell_y + this.cell_size],
-                bottom: [cell_x + this.cell_size, cell_y + this.cell_size - this.config.bar_linewidth/2],
+              const barWidth = this.config.bar_linewidth;
+              const barColor = '#212121';
+              const halfBar = barWidth / 2;
+
+              const barStart = {
+                top: [cellX, cellY + halfBar],
+                left: [cellX + halfBar, cellY],
+                right: [cellX + SIZE - halfBar, cellY + SIZE],
+                bottom: [cellX + SIZE, cellY + SIZE - halfBar],
               };
-              var bar_end = {
-                top: [cell_x + this.cell_size, cell_y + this.config.bar_linewidth/2],
-                left: [cell_x + this.config.bar_linewidth/2, cell_y + this.cell_size],
-                right: [cell_x - this.config.bar_linewidth/2 + this.cell_size, cell_y],
-                bottom: [cell_x, cell_y + this.cell_size - this.config.bar_linewidth/2],
+
+              const barEnd = {
+                top: [cellX + SIZE, cellY + halfBar],
+                left: [cellX + halfBar, cellY + SIZE],
+                right: [cellX + SIZE - halfBar, cellY],
+                bottom: [cellX, cellY + SIZE - halfBar],
               };
-              for (var key in cell.bar) {
-                if (cell.bar.hasOwnProperty(key)) {
-                  // key is top, bottom, etc.
-                  // cell.bar[key] is true or false
-                  if (cell.bar[key]) {
-                    this.context.beginPath();
-                    this.context.moveTo(bar_start[key][0], bar_start[key][1]);
-                    this.context.lineTo(bar_end[key][0], bar_end[key][1]);
-                    const eps = Math.random()/10000;
-                    this.context.lineWidth = this.config.bar_linewidth + eps;
-                    this.context.stroke();
-                    this.context.lineWidth = 1 + eps;
-                  }
+
+              for (const side in cell.bar) {
+                if (cell.bar[side]) {
+                  const [x1, y1] = barStart[side];
+                  const [x2, y2] = barEnd[side];
+                  const barLine = document.createElementNS(this.svgNS, 'line');
+                  barLine.setAttribute('x1', x1);
+                  barLine.setAttribute('y1', y1);
+                  barLine.setAttribute('x2', x2);
+                  barLine.setAttribute('y2', y2);
+                  barLine.setAttribute('stroke', barColor);
+                  barLine.setAttribute('stroke-width', barWidth);
+                  barLine.setAttribute('stroke-linecap', 'square');
+                  barLine.setAttribute('pointer-events', 'none');
+                  svg.appendChild(barLine);
                 }
               }
-            }
-
-            const NUMBER_SIZE_DIV = 3.75;
-            if (cell.number) {
-              this.context.font =
-                Math.ceil(this.cell_size / NUMBER_SIZE_DIV) + 'px sans-serif';
-              this.context.textAlign = 'left';
-              this.context.textBaseline = 'top';
-              this.context.fillText(
-                cell.number,
-                Math.floor(cell_x + this.cell_size * 0.1),
-                Math.floor(cell_y + this.cell_size * 0.1)
-              );
-            }
-
-            if (cell.top_right_number) {
-              this.context.font =
-                Math.ceil(this.cell_size / NUMBER_SIZE_DIV) + 'px sans-serif';
-              this.context.textAlign = 'right';
-              this.context.textBaseline = 'top';
-              this.context.fillText(
-                cell.top_right_number,
-                Math.floor(cell_x + this.cell_size * 0.9),
-                Math.floor(cell_y + this.cell_size * 0.1)
-              );
             }
 
             if (cell.letter) {
-              var cell_letter_length = cell.letter.length;
-              this.context.font =
-                this.cell_size / (1.1 + 0.5 * cell_letter_length) +
-                'px sans-serif';
-              if (cell.revealed) {
-                this.context.font = 'bold italic ' + this.context.font;
-              }
-              if (cell.checked) {
-                this.context.beginPath();
-                this.context.moveTo(cell_x, cell_y);
-                this.context.lineTo(
-                  cell_x + this.cell_size,
-                  cell_y + this.cell_size
-                );
-                //this.context.lineWidth = 5;
-                this.context.strokeStyle = this.context.fillStyle;
-                this.context.stroke();
-                this.context.strokeStyle = this.config.color_block;
-              }
-              this.context.textAlign = 'center';
-              this.context.textBaseline = 'middle';
+              const text = document.createElementNS(this.svgNS, 'text');
+              text.setAttribute('x', cellX + SIZE / 2);
+              text.setAttribute('y', cellY + SIZE * 0.77);
+              text.setAttribute('text-anchor', 'middle');
+              const letterLength = cell.letter.length;
+              const scale = letterLength <= 2 ? 0.6 : letterLength === 3 ? 0.45 : 0.35;
+              text.setAttribute('font-size', `${SIZE * scale}px`);
+              text.setAttribute('font-family', 'Arial, sans-serif');
+              text.setAttribute('font-weight', 'bold');
+              text.textContent = cell.letter;
+              text.classList.add('cw-cell-letter');
+              text.setAttribute('fill', this.config.font_color_fill);
+              svg.appendChild(text);
 
-              // the y-offset changes if this is a "clue" block
-              // normally we slide the letter down to fit with numbers
-              // for "clue" blocks we can center it
-              var y_offset = cell.clue
-                ? this.cell_size / 1.8
-                : (2 * this.cell_size) / 3;
-              this.context.fillText(
-                cell.letter,
-                cell_x + this.cell_size / 2,
-                cell_y + y_offset
-              );
-              // reset fill style
-              this.context.fillStyle = this.config.color_block;
+              if (cell.checked) {
+                const slash = document.createElementNS(this.svgNS, 'line');
+                slash.setAttribute('x1', cellX + 2);
+                slash.setAttribute('y1', cellY + 2);
+                slash.setAttribute('x2', cellX + SIZE - 2);
+                slash.setAttribute('y2', cellY + SIZE - 2);
+                slash.setAttribute('stroke', '#000');
+                slash.setAttribute('stroke-width', 2);
+                slash.setAttribute('stroke-linecap', 'round');
+                svg.appendChild(slash);
+              }
+            }
+
+            if (cell.number) {
+              const number = document.createElementNS(this.svgNS, 'text');
+              number.setAttribute('x', cellX + SIZE * 0.1);
+              number.setAttribute('y', cellY + SIZE * 0.3);
+              number.setAttribute('font-size', `${SIZE / 3.75}px`);
+              number.setAttribute('font-family', 'Arial, sans-serif');
+              number.textContent = cell.number;
+              number.setAttribute('fill', this.config.font_color_clue);
+              number.classList.add('cw-cell-number');
+              svg.appendChild(number);
             }
           }
         }
-        // update clue appearance (for greyed out clues)
+
+        this.drawSelectedWordBorder(svg, this.selected_word);
+        setTimeout(() => this.syncTopTextWidth(), 0);
+
         for (const wordId in this.words) {
           this.updateClueAppearance(this.words[wordId]);
         }
-
       }
+
+      drawSelectedWordBorder(svg, word) {
+          if (!word || !word.cells.length) return;
+
+          const SIZE = this.cell_size;
+
+          let minX = Infinity, minY = Infinity, maxX = -1, maxY = -1;
+
+          for (const coord of word.cells) {
+            const [x, y] = coord.split('-').map(Number);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+
+          const rect = document.createElementNS(this.svgNS, 'rect');
+          rect.setAttribute('x', (minX - 1) * SIZE);
+          rect.setAttribute('y', (minY - 1) * SIZE);
+          rect.setAttribute('width', (maxX - minX + 1) * SIZE);
+          rect.setAttribute('height', (maxY - minY + 1) * SIZE);
+          rect.setAttribute('fill', 'none');
+          rect.setAttribute('stroke', this.config.color_selected);
+          rect.setAttribute('stroke-width', 1.5);
+          rect.setAttribute('pointer-events', 'none');
+          rect.setAttribute('class', 'selected-word-border');
+          svg.appendChild(rect);
+        }
 
       mouseMoved(e) {
         if (this.config.hover_enabled) {
-          var offset = this.canvas.offset(),
+          var offset = this.svg.offset(),
             mouse_x = e.pageX - offset.left,
             mouse_y = e.pageY - offset.top,
             index_x = Math.ceil(mouse_x / this.cell_size),
@@ -1722,7 +1893,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
 
       mouseClicked(e) {
-        var offset = this.canvas.offset(),
+        var offset = this.svg.offset(),
           mouse_x = e.pageX - offset.left,
           mouse_y = e.pageY - offset.top,
           index_x = Math.ceil(mouse_x / this.cell_size),
@@ -1740,7 +1911,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.setActiveWord(
             this.active_clues.getMatchingWord(index_x, index_y, true)
           );
-        } else if (this.inactive_clues.getMatchingWord(index_x, index_y, true)){
+        } else {
           this.setActiveWord(
             this.inactive_clues.getMatchingWord(index_x, index_y, true)
           );
@@ -1751,13 +1922,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
 
       keyPressed(e) {
-        if (this.solved_open) {
-          // close the modal
-          let modal = this.root.find('.cw-modal').get(0);
-          modal.style.display = 'none';
-          const this_hidden_input = this.hidden_input;
-          this_hidden_input.focus();
-          this.solved_open = false;
+        if (this.settings_open) {
           return;
         }
 
@@ -1798,6 +1963,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               this.skipToWord(SKIP_DOWN);
             } else {
               this.moveSelectionBy(0, 1);
+              this.renderCells();
             }
             break;
           case 32: //space
@@ -1898,6 +2064,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
 
       autofill() {
+        // save progress
+        this.saveGame();
         if (this.is_autofill) {
           var my_number = this.selected_cell.number;
           var same_number_cells = this.number_to_cells[my_number] || [];
@@ -1907,8 +2075,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             cell.checked = this.selected_cell.checked;
           }
         }
-        // save progress
-        this.saveGame();
       }
 
       // Detects user inputs to hidden input element
@@ -1927,6 +2093,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           // find all cells with this number
           // and fill them with the same letter
           this.autofill();
+
+          // Within hiddenInputChanged():
+          this.renderCells(); // Re-render SVG grid immediately after user input
 
           // find empty cell, then next cell
           // Change this depending on config
@@ -1949,12 +2118,12 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
           this.setActiveCell(next_cell);
           this.renderCells();
-          this.checkIfSolved();
+          this.checkIfSolved()
         }
         this.hidden_input.val('');
       }
 
-      checkIfSolved(do_reveal=true) {
+      checkIfSolved(do_reveal = false) {
         var wasSolved = this.isSolved;
         var i, j, cell;
         for (i in this.cells) {
@@ -1981,7 +2150,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           var minDisplay = display_minutes == 1 ? 'minute' : 'minutes';
           var secDisplay = display_seconds == 1 ? 'second' : 'seconds';
           var allMin = display_minutes > 0 ? `${display_minutes} ${minDisplay} ` : '';
-          timerMessage = `<br /><br />You solved the puzzle in ${allMin} ${display_seconds} ${secDisplay}.`;
+          timerMessage = `<br /><br /><center>You finished in ${allMin} ${display_seconds} ${secDisplay}.</center>`;
 
           // stop the timer
           clearTimeout(xw_timer);
@@ -1992,18 +2161,72 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         if (do_reveal) {
           this.check_reveal('puzzle', 'reveal');
         }
+
+        setTimeout(() => {
+          this.renderCells(); // Force fresh render
+          const allLetters = this.svgContainer.querySelectorAll('.cw-cell-letter');
+
+          allLetters.forEach((el, i) => {
+            setTimeout(() => {
+              el.classList.add('spin');
+            }, i * 15);
+          });
+        }, 100); // give the DOM some time to settle
+
+
+        confetti({
+          particleCount: 280,
+          spread: 190,
+          origin: { y: 0.4 }
+        });
+
+       /* const winSound = new Audio('./sounds/hny.mp3');
+          winSound.play();*/
+
+        const successWrapper = document.getElementById("successAnimWrapper")
+        const successAnim = document.getElementById("successAnim")
+        function showSuccessAnim() {
+          successWrapper.style.display = "flex";
+          successWrapper.style.pointerEvents = "all";
+          gsap.to(successAnim, {
+            y: "0px",
+            rotateY: "0deg",
+            duration: 1,
+            ease: "bounce.out",
+            onComplete: () => { setTimeout(hideSuccessAnim, 500) }
+          })
+          gsap.to(successAnim, {
+            opacity: 1,
+            duration: 1,
+            ease: "power3.out"
+          })
+        }
+        function hideSuccessAnim() {
+          gsap.to(successAnim, {
+            y: "-40px",
+            rotateY: "90deg",
+            duration: 0.5,
+            opacity: 0,
+            ease: "power4.out",
+            onComplete: () => { successWrapper.style.display = "none"; successWrapper.style.pointerEvents = "none"; showSuccessMsg() }
+          })
+        }
+        const here = this
+        function showSuccessMsg() {
+          const rawMessage = here.msg_solved;
+
+          // â›” If msg_solved is undefined, null, or an empty string, skip the message
+          if (!rawMessage || rawMessage.trim() === '') return;
+
+          let solvedMessage = escape(rawMessage).trim().replaceAll('\n', '<br />');
+          solvedMessage += timerMessage;
+          here.createModalBox('Puzzle solved!', solvedMessage);
+        }
+
+
         // show completion message if newly solved
         if (!wasSolved) {
-          var solvedMessage = sanitizeHTML(this.msg_solved).trim().replaceAll('\n', '<br />');
-          solvedMessage += timerMessage;
-
-          this.createModalBox('🎉🎉🎉', solvedMessage, 'Close', true);
-          if (this.config.confetti_enabled) {
-            confetti.start();
-            setTimeout(function() {
-                confetti.stop()
-            }, 3000);
-          }
+          showSuccessAnim()
         }
       }
 
@@ -2027,6 +2250,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 this.setActiveWord(word);
                 this.setActiveCell(word_cell);
                 this.renderCells();
+                this.renderCells();
+
                 return true;
               }
             }
@@ -2070,7 +2295,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         }
       }
 
-      moveToNextWord(to_previous, skip_filled_words=false) {
+      moveToNextWord(to_previous, skip_filled_words = false) {
         if (!this.selected_word) {
           return;
         }
@@ -2101,8 +2326,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       moveToNextWord_OLD(to_previous) {
         if (this.selected_word) {
           var next_word = to_previous
-              ? this.active_clues.getPreviousWord(this.selected_word)
-              : this.active_clues.getNextWord(this.selected_word),
+            ? this.active_clues.getPreviousWord(this.selected_word)
+            : this.active_clues.getNextWord(this.selected_word),
             cell;
           if (next_word) {
             cell = next_word.getFirstEmptyCell() || next_word.getFirstCell();
@@ -2197,13 +2422,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               new_cell.y,
               true
             );
-            // we also check if the new cell has a word in the other direction
-            var newCellInactiveWord = this.inactive_clues.getMatchingWord(
-              new_cell.x,
-              new_cell.y,
-              true
-            );
-            if (!newCellActiveWord && newCellInactiveWord) {
+            if (!newCellActiveWord) {
               this.changeActiveClues();
             }
             // In any case we change the active word
@@ -2220,6 +2439,17 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         setBreakpointClasses(this.root);
         resizeText(this.root, this.top_text);
         this.renderCells();
+        this.syncTopTextWidth();
+      }
+
+      syncTopTextWidth() {
+          const svg = this.svgContainer;
+          const wrapper = this.toptext?.get(0);
+
+          if (svg && wrapper) {
+            const bbox = svg.getBoundingClientRect();
+            wrapper.style.width = `${bbox.width}px`;
+          }
       }
 
       mouseEnteredClue(e) {
@@ -2255,15 +2485,15 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.createModalBox(
           'Info',
           `
-            <p><b>${sanitizeHTML(this.title)}</b></p>
-            <p>${sanitizeHTML(this.author)}</p>
-            <p><i>${sanitizeHTML(this.copyright)}</i></p>
+            <p><b>${escape(this.title)}</b></p>
+            <p>${escape(this.author)}</p>
+            <p><i>${escape(this.copyright)}</i></p>
           `
         );
       }
 
       showNotepad() {
-        this.createModalBox('Notes', sanitizeHTML(this.notepad));
+        this.createModalBox('Notes', escape(this.notepad));
       }
 
       openSettings() {
@@ -2284,8 +2514,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             </div>
             <div class="settings-option">
               <label class="settings-label">
-                <input id="strike_completed_clues" type="checkbox" name="strike_completed_clues" class="settings-changer">
-                  Grey out clues for completed words
+                <input id="gray_completed_clues" type="checkbox" name="gray_completed_clues" class="settings-changer">
+                  Gray out clues for completed words
                 </input>
               </label>
             </div>
@@ -2353,10 +2583,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             </div>
           </div>
 
-          <!-- Miscellaneous -->
+          <!-- Timer -->
           <div class="settings-setting">
             <div class="settings-description">
-              Miscellaneous
+              Timer
             </div>
             <div class="settings-option">
               <label class="settings-label">
@@ -2365,24 +2595,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 </input>
               </label>
             </div>
-            <div class="settings-option">
-              <label class="settings-label">
-                <input id="dark_mode_enabled" checked="" type="checkbox" name="dark_mode_enabled" class="settings-changer">
-                  Dark mode
-                </input>
-              </label>
-            </div>
-            <div class="settings-option">
-              <label class="settings-label">
-                <input id="confetti_enabled" checked="checked" type="checkbox" name="confetti_enabled" class="settings-changer">
-                  Confetti on solve
-                </input>
-              </label>
-            </div>
           </div>
-
-        </div>
         `;
+
         this.createModalBox('Settings', settingsHTML);
         // Show the proper value for each of these fields
         var classChangers = document.getElementsByClassName('settings-changer');
@@ -2403,32 +2618,36 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             if (event.target.className === 'settings-changer') {
               if (event.target.type === 'checkbox') {
                 this.config[event.target.name] = event.target.checked;
-
-                // If the toggled setting is strike_completed_clues, re-render clues immediately
-                if(event.target.name === 'strike_completed_clues') {
-                  for (const wordId in this.words) {
-                    this.updateClueAppearance(this.words[wordId]);
-                  }
-                }
-
                 // need to add a special bit for dark mode
                 if (event.target.name == 'dark_mode_enabled' && DarkReader) {
                   if (event.target.checked) {
                     DarkReader.enable({
                       brightness: 100,
                       contrast: 90,
-                      sepia: 10
+                      sepia: 55
                     });
-                    this.config.color_none = '#252624';
-                    this.config.font_color_fill = '#ddd4c5';
+                    this.config.color_none = '#F2F2F2';
+                    //this.config.font_color_fill = '#ddd4c5';
+                    this.config.color_selected = '#5C5C42';
+                    this.config.color_word = '#9E9E77';
                     this.renderCells();
                   } else {
                     DarkReader.disable();
                     this.config.color_none = default_config.color_none;
-                    this.config.font_color_fill = default_config.font_color_fill;
+                    this.config.color_selected = default_config.color_selected;
+                    this.config.color_word = default_config.color_word;
+                    //this.config.font_color_fill = default_config.font_color_fill;
                     this.renderCells();
                   }
+
+                    // If the toggled setting is gray_completed_clues, re-render clues immediately
+                    if(event.target.name === 'gray_completed_clues') {
+                      for (const wordId in this.words) {
+                        this.updateClueAppearance(this.words[wordId]);
+                      }
+                  }
                 }
+
               } else if (event.target.type === 'radio') {
                 this.config[event.target.name] = event.target.id;
               }
@@ -2440,9 +2659,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       fillJsXw() {
         // update this.jsxw with the currently filled letters
         var cells = this.cells;
-        this.jsxw.cells.forEach(function(c) {
+        this.jsxw.cells.forEach(function (c) {
           var x = c['x']; var y = c['y'];
-          c['letter'] = cells[x+1][y+1]['letter'];
+          c['letter'] = cells[x + 1][y + 1]['letter'];
         });
       }
 
@@ -2450,34 +2669,67 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // we only save settings that are configurable
         var ss1 = { ...this.config };
         var savedSettings = {};
-        CONFIGURABLE_SETTINGS.forEach(function(x) {
+        CONFIGURABLE_SETTINGS.forEach(function (x) {
           savedSettings[x] = ss1[x];
         })
         //console.log(savedSettings);
-        lscache.set(
+        localStorage.setItem(
           SETTINGS_STORAGE_KEY,
-          savedSettings
+          JSON.stringify(savedSettings)
         );
       }
 
       /* Save the game to local storage */
       saveGame() {
-        // use setTimeout to avoid blocking
-        setTimeout(() => {
-          // fill jsxw
-          this.fillJsXw();
-          // stringify
-          const jsxw_str = JSON.stringify(this.jsxw.cells);
-          // We set this to expire in about 7 days
-          lscache.set(this.savegame_name, this.jsxw.cells, 10000);
-        }, 0);
+        // fill jsxw
+        this.fillJsXw();
+        // stringify
+        const jsxw_str = JSON.stringify(this.jsxw.cells);
+        localStorage.setItem(this.savegame_name, jsxw_str);
+        localStorage.setItem(this.savegame_name + "_notes", JSON.stringify(Array.from(this.notes.entries()).map(n => { return { key: n[0], value: n[1] } })));
+        //this.createModalBox('ðŸ’¾', 'Progress saved.');
+      }
+
+      /* Show "load game" menu" */
+      loadGameMenu() {
+        // Find all the savegames
+        var innerHTML = '';
+        for (var i = 0; i < localStorage.length; i++) {
+          var thisKey = localStorage.key(i);
+          if (thisKey.startsWith(STORAGE_KEY)) {
+            var thisJsXw = JSON.parse(localStorage.getItem(localStorage.key(i)));
+            var thisDisplay = thisKey.substr(STORAGE_KEY.length);
+            innerHTML += `
+            <label class="settings-label">
+              <input id="${thisKey}" checked="" type="radio" class="loadgame-changer">
+                ${thisDisplay}
+              </input>
+            </label>
+            `;
+          }
+        }
+        if (!innerHTML) {
+          innerHTML = 'No save games found.';
+        }
+
+        // Create a modal box
+        var loadgameHTML = `
+        <div class="loadgame-wrapper">
+          ${innerHTML}
+        </div>
+        `;
+        this.createModalBox('Load Game', loadgameHTML);
       }
 
       /* Load a game from local storage */
       loadGame() {
-        var jsxw_cells = lscache.get(this.savegame_name);
+        var jsxw_cells = JSON.parse(localStorage.getItem(this.savegame_name));
         // don't actually *load* it, just return the jsxw
         return jsxw_cells;
+        //if (jsxw) {
+        //  this.removeListeners();
+        //  this.parsePuzzle(jsxw);
+        //}
       }
 
       /* Export a JPZ */
@@ -2497,6 +2749,174 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         element.click();
         document.body.removeChild(element);
+      }
+
+      set_theme(newThemeClass) {
+        // EDIT HERE TO ADD THEME
+        // this is where to set the theme class of the root to make it use diffrent variables'
+        const page = document.querySelector(".crossword")
+        page.classList.remove("dark-theme");
+        page.classList.remove("earth-tones-theme");
+        page.classList.remove("pumpkin-spice-theme");
+        page.classList.remove("light-green-theme");
+        page.classList.remove("light-blue-theme");
+        page.classList.remove("barbie-theme");
+        page.classList.remove("taco-bell-theme");
+        page.classList.remove("grape-soda-theme");
+        page.classList.remove("cherry-blossom-theme")
+        page.classList.remove("momos-nail-corner-theme")
+        page.classList.remove("frost-theme")
+        page.classList.remove("cryptic-crossweird-theme")
+        page.classList.remove("spring-pastels-theme")
+        page.classList.add(newThemeClass);
+        console.log("new theme class " + newThemeClass);
+
+        switch (newThemeClass) {
+          case 'dark-theme':
+            console.log('setConfig');
+            gCrossword.setConfig('color_selected', '#322533');
+            gCrossword.setConfig('color_word', '#534A54');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#3F4D59');
+            gCrossword.setConfig('color_hilite', '#322533');
+            gCrossword.setConfig('font_color_fill', '#FFFFFF');
+            gCrossword.setConfig('font_color_clue', '#FFFFFF');
+            break;
+          case 'pumpkin-spice-theme':
+            console.log('setConfig');
+            gCrossword.setConfig('color_selected', '#9e2a2b');
+            gCrossword.setConfig('color_word', '#E3AF7B');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#FFFFFF');
+            gCrossword.setConfig('color_hilite', '#E3AF7B');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'earth-tones-theme':
+            console.log('setConfig');
+            gCrossword.setConfig('color_selected', '#754E42');
+            gCrossword.setConfig('color_word', '#F7DFD0');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#FFFFFF');
+            gCrossword.setConfig('color_hilite', '#F7DFD0');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'light-green-theme':
+            gCrossword.setConfig('color_selected', '#9DB08F');
+            gCrossword.setConfig('color_word', '#EFF5E9');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#FFFFFF');
+            gCrossword.setConfig('color_hilite', '#9DB08F');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'light-blue-theme':
+            gCrossword.setConfig('color_selected', '#506E85');
+            gCrossword.setConfig('color_word', '#D7E9F5');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#FFFFFF');
+            gCrossword.setConfig('color_hilite', '#506E85')
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'barbie-theme':
+            gCrossword.setConfig('color_selected', '#56D6FC');
+            gCrossword.setConfig('color_word', '#FFCFE4');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#FFE8F2');
+            gCrossword.setConfig('color_hilite', '#56D6FC');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'taco-bell-theme':
+            gCrossword.setConfig('color_selected', '#289E94');
+            gCrossword.setConfig('color_word', '#3DF2E3');
+            gCrossword.setConfig('color_block', '#502859');
+            gCrossword.setConfig('color_none', '#FFD4E6');
+            gCrossword.setConfig('color_hilite', '#289E94');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'grape-soda-theme':
+            gCrossword.setConfig('color_selected', '#7976a4');
+            gCrossword.setConfig('color_word', '#dfdfea');
+            gCrossword.setConfig('color_block', '#2b256f');
+            gCrossword.setConfig('color_none', '#FFFFFF');
+            gCrossword.setConfig('color_hilite', '#289E94');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'cherry-blossom-theme':
+            gCrossword.setConfig('color_selected', '#F25477');
+            gCrossword.setConfig('color_word', '#FFDCDC');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#FFFFFF');
+            gCrossword.setConfig('color_hilite', '#506E85');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'momos-nail-corner-theme':
+            gCrossword.setConfig('color_selected', '#98fdff');
+            gCrossword.setConfig('color_word', '#d3feff');
+            gCrossword.setConfig('color_block', '#abc837');
+            gCrossword.setConfig('color_none', '#edf9c3');
+            gCrossword.setConfig('color_hilite', '#289e94');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'frost-theme':
+            gCrossword.setConfig('color_selected', '#b0bef7');
+            gCrossword.setConfig('color_word', '#e6eafc');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#ffffff');
+            gCrossword.setConfig('color_hilite', '#289e94');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'cryptic-crossweird-theme':
+            gCrossword.setConfig('color_selected', '#da854a');
+            gCrossword.setConfig('color_word', '#eabc9b');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#ffffff');
+            gCrossword.setConfig('color_hilite', '#289e94');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+          case 'spring-pastels-theme':
+            gCrossword.setConfig('color_selected', '#e3addd');
+            gCrossword.setConfig('color_word', '#f7e8f5');
+            gCrossword.setConfig('color_block', '#212121');
+            gCrossword.setConfig('color_none', '#ffffff');
+            gCrossword.setConfig('color_hilite', '#289e94');
+            gCrossword.setConfig('font_color_fill', '#000000');
+            gCrossword.setConfig('font_color_clue', '#000000');
+            break;
+        }
+        gCrossword.renderCells();
+        /*if (gCrossword.clues_top) {
+          gCrossword.renderClues(gCrossword.clues_top, gCrossword.clues_top_container);
+        }
+        if (gCrossword.clues_bottom) {
+          gCrossword.renderClues(gCrossword.clues_bottom, gCrossword.clues_bottom_container);
+        }*/
+        var first_word = gCrossword.active_clues.getFirstWord()
+        gCrossword.setActiveWord(first_word);
+        gCrossword.setActiveCell(first_word.getFirstCell());
+
+        this.renderCells();
+        this.appliedThemeClass = newThemeClass; // <- track applied theme
+        localStorage.setItem('selectedTheme', newThemeClass);
+      }
+
+      loadSavedTheme() {
+        let savedTheme = localStorage.getItem('selectedTheme');
+        if (!savedTheme) {
+          savedTheme = 'cryptic-crossweird-theme';
+          localStorage.setItem('selectedTheme', savedTheme);
+        }
+        this.set_theme(savedTheme);
+        this.appliedThemeClass = savedTheme;
       }
 
       check_reveal(to_solve, reveal_or_check, e) {
@@ -2568,12 +2988,13 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           }
         }
         this.renderCells();
-        this.saveGame();
 
         if (reveal_or_check == 'reveal') {
           this.checkIfSolved(false);
         }
-        this.hidden_input.focus();
+        if (!isMobile) {
+          this.hidden_input.focus();
+        }
       }
 
       printPuzzle(e) {
@@ -2581,32 +3002,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.fillJsXw();
         jscrossword_to_pdf(this.jsxw);
       }
-
-      updateClueAppearance(word) {
-        // Grey out completed clues
-
-        if (this.fakeclues) return;
-
-        const clueEl = this.clues_holder.find(`.cw-clue.word-${word.id} .cw-clue-text`);
-
-        if (!this.config.strike_completed_clues) {
-           // Reset clue styling if the setting is turned off
-           clueEl.css({
-             "color": ""
-           });
-           return;
-        }
-
-        if (word.isFilled()) {
-           clueEl.css({
-             "color": "#aaa"
-           });
-         } else {
-           clueEl.css({
-             "color": ""
-           });
-         }
-       }
 
       toggleTimer() {
         var display_seconds, display_minutes;
@@ -2629,6 +3024,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           timer_btn.html(display);
           timer();
         }
+
         function timer() {
           xw_timer = setTimeout(add, 1000);
         }
@@ -2637,14 +3033,45 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           // Stop the timer
           clearTimeout(xw_timer);
           timer_btn.removeClass('running');
+          timer_btn.addClass('blink'); // Add blinking effect
           this.timer_running = false;
-          this.hidden_input.focus();
+          if (!isMobile) {
+            this.hidden_input.focus();
+          }
         } else {
           // Start the timer
+          timer_btn.removeClass('blink'); // Remove blinking effect
           this.timer_running = true;
           timer_btn.addClass('running');
-          this.hidden_input.focus();
+          if (!isMobile) {
+            this.hidden_input.focus();
+          }
           timer();
+        }
+      }
+
+      updateClueAppearance(word) {
+        const clueEl = this.clues_holder.find(`.cw-clue.word-${word.id} .cw-clue-text`);
+
+        if (!this.config.gray_completed_clues) {
+          // Reset clue styling if the setting is turned off
+          clueEl.css({
+            "text-decoration": "",
+            "color": ""
+          });
+          return;
+        }
+
+        if (word.isFilled()) {
+          clueEl.css({
+            "text-decoration": "",
+            "color": "#aaa"
+          });
+        } else {
+          clueEl.css({
+            "text-decoration": "",
+            "color": ""
+          });
         }
       }
     }
@@ -2735,7 +3162,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
 
       // in clues list, marks clue for word that has cell with given coordinates
-      markActive(x, y, is_passive, fakeclues=false) {
+      markActive(x, y, is_passive, fakeclues = false) {
         // don't mark anything as active if fake clues
         if (fakeclues) {
           return;
@@ -2821,8 +3248,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             this.dir = data.dir;
             this.cell_ranges = data.cell_ranges;
             this.clue = data.clue;
-            // don't bother with references
-            //this.refs_raw = data.clue.refs || [];
+            //this.refs_raw = data.clue.refs;
             this.parseRanges();
           } else {
             load_error = true;

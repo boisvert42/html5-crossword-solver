@@ -1890,6 +1890,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       }
 
       mouseClicked(e) {
+        e.preventDefault();
         var offset = this.canvas.offset(),
           mouse_x = e.pageX - offset.left,
           mouse_y = e.pageY - offset.top,

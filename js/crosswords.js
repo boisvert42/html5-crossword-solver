@@ -106,6 +106,24 @@ function adjustColor(color, amount) {
   return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
 }
 
+// True for phones/tablets that should see an on-screen keyboard.
+// False for laptops/desktops, even with touch or small viewports.
+function isMobileForKeyboard() {
+  const ua = navigator.userAgent || "";
+  // Common mobile signals
+  if (/(Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini)/i.test(ua)) {
+    return true;
+  }
+  // Tablets (iPad classic UA)
+  if (/iPad/i.test(ua)) return true;
+
+  // iPadOS 13+ reports "Macintosh" but has multiple touch points
+  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) {
+    return true;
+  }
+  return false;
+}
+
 // Helper function to draw an arrow in a square
 function drawArrow(context, top_x, top_y, square_size, direction = "right") {
     const headlen = square_size / 5; // length of the arrowhead
@@ -686,6 +704,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           autocapitalize: "none",
           spellcheck: "false"
         });
+        
+        this.hidden_input.attr("id", "cw-virtual-keyboard-input");
 
         this.reveal_letter = this.root.find('.cw-reveal-letter');
         this.reveal_word = this.root.find('.cw-reveal-word');
@@ -1111,6 +1131,34 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         //this.adjustPaddings();
         this.renderCells();
+        
+        if (isMobileForKeyboard()) {
+          KioskBoard.run('#cw-virtual-keyboard-input', {
+            language: 'en',
+            allowMobileKeyboard: false,
+            theme: 'light',
+            cssAnimations: true,
+            keysArrayOfObjects: [
+              {
+                "0": "Q", "1": "W", "2": "E", "3": "R", "4": "T",
+                "5": "Y", "6": "U", "7": "I", "8": "O", "9": "P"
+              },
+              {
+                "0": "A", "1": "S", "2": "D", "3": "F", "4": "G",
+                "5": "H", "6": "J", "7": "K", "8": "L"
+              },
+              {
+                "0": "Z", "1": "X", "2": "C", "3": "V",
+                "4": "B", "5": "N", "6": "M"
+              },
+              {
+                "0": "←"  // backspace key; you can add more "func":"..." if needed
+              }
+            ]
+          });
+        }
+        // Immediately show the virtual keyboard
+        this.hidden_input.focus();
 
       }
 

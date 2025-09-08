@@ -1395,6 +1395,14 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           input_left = offset.left + (cell.x - 1) * this.cell_size;
 
           this.hidden_input.css({ left: input_left, top: input_top });
+          
+          this.hidden_input.css({
+            left: input_left,
+            top: input_top,
+            width: this.cell_size,
+            height: this.cell_size
+          });
+          
           this.hidden_input.focus();
         }
       }

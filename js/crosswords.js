@@ -678,6 +678,14 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.settings_btn = this.root.find('.cw-settings-button');
 
         this.hidden_input = this.root.find('input.cw-hidden-input');
+        
+        this.hidden_input.attr({
+          inputmode: "latin",
+          autocomplete: "off",
+          autocorrect: "off",
+          autocapitalize: "none",
+          spellcheck: "false"
+        });
 
         this.reveal_letter = this.root.find('.cw-reveal-letter');
         this.reveal_word = this.root.find('.cw-reveal-word');

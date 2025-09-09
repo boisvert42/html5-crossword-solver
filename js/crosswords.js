@@ -789,49 +789,99 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       
       /** Build a grid using the DOM **/
       buildGrid() {
-          // Container for the DOM grid
-          const gridContainer = $('<div class="cw-grid"></div>');
-          gridContainer.css({
-		    gridTemplateColumns: `repeat(${this.grid_width}, 1fr)`,
-		    gridTemplateRows: `repeat(${this.grid_height}, 1fr)`
-		  });
+        const gridContainer = $('<div class="cw-grid"></div>');
+        gridContainer.css({
+          gridTemplateColumns: `repeat(${this.grid_width}, 1fr)`,
+          gridTemplateRows: `repeat(${this.grid_height}, 1fr)`
+        });
 
+        // New: a 2D map of DOM nodes for quick access
+        this.domCells = Array.from({
+          length: this.grid_height + 1
+        }, () => []);
+        this.domInputs = Array.from({
+          length: this.grid_height + 1
+        }, () => []);
+
+        for (let y = 1; y <= this.grid_height; y++) {
+          for (let x = 1; x <= this.grid_width; x++) {
+            const cell = this.getCell(x, y);
+            const cellDiv = $('<div class="cw-cell"></div>')
+              .attr({
+                'data-x': x,
+                'data-y': y
+              });
+            if (cell.empty) cellDiv.addClass('cw-block');
+
+            if (!cell.empty) {
+              if (cell.number) cellDiv.append($('<span class="cw-number"></span>').text(cell.number));
+
+              const input = $('<input class="cw-letter" maxlength="2" />').val(cell.letter || '');
+              // Save model from typing
+              input.on('input', (e) => {
+                cell.letter = e.target.value.toUpperCase();
+                e.target.value = cell.letter; // normalize casing visually
+                this.checkIfSolved?.();
+              });
+
+              cellDiv.append(input);
+              this.domInputs[y][x] = input;
+            }
+
+            this.domCells[y][x] = cellDiv;
+            gridContainer.append(cellDiv);
+          }
+        }
+
+        this.canvas_holder.empty().append(gridContainer);
+      }
+      
+      updateDomHighlights() {
+        // Clear previous highlights
+        if (this._lastHighlighted) this._lastHighlighted.removeClass('in-word');
+        if (this._lastActive) this._lastActive.removeClass('is-active');
+
+        let $acc = $();
+
+        // Highlight the selected word by scanning the grid and checking membership
+        if (this.selected_word) {
           for (let y = 1; y <= this.grid_height; y++) {
-              for (let x = 1; x <= this.grid_width; x++) {
-                  const cell = this.getCell(x, y);
-
-                  const cellDiv = $('<div class="cw-cell"></div>');
-                  cellDiv.addClass(cell.empty ? 'cw-cell cw-block' : 'cw-cell');
-
-
-                  if (!cell.empty) {
-                      // Add clue number if present
-                      if (cell.number) {
-                          const numSpan = $('<span class="cw-number"></span>')
-                              .text(cell.number);
-                          cellDiv.append(numSpan);
-                      }
-
-                      // Add input for the letter
-                      const input = $('<input class="cw-letter" maxlength="2" />')
-                          .val(cell.letter || '');
-
-                      // Save back to our model
-                      input.on('input', (e) => {
-                          cell.letter = e.target.value.toUpperCase();
-                          this.checkIfSolved();
-                      });
-
-                      cellDiv.append(input);
-                  }
-
-                  gridContainer.append(cellDiv);
+            for (let x = 1; x <= this.grid_width; x++) {
+              const el = this.domCells?.[y]?.[x];
+              if (!el || el.hasClass('cw-block')) continue;
+              if (this.selected_word.hasCell(x, y)) {
+                el.addClass('in-word');
+                $acc = $acc.add(el);
               }
+            }
+          }
+        }
+        this._lastHighlighted = $acc;
+
+        // Mark the active cell and focus its input
+        if (this.selected_cell) {
+          const {
+            x,
+            y
+          } = this.selected_cell;
+          const activeEl = this.domCells?.[y]?.[x];
+          if (activeEl) {
+            activeEl.addClass('is-active');
+            this._lastActive = activeEl;
           }
 
-          // Swap out the canvas for the grid
-          this.canvas_holder.empty().append(gridContainer);
+          const input = this.domInputs?.[y]?.[x];
+          if (input && input.length) {
+            // Focus caret at end (deferred so DOM is ready)
+            setTimeout(() => {
+              input[0].focus();
+              const v = input.val() || '';
+              input[0].setSelectionRange(v.length, v.length);
+            }, 0);
+          }
+        }
       }
+
 
 
       /**
@@ -1150,7 +1200,14 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         //this.adjustPaddings();
         //this.renderCells();
-        this.buildGrid();       // try new DOM path
+        this.buildGrid();
+        
+        this.domGridEnabled = true;                 // tell the app we're in DOM mode
+		this.hidden_input.off();                    // detach old listeners just in case
+		this.hidden_input.prop('disabled', true)    // prevent focus
+						 .css({ display: 'none' }); // and remove from hit testing
+        
+        this.enableDomKeyNav();
 
       }
 
@@ -1410,6 +1467,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       setActiveWord(word) {
         if (word) {
           this.selected_word = word;
+          this.updateDomHighlights();
           if (this.fakeclues) {
             return;
           }
@@ -1432,19 +1490,95 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
       setActiveCell(cell) {
         var offset = this.canvas.offset(),
-          input_top,
-          input_left;
+          input_top, input_left;
         if (cell && !cell.empty) {
           this.selected_cell = cell;
+
           this.inactive_clues.markActive(cell.x, cell.y, true, this.fakeclues);
           this.active_clues.markActive(cell.x, cell.y, false, this.fakeclues);
 
-          input_top = offset.top + (cell.y - 1) * this.cell_size;
-          input_left = offset.left + (cell.x - 1) * this.cell_size;
-
-          this.hidden_input.css({ left: input_left, top: input_top });
-          this.hidden_input.focus();
+          if (!this.domGridEnabled) {
+            // === old canvas path ===
+            input_top = offset.top + (cell.y - 1) * this.cell_size;
+            input_left = offset.left + (cell.x - 1) * this.cell_size;
+            this.hidden_input.css({
+              left: input_left,
+              top: input_top
+            });
+            this.hidden_input.focus();
+          } else {
+            // === new DOM path ===
+            this.updateDomHighlights();
+          }
         }
+      }
+      
+      enableDomKeyNav() {
+        // One delegated handler for all .cw-letter inputs
+        this.canvas_holder.on('keydown', '.cw-letter', (e) => {
+          if (!this.selected_cell) return;
+
+          const key = e.key;
+          const isAcross = (this.active_clues && this.active_clues.id === CLUES_TOP);
+
+          // Arrow keys — let your existing logic do the heavy lifting
+          if (key === 'ArrowRight') {
+            this.moveSelectionBy(1, 0);
+            e.preventDefault();
+            return;
+          }
+          if (key === 'ArrowLeft') {
+            this.moveSelectionBy(-1, 0);
+            e.preventDefault();
+            return;
+          }
+          if (key === 'ArrowDown') {
+            this.moveSelectionBy(0, 1);
+            e.preventDefault();
+            return;
+          }
+          if (key === 'ArrowUp') {
+            this.moveSelectionBy(0, -1);
+            e.preventDefault();
+            return;
+          }
+
+          // Tab / Shift+Tab — next/previous word
+          if (key === 'Tab') {
+            this.moveToNextWord(!!e.shiftKey /* to_previous */ );
+            e.preventDefault();
+            return;
+          }
+
+          // Home / End — jump to start/end of current word
+          if (key === 'Home') {
+            this.moveToFirstCell(false /* to_last */ );
+            e.preventDefault();
+            return;
+          }
+          if (key === 'End') {
+            this.moveToFirstCell(true /* to_last */ );
+            e.preventDefault();
+            return;
+          }
+
+          // Backspace — if current cell is empty, move backward along the active direction
+          if (key === 'Backspace') {
+            const inputEl = e.currentTarget;
+            const val = inputEl.value || '';
+            // If there’s a selection or a char to delete, let the browser handle it
+            const selStart = inputEl.selectionStart,
+              selEnd = inputEl.selectionEnd;
+            const hasSelection = selStart !== selEnd;
+            if (!hasSelection && val.length === 0) {
+              if (isAcross) this.moveSelectionBy(-1, 0);
+              else this.moveSelectionBy(0, -1);
+              e.preventDefault();
+            }
+            // otherwise fall through and let native delete happen
+            return;
+          }
+        });
       }
 
       renderClues(clues_group, clues_container) {

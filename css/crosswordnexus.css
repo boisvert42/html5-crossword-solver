@@ -257,6 +257,15 @@ input.cw-hidden-input {
   text-transform: uppercase;
 }
 
+/* Active cell + active word highlighting */
+.cw-cell.is-active { outline: 2px solid #FF4136; outline-offset: -2px; }
+.cw-cell.in-word   { background: #FEE300; }
+.cw-cell.in-word.cw-block { background: #000; } /* stay black for blocks */
+
+/* Optional: hover (kept subtle) */
+.cw-cell:hover { background: #fff7b7; }
+
+
 
 /**
 * Modal box

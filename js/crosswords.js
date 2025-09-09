@@ -881,6 +881,43 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           }
         }
       }
+      
+      enableDomClickActivate() {
+        // One handler for all cells; safe with dynamic rebuilds.
+        this.canvas_holder.on('click', '.cw-cell', (e) => {
+          const el = $(e.currentTarget);
+          if (el.hasClass('cw-block')) return; // ignore blocks
+          e.preventDefault();
+
+          const x = +el.attr('data-x');
+          const y = +el.attr('data-y');
+          const cell = this.getCell(x, y);
+
+          if (!cell || cell.empty) return;
+
+          // Same-cell click toggles clue direction (across<->down), like your canvas path.
+          if (this.selected_cell &&
+            this.selected_cell.x === x &&
+            this.selected_cell.y === y) {
+            this.changeActiveClues();
+          }
+
+          // Prefer the currently active group, fall back to the inactive group.
+          let word = this.active_clues.getMatchingWord(x, y, true);
+          if (!word) {
+            word = this.inactive_clues.getMatchingWord(x, y, true);
+            if (word) this.changeActiveClues(); // flip to match the clicked word
+          }
+
+          if (word) this.setActiveWord(word);
+
+          // This will update clue marking + (in DOM mode) highlights/focus.
+          this.setActiveCell(cell);
+
+          // If someone toggles back to canvas mode, keep it rendering.
+          if (!this.domGridEnabled) this.renderCells();
+        });
+      }
 
 
 
@@ -1208,6 +1245,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 						 .css({ display: 'none' }); // and remove from hit testing
         
         this.enableDomKeyNav();
+        this.enableDomClickActivate();
 
       }
 

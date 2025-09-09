@@ -786,6 +786,53 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       error(message) {
         alert(message);
       }
+      
+      /** Build a grid using the DOM **/
+      buildGrid() {
+          // Container for the DOM grid
+          const gridContainer = $('<div class="cw-grid"></div>');
+          gridContainer.css({
+		    gridTemplateColumns: `repeat(${this.grid_width}, 1fr)`,
+		    gridTemplateRows: `repeat(${this.grid_height}, 1fr)`
+		  });
+
+          for (let y = 1; y <= this.grid_height; y++) {
+              for (let x = 1; x <= this.grid_width; x++) {
+                  const cell = this.getCell(x, y);
+
+                  const cellDiv = $('<div class="cw-cell"></div>');
+                  cellDiv.addClass(cell.empty ? 'cw-cell cw-block' : 'cw-cell');
+
+
+                  if (!cell.empty) {
+                      // Add clue number if present
+                      if (cell.number) {
+                          const numSpan = $('<span class="cw-number"></span>')
+                              .text(cell.number);
+                          cellDiv.append(numSpan);
+                      }
+
+                      // Add input for the letter
+                      const input = $('<input class="cw-letter" maxlength="2" />')
+                          .val(cell.letter || '');
+
+                      // Save back to our model
+                      input.on('input', (e) => {
+                          cell.letter = e.target.value.toUpperCase();
+                          this.checkIfSolved();
+                      });
+
+                      cellDiv.append(input);
+                  }
+
+                  gridContainer.append(cellDiv);
+              }
+          }
+
+          // Swap out the canvas for the grid
+          this.canvas_holder.empty().append(gridContainer);
+      }
+
 
       /**
      * Parse puzzle data into CrossWord structures.
@@ -1102,7 +1149,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         }
 
         //this.adjustPaddings();
-        this.renderCells();
+        //this.renderCells();
+        this.buildGrid();       // try new DOM path
 
       }
 

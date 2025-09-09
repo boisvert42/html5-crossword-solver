@@ -203,6 +203,62 @@ input.cw-hidden-input {
 }
 
 /**
+ * CSS for the DOM grid
+**/
+.cw-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+}
+
+}
+.cw-cell {
+  aspect-ratio: 1 / 1;
+}
+.cw-letter {
+  text-transform: uppercase;
+}
+
+.cw-grid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+}
+
+.cw-cell {
+  position: relative;
+  border: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  aspect-ratio: 1 / 1;
+  background: #fff;
+}
+
+.cw-cell.cw-block {
+  background: #000;
+}
+
+.cw-number {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 0.5em;
+}
+
+.cw-letter {
+  width: 100%;
+  height: 100%;
+  border: none;
+  text-align: center;
+  font-size: 1em;
+  background: transparent;
+  text-transform: uppercase;
+}
+
+
+/**
 * Modal box
 **/
 /* The Modal (background) */

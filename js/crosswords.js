@@ -791,9 +791,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       buildGrid() {
         const gridContainer = $('<div class="cw-grid"></div>');
         gridContainer.css({
-          gridTemplateColumns: `repeat(${this.grid_width}, 1fr)`,
-          gridTemplateRows: `repeat(${this.grid_height}, 1fr)`
-        });
+		  "--cw-cols": this.grid_width,
+		  "--cw-rows": this.grid_height
+		});
 
         // New: a 2D map of DOM nodes for quick access
         this.domCells = Array.from({
@@ -818,10 +818,18 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
               const input = $('<input class="cw-letter" maxlength="2" />').val(cell.letter || '');
               // Save model from typing
-              input.on('input', (e) => {
-                cell.letter = e.target.value.toUpperCase();
-                e.target.value = cell.letter; // normalize casing visually
-                this.checkIfSolved?.();
+              input.on('keydown', (e) => {
+                const key = e.key;
+                if (key.length === 1 && /^[A-Za-z]$/.test(key)) {
+                  e.preventDefault();
+                  const val = key.toUpperCase();
+
+                  // Reuse the original path
+                  this.hiddenInputChanged(val);
+
+                  // Keep DOM input display in sync
+                  input.val(val);
+                }
               });
 
               cellDiv.append(input);

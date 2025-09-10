@@ -163,12 +163,10 @@ input.cw-hidden-input {
 }
 
 .cw-canvas {
-    display: inline-block;
-    flex: 1 1 auto;
-    margin: 10px 0;
-    min-height: 300px;
-    position: relative;
-    text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;       /* prevent accidental spill */
 }
 
 .cw-top-text-wrapper {
@@ -206,30 +204,23 @@ input.cw-hidden-input {
  * CSS for the DOM grid
 **/
 .cw-grid {
-  width: 100%;
-  height: 100%;
   display: grid;
-}
+  grid-template-columns: repeat(var(--cw-cols, 15), 1fr);
+  grid-template-rows: repeat(var(--cw-rows, 15), 1fr);
 
-}
-.cw-cell {
-  aspect-ratio: 1 / 1;
-}
-.cw-letter {
-  text-transform: uppercase;
-}
-
-.cw-grid {
-  display: grid;
-  width: 100%;
-  height: 100%;
+  aspect-ratio: var(--cw-cols, 15) / var(--cw-rows, 15);
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
 }
 
 .cw-cell {
   position: relative;
   border: 1px solid #000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   font-size: 16px;
   aspect-ratio: 1 / 1;
@@ -255,6 +246,8 @@ input.cw-hidden-input {
   font-size: 1em;
   background: transparent;
   text-transform: uppercase;
+  caret-color: transparent;
+  transform: translateY(0.15em); /* move the letters down a bit */
 }
 
 /* Active cell + active word highlighting */

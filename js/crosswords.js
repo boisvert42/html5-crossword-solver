@@ -790,10 +790,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       /** Build a grid using the DOM **/
       buildGrid() {
         const gridContainer = $('<div class="cw-grid"></div>');
-        gridContainer.css({
-		  "--cw-cols": this.grid_width,
-		  "--cw-rows": this.grid_height
-		});
+        const el = gridContainer.get(0);
+		el.style.setProperty("--cw-cols", this.grid_width);
+		el.style.setProperty("--cw-rows", this.grid_height);
 
         // New: a 2D map of DOM nodes for quick access
         this.domCells = Array.from({
@@ -812,6 +811,17 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 'data-y': y
               });
             if (cell.empty) cellDiv.addClass('cw-block');
+            
+            // Apply background color if present
+            if (cell['background-color']) {
+              cellDiv.css('background-color', cell['background-color']);
+            }
+            
+            // Apply bar classes
+            if (cell['top-bar'])    cellDiv.addClass('bar-top');
+            if (cell['bottom-bar']) cellDiv.addClass('bar-bottom');
+            if (cell['left-bar'])   cellDiv.addClass('bar-left');
+            if (cell['right-bar'])  cellDiv.addClass('bar-right');
 
             if (!cell.empty) {
               if (cell.number) cellDiv.append($('<span class="cw-number"></span>').text(cell.number));

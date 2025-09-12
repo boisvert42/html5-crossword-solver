@@ -833,7 +833,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             if (!cell.empty) {
               if (cell.number) cellDiv.append($('<span class="cw-number"></span>').text(cell.number));
 
-              const input = $('<input class="cw-letter" maxlength="2" />').val(cell.letter || '');
+              const input = $('<input class="cw-letter" maxlength="2" readonly />')
+                .val(cell.letter || '');
               // Save model from typing
               input.on('keydown', (e) => {
                 const key = e.key;
@@ -1587,28 +1588,56 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // One delegated handler for all .cw-letter inputs
         this.canvas_holder.on('keydown', '.cw-letter', (e) => {
           if (!this.selected_cell) return;
+          
+          // TODO: this isn't working
+          // If modifier (Ctrl, Alt, Meta) is pressed...
+          if (e.ctrlKey || e.metaKey || e.altKey) {
+            // Let the event bubble to the browser (so shortcuts work)
+            // BUT stop the input from inserting text
+            e.stopPropagation();
+            return;  // don’t run crossword handling
+          }
 
           const key = e.key;
           const isAcross = (this.active_clues && this.active_clues.id === CLUES_TOP);
 
           // Arrow keys — let your existing logic do the heavy lifting
           if (key === 'ArrowRight') {
-            this.moveSelectionBy(1, 0);
+            if (e.shiftKey) {
+              this.skipToWord(SKIP_RIGHT);
+            } else {
+              this.moveSelectionBy(1, 0);
+            }
             e.preventDefault();
             return;
           }
+
           if (key === 'ArrowLeft') {
-            this.moveSelectionBy(-1, 0);
+            if (e.shiftKey) {
+              this.skipToWord(SKIP_LEFT);
+            } else {
+              this.moveSelectionBy(-1, 0);
+            }
             e.preventDefault();
             return;
           }
+
           if (key === 'ArrowDown') {
-            this.moveSelectionBy(0, 1);
+            if (e.shiftKey) {
+              this.skipToWord(SKIP_DOWN);
+            } else {
+              this.moveSelectionBy(0, 1);
+            }
             e.preventDefault();
             return;
           }
+
           if (key === 'ArrowUp') {
-            this.moveSelectionBy(0, -1);
+            if (e.shiftKey) {
+              this.skipToWord(SKIP_UP);
+            } else {
+              this.moveSelectionBy(0, -1);
+            }
             e.preventDefault();
             return;
           }

@@ -223,21 +223,20 @@ input.cw-hidden-input {
 .cw-cell {
   position: relative;
   display: flex;
-  align-items: flex-start;
   justify-content: center;
   aspect-ratio: 1 / 1;
-  background: #fff;
   border: none;           /* no cell-level border */
   container-type: inline-size;
+  width: 100%;
+  height: 100%;
 }
 
 .cw-cell.outlined {
   border: 1px solid #000;
 }
 
-
 .cw-cell.cw-block {
-  background: #000;
+  background-color: #000;
 }
 
 /* Small clue number in corner */
@@ -258,16 +257,12 @@ input.cw-hidden-input {
   background: transparent;
   text-transform: uppercase;
   caret-color: transparent;
-  transform: translateY(0.15em); /* move the letters down a bit */
 }
 
 /* Active cell + active word highlighting */
 .cw-cell.is-active { outline: 2px solid #FF4136; outline-offset: -2px; }
 .cw-cell.in-word   { background: #FEE300; }
-.cw-cell.in-word.cw-block { background: #000; } /* stay black for blocks */
 
-/* Optional: hover (kept subtle) */
-.cw-cell:hover { background: #fff7b7; }
 
 /* Bars — thick black lines on edges */
 .cw-cell.bar-top    { box-shadow: inset 0 3px 0 0 #000; }

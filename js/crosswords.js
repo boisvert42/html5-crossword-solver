@@ -1271,6 +1271,13 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         
         this.enableDomKeyNav();
         this.enableDomClickActivate();
+        
+        /* Highlight the first word */
+        var first_word = this.active_clues.getFirstWord();
+        if (first_word) {
+          this.setActiveWord(first_word);
+          this.setActiveCell(first_word.getFirstCell());
+        }
 
       }
 

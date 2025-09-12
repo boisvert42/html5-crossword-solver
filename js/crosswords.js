@@ -810,7 +810,14 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 'data-x': x,
                 'data-y': y
               });
-            if (cell.empty) cellDiv.addClass('cw-block');
+              
+            if (cell.empty) {
+              cellDiv.addClass('cw-block');
+            }
+            else {
+              cellDiv.addClass("outlined");
+            }
+
             
             // Apply background color if present
             if (cell['background-color']) {

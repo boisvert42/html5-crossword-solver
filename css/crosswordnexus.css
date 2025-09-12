@@ -231,6 +231,11 @@ input.cw-hidden-input {
   container-type: inline-size;
 }
 
+.cw-cell.outlined {
+  border: 1px solid #000;
+}
+
+
 .cw-cell.cw-block {
   background: #000;
 }

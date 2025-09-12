@@ -264,8 +264,19 @@ input.cw-hidden-input {
 }
 
 /* Active cell + active word highlighting */
-.cw-cell.is-active { outline: 2px solid #FF4136; outline-offset: -2px; }
-.cw-cell.in-word   { background: #FEE300; }
+.cw-cell.in-word::after,
+.cw-cell.is-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #FEE300; /* or #FF4136 */
+  mix-blend-mode: multiply; /* or overlay, screen, etc. */
+}
+.cw-cell.is-active::after {
+  background: #FF4136;
+}
+
 
 /* Most cells (non-void) will be outlined */
 .cw-cell.outlined {

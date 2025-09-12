@@ -817,7 +817,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             else {
               cellDiv.addClass("outlined");
             }
-
             
             // Apply background color if present
             if (cell['background-color']) {

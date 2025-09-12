@@ -217,8 +217,7 @@ input.cw-hidden-input {
 
   margin: 0 auto;
   
-  background: black;      /* background = gridlines */
-  gap: 1px;               /* this is the “line width” */
+  gap: 0px;               /* this is the “line width” */
 }
 
 .cw-cell {
@@ -261,11 +260,6 @@ input.cw-hidden-input {
 .cw-cell.is-active { outline: 2px solid #FF4136; outline-offset: -2px; }
 .cw-cell.in-word   { background: #FEE300; }
 .cw-cell.in-word.cw-block { background: #000; } /* stay black for blocks */
-
-/* Every playable cell gets a thin outline */
-.cw-cell:not(.cw-block) {
-  box-shadow: inset 0 0 0 1px #000; /* 1px border inside the cell */
-}
 
 /* Optional: hover (kept subtle) */
 .cw-cell:hover { background: #fff7b7; }

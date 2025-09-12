@@ -244,7 +244,7 @@ input.cw-hidden-input {
   position: absolute;
   top: 2%;
   left: 3%;
-  font-size: 2em;
+  font-size: 33cqw; /* 33% of the cell’s width */
 }
 
 .cw-letter {
@@ -252,11 +252,12 @@ input.cw-hidden-input {
   height: 100%;
   border: none;
   text-align: center;
-  font-size: 4em;
+  font-size: 1em;
   line-height: 100%;
   background: transparent;
   text-transform: uppercase;
   caret-color: transparent;
+  font-size: 70cqw; /* 70% of the cell’s width */
 }
 
 /* Active cell + active word highlighting */

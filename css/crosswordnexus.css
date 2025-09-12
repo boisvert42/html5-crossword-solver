@@ -254,6 +254,13 @@ input.cw-hidden-input {
   text-transform: uppercase;
   caret-color: transparent;
   font-size: 70cqw; /* 70% of the cell’s width */
+  outline: none;          /* disable default blue outline */
+  box-shadow: none;       /* also remove any box-shadow focus indicators */
+}
+
+.cw-letter:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Active cell + active word highlighting */

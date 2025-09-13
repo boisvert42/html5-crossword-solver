@@ -811,12 +811,15 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 'data-y': y
               });
               
-            if (cell.empty) {
+            // Block
+            if (cell.type === 'block') {
               cellDiv.addClass('cw-block');
             }
 
-            // TODO: don't outline "void"s
-            cellDiv.addClass("outlined");
+            // Void
+            if (cell.type !== 'void') {
+              cellDiv.addClass("outlined");
+            }
 
             
             // Apply background color if present

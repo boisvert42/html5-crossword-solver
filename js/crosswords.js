@@ -851,27 +851,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
               const input = $('<input class="cw-letter" maxlength="2" readonly />')
                 .val(cell.letter || '');
-              // Save model from typing
-              input.on('keydown', (e) => {
-                // If modifier (Ctrl, Alt, Meta) is pressed...
-                if (e.ctrlKey || e.metaKey || e.altKey) {
-                  // Let the event bubble to the browser (so shortcuts work)
-                  // BUT stop the input from inserting text
-                  e.stopPropagation();
-                  return; // don’t run crossword handling
-                }
-                const key = e.key;
-                if (key.length === 1 && /^[A-Za-z]$/.test(key)) {
-                  e.preventDefault();
-                  const val = key.toUpperCase();
-
-                  // Reuse the original path
-                  this.hiddenInputChanged(val);
-
-                  // Keep DOM input display in sync
-                  input.val(val);
-                }
-              });
 
               cellDiv.append(input);
               this.domInputs[y][x] = input;
@@ -1699,6 +1678,16 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             // otherwise fall through and let native delete happen
             return;
           }
+          
+          // Everything else → treat as literal input
+          if (key.length === 1) {
+            e.preventDefault();
+            const val = key.toUpperCase();
+            this.hiddenInputChanged(val);
+            $(e.currentTarget).val(val);   // <– actually show it in the box
+            this.advanceCursor();
+          }
+          
         });
       }
 

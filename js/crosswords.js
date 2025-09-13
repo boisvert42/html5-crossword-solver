@@ -820,7 +820,20 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             if (cell.type !== 'void') {
               cellDiv.addClass("outlined");
             }
-
+            
+            // Clue
+            if (cell.type === 'clue') {
+              cellDiv.addClass("cw-clue-cell");
+              // Use a <div> but give it cw-letter so it sizes like inputs
+              const span = $('<div class="cw-clue-letter"></div>')
+                .text(cell.letter || '')
+                .css({
+                  'pointer-events': 'none',
+                  'user-select': 'none',
+                  'vertical-align': 'center'
+                });
+              cellDiv.append(span);
+            }
             
             // Apply background color if present
             if (cell['background-color']) {
@@ -840,6 +853,13 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 .val(cell.letter || '');
               // Save model from typing
               input.on('keydown', (e) => {
+                // If modifier (Ctrl, Alt, Meta) is pressed...
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                  // Let the event bubble to the browser (so shortcuts work)
+                  // BUT stop the input from inserting text
+                  e.stopPropagation();
+                  return; // don’t run crossword handling
+                }
                 const key = e.key;
                 if (key.length === 1 && /^[A-Za-z]$/.test(key)) {
                   e.preventDefault();
@@ -1592,7 +1612,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.canvas_holder.on('keydown', '.cw-letter', (e) => {
           if (!this.selected_cell) return;
           
-          // TODO: this isn't working
           // If modifier (Ctrl, Alt, Meta) is pressed...
           if (e.ctrlKey || e.metaKey || e.altKey) {
             // Let the event bubble to the browser (so shortcuts work)

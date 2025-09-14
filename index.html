@@ -23,12 +23,15 @@
 
     <script>
         function isMobileDevice() {
+		  return false;
+		  /**
           const ua = navigator.userAgent || '';
           const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 1;
           const isiPad = ua.includes("iPad") || (ua.includes("Mac") && navigator.maxTouchPoints > 1);
           const isMobileUA = /android|iphone|ipod|mobile/i.test(ua);
       
           return isTouch && (isMobileUA || isiPad);
+          **/
         }
       
         const mobile = isMobileDevice();

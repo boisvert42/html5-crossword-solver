@@ -846,6 +846,15 @@ input.cw-hidden-input {
     display: none;
 }
 
+.cw-max-width-420 .cw-grid {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 400px;
+    position: relative;
+    margin-top: 10px;
+}
+
 input[type='checkbox'] {
     accent-color: #000000;
 }

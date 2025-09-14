@@ -632,7 +632,7 @@ input.cw-hidden-input {
     cursor: pointer;
     display: flex;
     border-radius: 4px;
-    line-height: 1.85rem;
+    /* line-height: 1.85rem; */
 }
 
 .cw-clue.active {

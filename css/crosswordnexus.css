@@ -140,7 +140,7 @@ input.cw-hidden-input {
     font-size: 0.9em;
     padding: 0.5em 10px;
     white-space: nowrap;
-    background-color: var(--main-bg-color);
+    background-color: var(--content-bg-color);
 }
 
 .cw-title,
@@ -809,7 +809,7 @@ input.cw-hidden-input {
     font-size: 14px;
 }
 
-.cw-max-width-600 .cw-copyright {
+.cw-max-width-600 .cw-header {
     display: none;
 }
 

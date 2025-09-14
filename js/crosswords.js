@@ -223,128 +223,92 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
     /** Template will have to change along with CSS **/
     var template = `
-      <div class = "cw-main auto normal">
+      <div class="cw-main auto normal">
         <!-- Overlay for opening puzzles -->
-        <div class = "cw-open-holder">
-        <div class = "cw-overflow" style = "
-          background-image   : url(images/cwlogo_trans.png);
-          background-position: center;
-          background-size    : 40%;
-          background-repeat  : no-repeat;"></div>
-          <div class = "cw-open-puzzle">
-          <div class = "cw-open-puzzle-instructions">
-              Drag and drop a file here, or click the button to choose a file
-              to open.
-            </div>
-            <button type = "button" class = "cw-button cw-button-open-puzzle">
-              Open puzzle file
-            </button>
-            <div class = "cw-open-puzzle-formats">
+        <div class="cw-open-holder">
+          <div class="cw-open-puzzle">
+            <div class="cw-open-puzzle-instructions"> Drag and drop a file here, or click the button to choose a file to open. </div>
+            <button type="button" class="cw-button cw-button-open-puzzle"> Open puzzle file </button>
+            <div class="cw-open-puzzle-formats">
               <b>Accepted formats: </b> PUZ, JPZ, XML, CFP, and iPUZ (partial)
             </div>
           </div>
-          <input type = "file" class = "cw-open-jpz" accept = ".puz,.xml,.jpz,.xpz,.ipuz,.cfp">
+          <input type="file" class="cw-open-jpz" accept=".puz,.xml,.jpz,.xpz,.ipuz,.cfp">
         </div>
         <!-- End overlay -->
-        <div class = "cw-header">
-        </div>
-        <div class = "cw-content">
+        <div class="cw-header"></div>
+        <div class="cw-content">
           <!-- Placeholder for modal boxes -->
-          <div    class = "cw-modal"></div>
-          <div    class = "cw-grid">
-          <div    class = "cw-buttons-holder">
-          <div    class = "cw-menu-container">
-          <button type  = "button" class = "cw-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                   File
-                  <span class = "cw-arrow"></span>
+          <div class="cw-modal"></div>
+          <div class="cw-grid">
+            <div class="cw-buttons-holder">
+              <div class="cw-menu-container">
+                <button type="button" class="cw-button">
+                  <span class="cw-button-icon">🗄️</span> File <span class="cw-arrow"></span>
                 </button>
-                <div    class = "cw-menu">
-                <button class = "cw-menu-item cw-file-info">Info</button>
-                <button class = "cw-menu-item cw-file-notepad">Notepad</button>
-                <button class = "cw-menu-item cw-file-print">Print</button>
-                <button class = "cw-menu-item cw-file-clear">Clear</button>
-                <button class = "cw-menu-item cw-file-download">Export JPZ</button>
+                <div class="cw-menu">
+                  <button class="cw-menu-item cw-file-info">Info</button>
+                  <button class="cw-menu-item cw-file-notepad">Notepad</button>
+                  <button class="cw-menu-item cw-file-print">Print</button>
+                  <button class="cw-menu-item cw-file-clear">Clear</button>
+                  <button class="cw-menu-item cw-file-download">Export JPZ</button>
                 </div>
               </div>
-              <div    class = "cw-menu-container cw-check">
-              <button type  = "button" class = "cw-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
-                   Check
-                  <span class = "cw-arrow"></span>
+              <div class="cw-menu-container cw-check">
+                <button type="button" class="cw-button">
+                  <span class="cw-button-icon">🔍</span> Check
+                  <span class="cw-arrow"></span>
                 </button>
-                <div    class = "cw-menu">
-                <button class = "cw-menu-item cw-check-letter">Letter</button>
-                <button class = "cw-menu-item cw-check-word">Word</button>
-                <button class = "cw-menu-item cw-check-puzzle">Puzzle</button>
+                <div class="cw-menu">
+                  <button class="cw-menu-item cw-check-letter">Letter</button>
+                  <button class="cw-menu-item cw-check-word">Word</button>
+                  <button class="cw-menu-item cw-check-puzzle">Puzzle</button>
                 </div>
               </div>
-              <div    class = "cw-menu-container cw-reveal">
-              <button type  = "button" class = "cw-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
-                   Reveal
-                  <span class = "cw-arrow"></span>
+              <div class="cw-menu-container cw-reveal">
+                <button type="button" class="cw-button">
+                  <span class="cw-button-icon">🎱</span> Reveal
+                  <span class="cw-arrow"></span>
                 </button>
-                <div    class = "cw-menu">
-                <button class = "cw-menu-item cw-reveal-letter">Letter</button>
-                <button class = "cw-menu-item cw-reveal-word">Word</button>
-                <button class = "cw-menu-item cw-reveal-puzzle">Puzzle</button>
+                <div class="cw-menu">
+                  <button class="cw-menu-item cw-reveal-letter">Letter</button>
+                  <button class="cw-menu-item cw-reveal-word">Word</button>
+                  <button class="cw-menu-item cw-reveal-puzzle">Puzzle</button>
                 </div>
               </div>
               <!-- TODO: put theme selection into the settings menu
-              <div    class = "cw-menu-container cw-theme">
-              <button type  = "button" class = "cw-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette-icon lucide-palette"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+              <div    class = "cw-menu-container cw-theme"><button type  = "button" class = "cw-button"><svg
+					xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette-icon lucide-palette"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/></svg>
                    Theme
-                  <span class = "cw-arrow"></span>
-                </button>
-                <div    class = "cw-menu">
-                <button class = "cw-menu-item cw-theme-barbie">Barbie</button>
-                <button class = "cw-menu-item cw-theme-cherry-blossom">Cherry Blossom</button>
-                <button class = "cw-menu-item cw-theme-cryptic-crossweird">Cryptic Crossweird</button>
-                <button class = "cw-menu-item cw-theme-dark">Dark</button>
-                <button class = "cw-menu-item cw-theme-earth-tones">Earth Tones</button>
-                <button class = "cw-menu-item cw-theme-frost">Frost</button>
-                <button class = "cw-menu-item cw-theme-gio">Gio</button>
-                <button class = "cw-menu-item cw-theme-grape-soda">Grape Soda</button>
-                <button class = "cw-menu-item cw-theme-light-blue">Light Blue</button>
-                <button class = "cw-menu-item cw-theme-light-green">Light Green</button>
-                <button class = "cw-menu-item cw-theme-momos-nail-corner">Momo's Nail Corner</button>
-                <button class = "cw-menu-item cw-theme-pride">Pride</button>
-                <button class = "cw-menu-item cw-theme-pumpkin-spice">Pumpkin Spice</button>
-                <button class = "cw-menu-item cw-theme-spring-pastels">Spring Pastels</button>
-                <button class = "cw-menu-item cw-theme-taco-bell">Taco Bell</button>
-                </div>
-              </div>
+                  <span class = "cw-arrow"></span></button><div    class = "cw-menu"><button class = "cw-menu-item cw-theme-barbie">Barbie</button><button class = "cw-menu-item cw-theme-cherry-blossom">Cherry Blossom</button><button class = "cw-menu-item cw-theme-cryptic-crossweird">Cryptic Crossweird</button><button class = "cw-menu-item cw-theme-dark">Dark</button><button class = "cw-menu-item cw-theme-earth-tones">Earth Tones</button><button class = "cw-menu-item cw-theme-frost">Frost</button><button class = "cw-menu-item cw-theme-gio">Gio</button><button class = "cw-menu-item cw-theme-grape-soda">Grape Soda</button><button class = "cw-menu-item cw-theme-light-blue">Light Blue</button><button class = "cw-menu-item cw-theme-light-green">Light Green</button><button class = "cw-menu-item cw-theme-momos-nail-corner">Momo's Nail Corner</button><button class = "cw-menu-item cw-theme-pride">Pride</button><button class = "cw-menu-item cw-theme-pumpkin-spice">Pumpkin Spice</button><button class = "cw-menu-item cw-theme-spring-pastels">Spring Pastels</button><button class = "cw-menu-item cw-theme-taco-bell">Taco Bell</button></div></div>
               -->
-              <button type = "button" class = "cw-button cw-settings-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                 Settings
+              <button type="button" class="cw-button cw-settings-button">
+                <span class="cw-button-icon">⚙️</span> Settings
               </button>
-              <span   class = "cw-flex-spacer"></span>
-              <button type  = "button" class = "cw-button cw-button-timer">00:00</button>
+              <span class="cw-flex-spacer"></span>
+              <button type="button" class="cw-button cw-button-timer">00:00</button>
             </div>
-            <input type  = "text" class = "cw-hidden-input">
-            <div   class = "cw-canvas">
-            <div   class = "cw-puzzle-container">
-            <div   class = "cw-top-text-wrapper">
-            <div   class = "cw-top-text">
-            <span  class = "cw-clue-number"></span>
-            <span  class = "cw-clue-text"></span>
-                    </div>
+            <input type="text" class="cw-hidden-input">
+            <div class="cw-canvas">
+              <div class="cw-puzzle-container">
+                <div class="cw-top-text-wrapper">
+                  <div class="cw-top-text">
+                    <span class="cw-clue-number"></span>
+                    <span class="cw-clue-text"></span>
                   </div>
-                  <svg id = "cw-puzzle-grid"></svg>
                 </div>
+                <svg id="cw-puzzle-grid"></svg>
               </div>
             </div>
-          <div class = "cw-clues-holder">
-          <div class = "cw-clues cw-clues-top">
-          <div class = "cw-clues-title"></div>
-          <div class = "cw-clues-items"></div>
+          </div>
+          <div class="cw-clues-holder">
+            <div class="cw-clues cw-clues-top">
+              <div class="cw-clues-title"></div>
+              <div class="cw-clues-items"></div>
             </div>
-            <div class = "cw-clues cw-clues-bottom">
-            <div class = "cw-clues-title"></div>
-            <div class = "cw-clues-items"></div>
+            <div class="cw-clues cw-clues-bottom">
+              <div class="cw-clues-title"></div>
+              <div class="cw-clues-items"></div>
             </div>
           </div>
         </div>

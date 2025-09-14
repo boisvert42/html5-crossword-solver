@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <meta name="HandheldFriendly" content="True">
     <title>Crossword Nexus Solver</title>
-    <link href="css/crosswordnexus.css" rel="stylesheet">
-
-    <!-- the main crossword JavaScript -->
-    <script src="js/crosswords.js"></script>
 
     <!-- jQuery -->
     <script src="lib/jquery.js"></script>
@@ -16,17 +12,117 @@
     <!-- for loading crosswords -->
     <script src="lib/jscrossword_combined.js"></script>
 
-    <!-- for saving crosswords -->
-    <script src="lib/lscache.min.js"></script>
-
     <!-- for printing -->
     <script src="lib/pdf/jspdf-3_0_1.min.js"></script>
     <script src="lib/pdf/grapheme-splitter.min.js"></script>
     <script src="lib/pdf/twemoji.min.js"></script>
     <script src="lib/pdf/xw_pdf.js"></script>
 
-    <!-- for dark mode -->
-    <script src="lib/darkreader.min.js"></script>
+    <!-- confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        function isMobileDevice() {
+          const ua = navigator.userAgent || '';
+          const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 1;
+          const isiPad = ua.includes("iPad") || (ua.includes("Mac") && navigator.maxTouchPoints > 1);
+          const isMobileUA = /android|iphone|ipod|mobile/i.test(ua);
+      
+          return isTouch && (isMobileUA || isiPad);
+        }
+      
+        const mobile = isMobileDevice();
+        console.log('[Device Detection]', {
+          ua: navigator.userAgent,
+          platform: navigator.platform,
+          maxTouchPoints: navigator.maxTouchPoints,
+          isMobile: mobile
+        });
+      
+        if (mobile) {
+          // ✅ Load core engine first (crosswords.js)
+          const core = document.createElement('script');
+          core.src = './js/crosswords.js';
+      
+          core.onload = () => {
+            // ✅ Then load mobile layout script and CSS
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = './css/crossword.mobile.css';
+            document.head.appendChild(link);
+      
+            const mobileScript = document.createElement('script');
+            mobileScript.src = './js/crossword.mobile.js';
+            document.body.appendChild(mobileScript); // ✅ Let it handle its own init
+          };
+      
+          window.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(core);
+          });
+      
+        } else {
+          // ✅ Desktop CSS
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = './css/crosswordnexus.css';
+          document.head.appendChild(link);
+      
+          // ✅ Desktop JS + Init
+          const script = document.createElement('script');
+          script.src = './js/crosswords.js';
+          script.onload = () => {
+            console.log('[Desktop] crosswords.js loaded — initializing crossword');
+      
+            const url = new URL(window.location.href);
+            const puzzle = url.searchParams.get("puzzle") || url.searchParams.get("file");
+            const b64config = url.searchParams.get("config");
+            const params = {};
+      
+            if (puzzle) {
+              params.puzzle_file = {
+                url: puzzle,
+                type: puzzle.slice(puzzle.lastIndexOf('.') + 1)
+              };
+            }
+      
+            if (b64config) {
+              try {
+                const config = JSON.parse(atob(b64config));
+                Object.assign(params, config);
+              } catch (e) {
+                console.warn("Invalid config:", e);
+              }
+            }
+      
+            window.gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+
+            setTimeout(() => {
+              const svg = document.getElementById('cw-puzzle-grid');
+              const cw = window.gCrossword;
+
+              if (svg && cw?.renderCells && cw.grid_width && cw.grid_height) {
+                console.log('[Fix] Final render pass after layout settle');
+                cw.renderCells();
+                cw.windowResized?.();
+                cw.syncTopTextWidth?.();
+              } else {
+                console.warn('[Fix] Skipping renderCells — grid size not yet initialized', {
+                  grid_width: cw?.grid_width,
+                  grid_height: cw?.grid_height
+                });
+              }
+            }, 350);
+          };
+      
+          window.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(script);
+          });
+        }
+      </script>           
+    
+    <noscript>
+      <link rel="stylesheet" href="./css/crosswordnexus.css">
+    </noscript>
 
     <style>
         html, body {
@@ -36,40 +132,46 @@
         }
         div.crossword { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
     </style>
+
 </head>
 <body>
-    <!-- The div in which the crossword will be created -->
-    <div class="crossword"></div>
+    <div class="crossword cryptic-crossweird-theme"></div>
+    <script>
+        var gCrossword;
+        $(document).ready(function(){
 
-<script>
-    (function(){
-        // Grab puzzle from query string if available
-        var url = new URL(window.location.href);
-        var puzzle = url.searchParams.get("puzzle");
-        if (!puzzle) puzzle = url.searchParams.get("file");
+            var url = new URL(window.location.href);
+            var puzzle = url.searchParams.get("puzzle");
+            if (!puzzle) puzzle = url.searchParams.get("file");
+            var b64config = url.searchParams.get("config");
+            var params = {};
 
-        // optional puzzle parameters
-        // for options, see line 141 in crosswords.js.
-        var params = {};
-        if (puzzle) {
-            params['puzzle_file'] = {
-                url: puzzle,
-                type: puzzle.slice(puzzle.lastIndexOf('.') + 1)
-            };
-        }
+            if (puzzle) {
+                params.puzzle_file = {
+                    url: puzzle,
+                    type: puzzle.slice(puzzle.lastIndexOf('.') + 1)
+                };
+            } else {
+              params.puzzle_file = {
+                url: './puzzles/sample.puz', // your default test file
+                type: 'puz'
+              };
+            }
 
-        // you can also set parameters in the URL
-        // as a base64-encoded JSON blob
-        var b64config = url.searchParams.get("config");
-        if (b64config) {
-            var config = JSON.parse(atob(b64config));
-            params = Object.assign(params, config);
-        }
+            if (b64config) {
+                var config = JSON.parse(atob(b64config));
+                params = Object.assign(params, config);
+            }
 
-        // Create the crossword
-        CrosswordNexus.createCrossword($('div.crossword'), params);
-    })();
-</script>
+            console.log(params);
 
+            if (!isMobileDevice) {
+              gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+            }
+
+        });
+    </script>
+ 
 </body>
 </html>
+         

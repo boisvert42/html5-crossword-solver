@@ -39,7 +39,7 @@ $(document).ready(function() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
 
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const screenIsSmall = Math.max(window.innerWidth, window.innerHeight) < 1024;
+    const screenIsSmall = false;//Math.max(window.innerWidth, window.innerHeight) < 1024;
 
     const isiPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 

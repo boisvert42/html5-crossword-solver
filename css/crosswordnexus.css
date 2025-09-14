@@ -827,7 +827,7 @@ input.cw-hidden-input {
     flex-direction: column;
 }
 
-/*.cw-max-width-600.cw-main {
+.cw-max-width-600.cw-main {
     font-size: 14px;
 }
 
@@ -841,11 +841,14 @@ input.cw-hidden-input {
   }
   
   .cw-max-width-600 .cw-clues-holder {
+    display: none;
+    /**
     display: flex;
     flex-direction: column;
     width: 100%;
     margin-top: 10px;
     margin-bottom: 10px;
+    **/
   } 
 
   .cw-max-width-600 .cw-clues {
@@ -859,7 +862,7 @@ input.cw-hidden-input {
 
 .cw-max-width-420 .cw-button-icon {
     display: none;
-}*/
+}
 
 input[type='checkbox'] {
     accent-color: #000000;

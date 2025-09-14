@@ -23,6 +23,7 @@
     
     <!-- Crossword Nexus CSS -->
     <link href="css/crosswordnexus.css" rel="stylesheet">
+    <!--<link href="css/crossword.mobile.css" rel="stylesheet">-->
 
     <script>
           // ✅ Desktop JS + Init
@@ -118,12 +119,11 @@
 
             console.log(params);
 
-            if (!isMobileDevice) {
-              gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
-            }
 
         });
     </script>
+    
+    <script src="js/crossword.mobile.js"></script>
  
 </body>
 </html>

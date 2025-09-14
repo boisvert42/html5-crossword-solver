@@ -22,48 +22,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
-        function isMobileDevice() {
-		  return false;
-		  /**
-          const ua = navigator.userAgent || '';
-          const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 1;
-          const isiPad = ua.includes("iPad") || (ua.includes("Mac") && navigator.maxTouchPoints > 1);
-          const isMobileUA = /android|iphone|ipod|mobile/i.test(ua);
-      
-          return isTouch && (isMobileUA || isiPad);
-          **/
-        }
-      
-        const mobile = isMobileDevice();
-        console.log('[Device Detection]', {
-          ua: navigator.userAgent,
-          platform: navigator.platform,
-          maxTouchPoints: navigator.maxTouchPoints,
-          isMobile: mobile
-        });
-      
-        if (mobile) {
-          // ✅ Load core engine first (crosswords.js)
-          const core = document.createElement('script');
-          core.src = './js/crosswords.js';
-      
-          core.onload = () => {
-            // ✅ Then load mobile layout script and CSS
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = './css/crossword.mobile.css';
-            document.head.appendChild(link);
-      
-            const mobileScript = document.createElement('script');
-            mobileScript.src = './js/crossword.mobile.js';
-            document.body.appendChild(mobileScript); // ✅ Let it handle its own init
-          };
-      
-          window.addEventListener('DOMContentLoaded', () => {
-            document.body.appendChild(core);
-          });
-      
-        } else {
           // ✅ Desktop CSS
           const link = document.createElement('link');
           link.rel = 'stylesheet';
@@ -120,12 +78,7 @@
           window.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(script);
           });
-        }
-      </script>           
-    
-    <noscript>
-      <link rel="stylesheet" href="./css/crosswordnexus.css">
-    </noscript>
+      </script>
 
     <style>
         html, body {

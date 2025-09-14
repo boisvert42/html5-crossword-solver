@@ -13,19 +13,23 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
+// Global crossword object reference
 var gCrossword;
+// Tracks whether the alternate (symbols) keyboard is active
 let isAltKeyboard = false;
 
 $(document).ready(function() {
+  // Save initial window height (used to detect soft keyboard)
   let initialWindowHeight = window.innerHeight;
   setCSSViewportHeight();
-  // Listen to visualViewport resize events
+
+  // Update CSS viewport height + check for keyboard on visual viewport resize
   window.visualViewport?.addEventListener('resize', () => {
     setCSSViewportHeight();
-    detectKeyboardAndResize(); // you already have this function
+    detectKeyboardAndResize(); // defined later
   });
 
-  // Listen to orientation changes
+  // Handle orientation changes: sync text widths and update viewport height
   window.addEventListener('orientationchange', () => {
     setTimeout(() => {
       if (gCrossword?.syncTopTextWidth) {
@@ -35,10 +39,12 @@ $(document).ready(function() {
     }, 300);
   });
 
+  // --- Device detection helper ---
   function isMobileDevice() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
 
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    // Screen check disabled here (always false)
     const screenIsSmall = false;//Math.max(window.innerWidth, window.innerHeight) < 1024;
 
     const isiPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -51,14 +57,17 @@ $(document).ready(function() {
     );
   }
 
+  // Detect if running on a mobile device
   const isMobile = isMobileDevice();
+  // Root crossword container element
   const crosswordRoot = document.querySelector('.crossword');
 
   if (isMobile && crosswordRoot) {
+    // Add mobile-mode classes to body and crossword container
     crosswordRoot.classList.add('mobile');
     document.body.classList.add('mobile-mode');
 
-    // Viewport handlers
+    // Re-run viewport/keyboard checks on resize
     window.visualViewport?.addEventListener('resize', detectKeyboardAndResize);
     window.addEventListener('resize', detectKeyboardAndResize);
     window.visualViewport?.addEventListener('resize', () => {
@@ -66,6 +75,7 @@ $(document).ready(function() {
       detectKeyboardAndResize();
     });
 
+    // Update CSS viewport height on orientation change
     window.addEventListener('orientationchange', () => {
       setTimeout(() => {
         setCSSViewportHeight();
@@ -73,6 +83,7 @@ $(document).ready(function() {
     });
   }
 
+  // Updates --vh CSS custom property for viewport height handling
   function setCSSViewportHeight() {
     if (!window.visualViewport) return;
 
@@ -80,6 +91,7 @@ $(document).ready(function() {
     document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
 
+  // Removes old keyboard and builds a fresh one
   function rebuildKeyboard() {
     const wrapper = document.querySelector('.keyboard-wrapper-placeholder');
     const oldKeyboard = wrapper.querySelector('#custom-keyboard');
@@ -90,29 +102,15 @@ $(document).ready(function() {
     wrapper.appendChild(newKeyboard);
     wrapper.style.height = `${newKeyboard.offsetHeight}px`;
 
-    /* // Reattach Rebus key
-    newKeyboard.querySelector('.cw-key-rebus')?.addEventListener('click', () => {
-      const rebusEntry = prompt('Rebus entry', '');
-      if (rebusEntry) {
-        gCrossword.hiddenInputChanged(rebusEntry.toUpperCase());
-      }
-    });
-
-    newKeyboard.querySelector('.cw-key-left')?.addEventListener('click', () => {
-      const skipFilled = gCrossword.config?.tab_key === 'tab_skip';
-      gCrossword.moveToNextWord(true, skipFilled); // ← previous word
-    });
-
-    newKeyboard.querySelector('.cw-key-right')?.addEventListener('click', () => {
-      const skipFilled = gCrossword.config?.tab_key === 'tab_skip';
-      gCrossword.moveToNextWord(false, skipFilled); // → next word
-    });*/
+    /* Example event reattachments for Rebus/arrow keys (currently commented out) */
   }
 
+  // Alias wrapper for rebuildKeyboard
   function rebuildKeyboardAndPositionDrawer() {
     rebuildKeyboard();
   }
 
+  // Determines if soft keyboard is visible based on height change
   function detectKeyboardAndResize() {
     setTimeout(() => {
       const currentHeight = window.innerHeight;
@@ -122,7 +120,7 @@ $(document).ready(function() {
     }, 50);
   }
 
-  // Load puzzle and optional config from URL
+  // --- Load puzzle and config from URL ---
   const url = new URL(window.location.href);
   let puzzle = url.searchParams.get("puzzle") || url.searchParams.get("file");
   const b64config = url.searchParams.get("config");
@@ -144,10 +142,13 @@ $(document).ready(function() {
     }
   }
 
-  gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+  // Grab the crossword from the window
+  gCrossword = window.gCrossword;
   if (gCrossword?.syncTopTextWidth) {
     window.gCrossword.syncTopTextWidth = gCrossword.syncTopTextWidth.bind(gCrossword);
   }
+
+  // Mobile-specific layout wrapping
   if (isMobile && crosswordRoot) {
     const tryWrapLayout = () => {
       const canvas = document.querySelector('.cw-canvas');
@@ -155,15 +156,15 @@ $(document).ready(function() {
       if (buttons && buttons.children.length) {
         const allButtons = Array.from(buttons.children);
 
-        // Match by text content – you can refine this to use classes if needed
+        // Find buttons by their labels
         const file = allButtons.find(btn => btn.textContent.includes('File'));
         const check = allButtons.find(btn => btn.textContent.includes('Check'));
         const reveal = allButtons.find(btn => btn.textContent.includes('Reveal'));
         const theme = allButtons.find(btn => btn.textContent.includes('Theme'));
         const settings = allButtons.find(btn => btn.textContent.includes('Settings'));
-        const timer = allButtons.find(btn => btn.textContent.match(/[\d:]+/)); // crude match for timer
+        const timer = allButtons.find(btn => btn.textContent.match(/[\d:]+/)); // crude timer match
 
-        // Only reflow if all buttons were found
+        // Reflow buttons into two rows if all found
         if (file && check && reveal && theme && settings && timer) {
           const row1 = document.createElement('div');
           row1.className = 'cw-buttons-row';
@@ -173,7 +174,6 @@ $(document).ready(function() {
           row2.className = 'cw-buttons-row';
           row2.append(settings, timer);
 
-          // Clear and re-append
           buttons.innerHTML = '';
           buttons.append(row1, row2);
         }
@@ -188,48 +188,39 @@ $(document).ready(function() {
         return setTimeout(tryWrapLayout, 100);
       }
 
-      // Safe to remove .cw-grid AFTER canvas is grabbed
+      // Remove grid container wrapper if present
       const grid = document.querySelector('.cw-grid');
       if (grid) grid.remove();
 
-      // Build wrapper
-      // Build wrapper
+      // Outer wrapper for grid/clues/buttons
       const wrapper = document.createElement('div');
       wrapper.className = 'cw-grid-wrapper';
 
-      // Append the canvas (grid)
+      // Append crossword grid canvas
       wrapper.appendChild(canvas);
 
-      // NEW: Create clues container
+      // Build mobile clues container
       const mobileClues = document.createElement('div');
       mobileClues.className = 'cw-mobile-clues-holder';
 
-      // Move top and bottom clues into this container
+      // Move across/down clues into mobile container
       const across = document.querySelector('.cw-clues-top');
       const down = document.querySelector('.cw-clues-bottom');
-
       if (across && down) {
         mobileClues.appendChild(across);
         mobileClues.appendChild(down);
       }
 
-      // Create container to hold grid + clues side by side
+      // Side-by-side container for grid and clues
       const gridClueWrapper = document.createElement('div');
       gridClueWrapper.className = 'cw-grid-clue-wrapper';
 
-      // Append the canvas (grid)
       gridClueWrapper.appendChild(canvas);
-
-      // Use the already-declared mobileClues
-      mobileClues.className = 'cw-mobile-clues-side'; // update class name for styling
-
-      // Append clues to the right of the grid
+      mobileClues.className = 'cw-mobile-clues-side';
       gridClueWrapper.appendChild(mobileClues);
-
-      // Append grid + clues layout into the main wrapper
       wrapper.appendChild(gridClueWrapper);
 
-      // Rebind clue clicks for mobile container
+      // Rebind clue click events for new container
       mobileClues.querySelectorAll('.cw-clue').forEach(el => {
         el.addEventListener('click', (e) => {
           const target = $(e.currentTarget);
@@ -246,7 +237,7 @@ $(document).ready(function() {
             }
             gCrossword.setActiveCell(cell);
 
-            // ✅ Manually trigger clue highlighting
+            // Trigger highlighting of active clues
             gCrossword.inactive_clues.markActive(cell.x, cell.y, true, gCrossword.fakeclues);
             gCrossword.active_clues.markActive(cell.x, cell.y, false, gCrossword.fakeclues);
 
@@ -255,47 +246,39 @@ $(document).ready(function() {
         });
       });
 
-      // Create drawer container
+      // Drawer container for buttons
       const buttonWrapper = document.createElement('div');
       buttonWrapper.className = 'cw-buttons-drawer';
-
-      // Add drawer to layout before inserting buttons
       wrapper.appendChild(buttonWrapper);
-
-      // THEN move buttons inside the drawer
       buttonWrapper.appendChild(buttons);
 
-      // Create the handle and append
+      // Drawer handle
       const handle = document.createElement('div');
       handle.className = 'cw-buttons-handle';
-
-      // Add drawer to wrapper
       wrapper.appendChild(handle);
       wrapper.appendChild(buttonWrapper);
 
-      // Create keyboard wrapper and append
+      // Keyboard wrapper placeholder
       const keyboardWrapper = document.createElement('div');
       keyboardWrapper.className = 'keyboard-wrapper-placeholder';
       wrapper.appendChild(keyboardWrapper);
 
-      // Insert everything before clues
+      // Insert full wrapper before clues
       content.insertBefore(wrapper, clues);
 
-      // Rebuild keyboard
+      // Build keyboard into wrapper
       rebuildKeyboardAndPositionDrawer();
 
-      // === Rebus via long-press on the grid ===
+      // --- Rebus entry via long-press on grid ---
       (function enableRebusLongPressOnCell() {
-        // Your grid is the canvas with id 'cw-puzzle-grid' (fallback to .cw-canvas)
         const grid = document.getElementById('cw-puzzle-grid') || document.querySelector('.cw-canvas');
-        if (!grid || grid.dataset.rebusLpAttached === '1') return; // guard against double binding
+        if (!grid || grid.dataset.rebusLpAttached === '1') return;
         grid.dataset.rebusLpAttached = '1';
 
-        const LP_MS = 450; // long-press threshold
-        const MAX_MOVE = 8; // cancel if finger moves too much (px)
+        const LP_MS = 450;
+        const MAX_MOVE = 8;
         let timer = null;
-        let startX = 0,
-          startY = 0;
+        let startX = 0, startY = 0;
 
         function openRebusEditor() {
           if (!gCrossword?.selected_cell || gCrossword.selected_cell.empty) return;
@@ -324,7 +307,7 @@ $(document).ready(function() {
           if (!timer) return;
           const dx = Math.abs(e.clientX - startX);
           const dy = Math.abs(e.clientY - startY);
-          if (dx > MAX_MOVE || dy > MAX_MOVE) clearTimer(); // treat as scroll/drag, cancel LP
+          if (dx > MAX_MOVE || dy > MAX_MOVE) clearTimer();
         });
 
         grid.addEventListener('pointerup', clearTimer);
@@ -332,23 +315,21 @@ $(document).ready(function() {
         grid.addEventListener('pointercancel', clearTimer);
       })();
 
-
-      // Drawer toggle logic
+      // Drawer toggle state
       drawer = buttonWrapper;
-      drawerOpen = false; // starts visible
-      drawer.classList.remove('open'); // make sure it's closed on load
-      // Immediately hide the drawer (force rendering to catch transform)
+      drawerOpen = false;
+      drawer.classList.remove('open');
       requestAnimationFrame(() => {
         drawer.classList.remove('open');
       });
 
-      // Click to toggle
+      // Toggle drawer on handle click
       handle.addEventListener('click', () => {
         drawerOpen = !drawerOpen;
         drawer.classList.toggle('open', drawerOpen);
       });
 
-      // Swipe gesture
+      // Swipe up/down to open/close drawer
       touchStartY = null;
       handle.addEventListener('touchstart', (e) => {
         touchStartY = e.touches[0].clientY;
@@ -364,12 +345,13 @@ $(document).ready(function() {
         }
         touchStartY = null;
       });
+
+      // After a short delay, set initial active word/cell and sync clue bar width
       setTimeout(() => {
         const firstWord = gCrossword.active_clues.getFirstWord();
         gCrossword.setActiveWord(firstWord);
         gCrossword.setActiveCell(firstWord.getFirstCell());
         gCrossword.renderCells();
-        // Match the width of the top clue bar to the grid
         setTimeout(() => {
           const gridEl = document.getElementById('cw-puzzle-grid');
           const clueBar = document.querySelector('.cw-top-text-wrapper');
@@ -385,42 +367,46 @@ $(document).ready(function() {
   console.log('Is mobile?', isMobile, 'Classes:', document.querySelector('.crossword')?.className);
 });
 
+// --- Virtual keyboard builder ---
 function createCustomKeyboard() {
   const keyboard = document.createElement('div');
   keyboard.id = 'custom-keyboard';
   keyboard.className = 'custom-keyboard';
 
+  // Rows of letters
   const letterRows = [
     'QWERTYUIOP'.split(''),
     'ASDFGHJKL'.split(''),
     'ZXCVBNM'.split('')
   ];
 
+  // Rows of symbols/numbers
   const symbolRows = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
     ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')'],
     ['-', '+', '=', '/', '?', ':', ';', '"', "'", '\\']
   ];
 
+  // Select current keyboard layout
   const rows = isAltKeyboard ? symbolRows : letterRows;
 
   rows.forEach((row, rowIndex) => {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'custom-keyboard-row';
 
-    // ── TOP ROW: ⬅️ ... letters ... ➡️
+    // Top row: add left arrow
     if (rowIndex === 0) {
       const leftArrow = document.createElement('div');
       leftArrow.className = 'custom-key wide-key cw-key-left';
       leftArrow.textContent = '<';
       leftArrow.addEventListener('click', () => {
         const skipFilled = gCrossword.config?.tab_key === 'tab_skip';
-        gCrossword.moveToNextWord(true, skipFilled); // ← previous word
+        gCrossword.moveToNextWord(true, skipFilled);
       });
       rowDiv.appendChild(leftArrow);
     }
 
-    // ── BOTTOM ROW: 123/ABC toggle on the far left
+    // Bottom row: add ALT toggle key
     if (rowIndex === 2) {
       const altKey = document.createElement('div');
       altKey.className = 'custom-key cw-key-alt-toggle';
@@ -440,7 +426,7 @@ function createCustomKeyboard() {
       rowDiv.appendChild(altKey);
     }
 
-    // main keys for the row
+    // Main keys (letters or symbols)
     row.forEach(letter => {
       const key = document.createElement('div');
       key.className = 'custom-key';
@@ -453,19 +439,20 @@ function createCustomKeyboard() {
       rowDiv.appendChild(key);
     });
 
+    // Top row: add right arrow
     if (rowIndex === 0) {
       const rightArrow = document.createElement('div');
       rightArrow.className = 'custom-key wide-key cw-key-right';
       rightArrow.textContent = '>';
       rightArrow.addEventListener('click', () => {
         const skipFilled = gCrossword.config?.tab_key === 'tab_skip';
-        gCrossword.moveToNextWord(false, skipFilled); // → next word
+        gCrossword.moveToNextWord(false, skipFilled);
       });
       rowDiv.appendChild(rightArrow);
     }
 
+    // Bottom row: add period + backspace keys
     if (rowIndex === 2) {
-      // Period key (bottom row)
       const periodKey = document.createElement('div');
       periodKey.className = 'custom-key period-key';
       periodKey.textContent = '.';
@@ -476,7 +463,6 @@ function createCustomKeyboard() {
       });
       rowDiv.appendChild(periodKey);
 
-      // Backspace (bottom row, far right)
       const backspace = document.createElement('div');
       backspace.className = 'custom-key backspace-key';
       backspace.textContent = '⌫';
@@ -493,6 +479,7 @@ function createCustomKeyboard() {
         backspaceFired = false;
       }
 
+      // Logic to delete current cell or move backwards
       function performBackspace() {
         if (!gCrossword?.selected_cell) return;
         const cell = gCrossword.selected_cell;
@@ -505,8 +492,7 @@ function createCustomKeyboard() {
           return;
         }
 
-        let x = cell.x,
-          y = cell.y;
+        let x = cell.x, y = cell.y;
         while (true) {
           if (isAcross ? x <= 1 : y <= 1) return;
           isAcross ? x-- : y--;
@@ -525,6 +511,7 @@ function createCustomKeyboard() {
         }
       }
 
+      // Backspace long-press handling
       backspace.addEventListener('pointerdown', () => {
         backspaceHeld = false;
         backspaceFired = false;

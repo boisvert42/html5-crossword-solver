@@ -15,7 +15,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 // Settings that we can save
 const CONFIGURABLE_SETTINGS = [
-  "skip_filled_letters", "arrow_direction", "space_bar", "tab_key", "timer_autostart", "dark_mode_enabled", "gray_completed_clues"
+  "skip_filled_letters", "arrow_direction", "space_bar", "tab_key",
+  "timer_autostart", "dark_mode_enabled", "gray_completed_clues",
+  "confetti_enabled"
 ];
 
 // Since DarkReader is an external library, make sure it exists
@@ -113,6 +115,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       space_bar: 'space_clear',
       filled_clue_color: '#999999',
       timer_autostart: false,
+      confetti_enabled: true,
       dark_mode_enabled: false,
       tab_key: 'tab_noskip',
       bar_linewidth: 3.2,
@@ -201,6 +204,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 <button class = "cw-menu-item cw-file-info">Info</button>
                 <button class = "cw-menu-item cw-file-notepad">Notepad</button>
                 <button class = "cw-menu-item cw-file-print">Print</button>
+                <button class = "cw-menu-item cw-file-save">Save as iPuz</button>
                 <button class = "cw-menu-item cw-file-clear">Clear</button>
                 </div>
               </div>
@@ -778,6 +782,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         this.jsxw = puzzle;
 
+        // Expose ipuz string
+        window.ipuz = this.jsxw.toIpuzString();
+
         this.diagramless_mode = false;
 
         // 1. Trust metadata if available
@@ -875,8 +882,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.is_autofill = true;
         }
 
-        if (this.fakeclues || this.crossword_type === 'diagramless') {
-          // top-text is meaningless for fakeclues and diagramless puzzles
+        if (this.fakeclues || this.crossword_type === 'diagramless' || this.crossword_type === 'coded') {
+          // top-text is meaningless for fakeclues and diagramless puzzles (and coded!)
           $('div.cw-top-text-wrapper').css({
             display: 'none'
           });
@@ -1374,12 +1381,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           $.proxy(this.check_reveal, this, 'puzzle', 'clear')
         );
 
-        // DOWNLOAD
-        //this.download_btn.on('click', $.proxy(this.exportJPZ, this));
+        // SAVE
+        this.save_btn.on('click', $.proxy(this.saveAsIpuz, this));
 
         /** We're disabling save and load buttons **/
-        // SAVE
-        //this.save_btn.on('click', $.proxy(this.saveGame, this));
         // LOAD
         //this.load_btn.on('click', $.proxy(this.loadGame, this));
 
@@ -2616,13 +2621,15 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.check_reveal('puzzle', 'reveal');
         }
 
-        confetti({
-          particleCount: 280,
-          spread: 190,
-          origin: {
-            y: 0.4
-          }
-        });
+        if (this.config.confetti_enabled) {
+          confetti({
+            particleCount: 280,
+            spread: 190,
+            origin: {
+              y: 0.4
+            }
+          });
+        }
 
         /* const winSound = new Audio('./sounds/hny.mp3');
            winSound.play();*/
@@ -3298,15 +3305,22 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             </div>
           </div>
 
-          <!-- Miscellaneous (only timer for now) -->
+          <!-- Miscellaneous -->
           <div class="settings-setting">
             <div class="settings-description">
-              Timer
+              Miscellaneous
             </div>
             <div class="settings-option">
               <label class="settings-label">
                 <input id="timer_autostart" checked="" type="checkbox" name="timer_autostart" class="settings-changer">
                   Start timer on puzzle open
+                </input>
+              </label>
+            </div>
+            <div class="settings-option">
+              <label class="settings-label">
+                <input id="confetti_enabled" checked="" type="checkbox" name="confetti_enabled" class="settings-changer">
+                  Confetti on solve
                 </input>
               </label>
             </div>
@@ -3617,6 +3631,28 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         } catch (err) {
           console.error("PDF generation failed:", err);
         }
+      }
+
+      saveAsIpuz(e) {
+        console.log(e);
+        const json = window.ipuz; // this should be a JSON *string*
+
+        // Create a Blob from the text
+        const blob = new Blob([json], { type: "application/json" });
+
+        // Create a temporary <a> element
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        a.href = url;
+        const filename = this.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.ipuz';
+        a.download = filename; // filename for the dialog
+
+        // Trigger a click
+        a.click();
+
+        // Cleanup
+        URL.revokeObjectURL(url);
       }
 
       toggleTimer() {

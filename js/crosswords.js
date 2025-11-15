@@ -240,6 +240,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
                 <div    class = "cw-menu">
                 <button class = "cw-menu-item cw-file-info">Info</button>
                 <button class = "cw-menu-item cw-file-notepad">Notepad</button>
+                <button class = "cw-menu-item cw-file-load">Open ...</button>
                 <button class = "cw-menu-item cw-file-print">Print</button>
                 <button class = "cw-menu-item cw-file-save">Save as iPuz</button>
                 <button class = "cw-menu-item cw-file-clear">Clear</button>
@@ -666,6 +667,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         this.info_btn = this.root.find('.cw-file-info');
         this.load_btn = this.root.find('.cw-file-load');
+        // hide the load button by default
+        this.load_btn.hide();
+
         this.print_btn = this.root.find('.cw-file-print');
         this.clear_btn = this.root.find('.cw-file-clear');
         this.save_btn = this.root.find('.cw-file-save');
@@ -713,6 +717,9 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
           this.open_button = this.root.find('.cw-button-open-puzzle');
           this.file_input = this.root.find('input[type="file"]');
+
+          // show the load button
+          this.load_btn.show();
 
           this.open_button.on('click', () => {
             this.file_input.click();
@@ -1425,9 +1432,11 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         // SAVE
         this.save_btn.on('click', $.proxy(this.saveAsIpuz, this));
 
-        /** We're disabling save and load buttons **/
         // LOAD
-        //this.load_btn.on('click', $.proxy(this.loadGame, this));
+        this.load_btn.on('click', () => {
+          this.init();   // re-initialize
+          this.file_input.click();
+        });
 
         // TIMER
         this.timer_button.on('click', $.proxy(this.toggleTimer, this));

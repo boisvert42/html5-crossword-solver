@@ -407,13 +407,15 @@
     if (!originalPuzzle) return;
     const primary = document.getElementById("primaryColor").value;
     const secondary = document.getElementById("secondaryColor").value;
+    const colorLine = document.getElementById("colorLine").value;
     const shade = replaceCirclesCheckbox.checked;
     savePrefs();
     rebuildWorkingPuzzle();
     const config = {
       color_selected: secondary,
       color_word: primary,
-      replace_circles: shade
+      replace_circles: shade,
+      color_line: colorLine
     };
     const configB64 = btoa(JSON.stringify(config));
     console.log(workingPuzzle);

@@ -140,6 +140,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       font_color_clue: '#FFFFFF',
       font_color_fill: '#000000',
       color_block: '#212121',
+      color_line: '#212121',
       puzzle_file: null,
       puzzle_object: null, // jsxw to load, if available
       puzzles: null,
@@ -1969,7 +1970,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
               rect.setAttribute('y', cellY);
               rect.setAttribute('width', SIZE);
               rect.setAttribute('height', SIZE);
-              rect.setAttribute('stroke', '#212121');
+              rect.setAttribute('stroke', this.config.color_line);
               rect.setAttribute('data-x', cell.x);
               rect.setAttribute('data-y', cell.y);
               rect.setAttribute('class', 'cw-cell');
@@ -2020,7 +2021,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
               circle.setAttribute('r', radius);
               circle.setAttribute('fill', 'none');
-              circle.setAttribute('stroke', this.config.color_block || '#212121');
+              circle.setAttribute('stroke', this.config.color_line);
               circle.setAttribute('stroke-width', 1.1);
               circle.setAttribute('pointer-events', 'none');
               fillGroup.appendChild(circle);
@@ -2028,7 +2029,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
             if (cell.bar) {
               const barWidth = this.config.bar_linewidth;
-              const barColor = '#212121';
+              const barColor = this.config.color_line;
 
               const barStart = {
                 top: [cellX, cellY],

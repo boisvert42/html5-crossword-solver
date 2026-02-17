@@ -451,6 +451,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
     );
 
     function escape(string) {
+      /** This is handled upstream, in JSCrossword **/
       //return String(string).replace(escapeRegex, (s) =>
       //  s.length > 1 ? s : entityMap[s]
       //);

@@ -451,6 +451,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
     );
 
     function escape(string) {
+      /** This is handled upstream, in JSCrossword **/
       //return String(string).replace(escapeRegex, (s) =>
       //  s.length > 1 ? s : entityMap[s]
       //);
@@ -3060,11 +3061,17 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
       // callback for clicking a clue in the sidebar
       clueClicked(e) {
-        if (this.fakeclues || this.diagramless_mode) return;
-
         const target = $(e.currentTarget);
         const word = this.words[target.data('word')];
         if (!word) return;
+
+        if (this.fakeclues) {
+          word.fakeClueCompleted = !Boolean(word.fakeClueCompleted);
+          this.updateClueAppearance(word);
+          return;
+        }
+
+        if (this.diagramless_mode) return;
 
         const cell = word.getFirstEmptyCell() || word.getFirstCell();
         if (!cell) return;
@@ -3818,10 +3825,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       updateClueAppearance(word) {
         const clueEl = this.clues_holder.find(`.cw-clue.word-${word.id} .cw-clue-text`);
 
-        if (this.fakeclues) return;
-
-        if (!this.config.gray_completed_clues) {
-          // Reset clue styling if the setting is turned off
+        if (!this.config.gray_completed_clues && !this.fakeclues) {
+          // Reset clue styling if the setting is turned off and this is not fakeclues
           clueEl.css({
             "text-decoration": "",
             "color": ""
@@ -3829,17 +3834,14 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           return;
         }
 
-        if (word.isFilled()) {
-          clueEl.css({
-            "text-decoration": "",
-            "color": "#aaa"
-          });
-        } else {
-          clueEl.css({
-            "text-decoration": "",
-            "color": ""
-          });
-        }
+        const shouldGray = this.fakeclues
+          ? Boolean(word.fakeClueCompleted)
+          : word.isFilled();
+
+        clueEl.css({
+          "text-decoration": "",
+          "color": shouldGray ? "#aaa" : ""
+        });
       }
     }
 
@@ -4006,6 +4008,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.cells = [];
         this.clue = {};
         this.refs_raw = [];
+        this.fakeClueCompleted = false;
         this.crossword = crossword;
         if (data) {
           if (

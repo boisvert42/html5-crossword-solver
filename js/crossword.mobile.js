@@ -200,6 +200,12 @@ $(document).ready(function() {
 
           if (!word) return;
 
+          if (gCrossword.fakeclues) {
+            word.fakeClueCompleted = !Boolean(word.fakeClueCompleted);
+            gCrossword.updateClueAppearance(word);
+            return;
+          }
+
           const cell = word.getFirstEmptyCell() || word.getFirstCell();
           if (cell) {
             gCrossword.setActiveWord(word);

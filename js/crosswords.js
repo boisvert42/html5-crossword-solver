@@ -155,7 +155,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       gray_completed_clues: false,
       forced_theme: null,
       lock_theme: false,
-      min_sidebar_clue_width: 220
+      min_sidebar_clue_width: 220,
+      save_game_limit: 10
     };
 
     // constants
@@ -478,6 +479,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       constructor(parent, user_config) {
         this.parent = parent;
         this.config = {};
+        this.saveTimeout = null;
         // Load solver config
         var saved_settings = {};
         try {
@@ -904,6 +906,8 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         };
         const myHash = simpleHash(JSON.stringify(puzzle));
         this.savegame_name = STORAGE_KEY + '_' + myHash;
+        localStorage.setItem(this.savegame_name + "_lastmodified", Date.now());
+        this.cleanupSaves();
 
         const versionKey = this.savegame_name + '_version';
         const savedVersion = localStorage.getItem(versionKey);
@@ -3544,49 +3548,100 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
       /* Save the game to local storage */
       saveGame() {
+        if (this.saveTimeout) {
+          clearTimeout(this.saveTimeout);
+        }
+        this.saveTimeout = setTimeout(() => {
+          this.saveGameImmediate();
+          this.saveTimeout = null;
+        }, 500); // Debounce for 500ms
+      }
+
+      saveGameImmediate() {
         // fill jsxw
         this.fillJsXw();
         // stringify
         const jsxw_str = JSON.stringify(this.jsxw.cells);
-        localStorage.setItem(this.savegame_name, jsxw_str);
-        localStorage.setItem(this.savegame_name + "_notes", JSON.stringify(Array.from(this.notes.entries()).map(n => {
-          return {
-            key: n[0],
-            value: n[1]
+        try {
+          localStorage.setItem(this.savegame_name, jsxw_str);
+          localStorage.setItem(this.savegame_name + "_notes", JSON.stringify(Array.from(this.notes.entries()).map(n => {
+            return {
+              key: n[0],
+              value: n[1]
+            }
+          })));
+          localStorage.setItem(this.savegame_name + "_lastmodified", Date.now());
+          /*localStorage.setItem(this.savegame_name + '_version', PUZZLE_STORAGE_VERSION);*/
+        } catch (e) {
+          console.error('[Crossword] localStorage save failed. Attempting cleanup...', e);
+          const currentLimit = this.config.save_game_limit || 10;
+          this.cleanupSaves(Math.floor(currentLimit / 2)); // Be more aggressive if we hit quota
+          try {
+            // try again once
+            localStorage.setItem(this.savegame_name, jsxw_str);
+            localStorage.setItem(this.savegame_name + "_lastmodified", Date.now());
+          } catch (e2) {
+            console.error('[Crossword] localStorage save failed even after cleanup.', e2);
           }
-        })));
-        /*localStorage.setItem(this.savegame_name + '_version', PUZZLE_STORAGE_VERSION);*/
+        }
       }
 
-      /* Show "load game" menu" */
-      loadGameMenu() {
-        // Find all the savegames
-        var innerHTML = '';
-        for (var i = 0; i < localStorage.length; i++) {
-          var thisKey = localStorage.key(i);
-          if (thisKey.startsWith(STORAGE_KEY)) {
-            var thisJsXw = JSON.parse(localStorage.getItem(localStorage.key(i)));
-            var thisDisplay = thisKey.substr(STORAGE_KEY.length);
-            innerHTML += `
-            <label class="settings-label">
-              <input id="${thisKey}" checked="" type="radio" class="loadgame-changer">
-                ${thisDisplay}
-              </input>
-            </label>
-            `;
-          }
+      /* Keep only the most recent saves */
+      cleanupSaves(limit = null) {
+        if (limit === null) {
+          limit = this.config.save_game_limit || 10;
         }
-        if (!innerHTML) {
-          innerHTML = 'No save games found.';
+        const saves = [];
+        const keysToPurge = [];
+
+        // Identify all potential save keys first to avoid iterator issues during deletion
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          allKeys.push(localStorage.key(i));
         }
 
-        // Create a modal box
-        var loadgameHTML = `
-        <div class="loadgame-wrapper">
-          ${innerHTML}
-        </div>
-        `;
-        this.createModalBox('Load Game', loadgameHTML);
+        allKeys.forEach(key => {
+          if (key.startsWith(STORAGE_KEY + '_') &&
+            !key.endsWith('_notes') &&
+            !key.endsWith('_version') &&
+            !key.endsWith('_lastmodified')) {
+
+            const lastModifiedStr = localStorage.getItem(key + '_lastmodified');
+
+            if (!lastModifiedStr && key !== this.savegame_name) {
+              // Legacy save without timestamp - user indicated it is safe to delete
+              keysToPurge.push(key);
+            } else {
+              saves.push({
+                key,
+                lastModified: parseInt(lastModifiedStr || Date.now().toString(), 10)
+              });
+            }
+          }
+        });
+
+        // 1. Purge legacy saves
+        keysToPurge.forEach(key => {
+          localStorage.removeItem(key);
+          localStorage.removeItem(key + '_notes');
+          localStorage.removeItem(key + '_version');
+          localStorage.removeItem(key + '_lastmodified');
+        });
+
+        // 2. enforce limit on remaining timestamped saves
+        if (saves.length <= limit) return;
+
+        // Sort by lastModified descending
+        saves.sort((a, b) => b.lastModified - a.lastModified);
+
+        // Delete older ones
+        for (let i = limit; i < saves.length; i++) {
+          const keyToDelete = saves[i].key;
+          localStorage.removeItem(keyToDelete);
+          localStorage.removeItem(keyToDelete + '_notes');
+          localStorage.removeItem(keyToDelete + '_version');
+          localStorage.removeItem(keyToDelete + '_lastmodified');
+        }
       }
 
       /* Load a game from local storage */

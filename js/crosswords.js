@@ -600,6 +600,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         this.handleClickWindow = this.handleClickWindow.bind(this);
         this.windowResized = this.windowResized.bind(this);
+        this.updateClueLayout = this.updateClueLayout.bind(this);
 
         this.init();
       }
@@ -666,6 +667,29 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.remove();
         }
 
+        // Reset state
+        this.activeClueGroupIndex = 0;
+        this.selected_word = null;
+        this.selected_cell = null;
+        this.hilited_word = null;
+        this.isSolved = false;
+        this.diagramless_mode = false;
+        this.savegame_name = null;
+        this.timer_running = false;
+        this.xw_timer_seconds = 0;
+        xw_timer_seconds = 0; // Reset global timer variable
+
+        this.cells = {};
+        this.words = {};
+        this.clueGroups = [];
+        this.displayClueGroups = null;
+
+        this.has_reveal = true;
+        this.has_check = true;
+        this.is_autofill = false;
+        this.completion_message = "Puzzle solved!";
+        this.notes = new Map();
+
         // build structures
         this.root = $(template);
         const fileInput = this.root.find('input.cw-open-jpz');
@@ -679,7 +703,6 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         this.clues_holder = this.root.find('div.cw-clues-holder');
 
         this.toptext = this.root.find('.cw-top-text-wrapper');
-        this.notes = new Map();
 
         this.settings_btn = this.root.find('.cw-settings-button');
 
@@ -749,6 +772,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.load_btn.show();
 
           this.open_button.on('click', () => {
+            this.file_input.val('');
             this.file_input.click();
           });
 
@@ -1293,6 +1317,13 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
           this.toggleTimer();
         }
 
+        // and whenever window resizes
+        window.removeEventListener('resize', this.updateClueLayout);
+        window.addEventListener('resize', this.updateClueLayout);
+
+      } // end completeLoad
+
+      updateClueLayout() {
         /** Some JS magic to deal with weird numbers of clue lists **/
         const holder = document.querySelector('.cw-clues-holder');
         if (!holder) return; // nothing to do if it doesn't exist
@@ -1300,30 +1331,21 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         const clues = holder.querySelectorAll('.cw-clues');
         if (!clues.length) return;
 
-        const MIN_AVG_WIDTH = this.config.min_sidebar_clue_width; // tweak this breakpoint
+        const MIN_AVG_WIDTH = this.config.min_sidebar_clue_width || 220; // tweak this breakpoint
 
-        function updateClueLayout() {
-          // available width per clue list
-          const avgWidth = holder.offsetWidth / clues.length;
-          const useColumn = avgWidth < MIN_AVG_WIDTH;
+        // available width per clue list
+        const avgWidth = holder.offsetWidth / clues.length;
+        const useColumn = avgWidth < MIN_AVG_WIDTH;
 
-          // apply layout
-          holder.style.flexDirection = useColumn ? 'column' : 'row';
-          clues.forEach(clue => {
-            clue.style.width = useColumn ? 'auto' : '';
-          });
+        // apply layout
+        holder.style.flexDirection = useColumn ? 'column' : 'row';
+        clues.forEach(clue => {
+          clue.style.width = useColumn ? 'auto' : '';
+        });
 
-          // optional debug log
-          // console.log(`→ avgWidth=${avgWidth.toFixed(1)}, layout=${useColumn ? 'column' : 'row'}`);
-        }
-
-        // run once on load
-        updateClueLayout();
-
-        // and whenever window resizes
-        window.addEventListener('resize', updateClueLayout);
-
-      } // end completeLoad
+        // optional debug log
+        // console.log(`→ avgWidth=${avgWidth.toFixed(1)}, layout=${useColumn ? 'column' : 'row'}`);
+      }
 
       remove() {
         this.removeListeners();
@@ -1333,6 +1355,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
       removeGlobalListeners() {
         $(window).off('click', this.handleClickWindow);
         $(window).off('resize', this.windowResized);
+        window.removeEventListener('resize', this.updateClueLayout);
       }
 
       removeListeners() {
@@ -1364,10 +1387,25 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         this.hidden_input.off('input');
         this.hidden_input.off('keydown');
+        $(document).off('keydown');
+
+        // Clear pending saves
+        if (this.saveTimeout) {
+          clearTimeout(this.saveTimeout);
+          this.saveTimeout = null;
+        }
+
+        // Stop timer
+        if (xw_timer) {
+          clearTimeout(xw_timer);
+          xw_timer = null;
+        }
       }
 
       addListeners() {
+        $(window).off('click', this.handleClickWindow);
         $(window).on('click', this.handleClickWindow);
+        $(window).off('resize', this.windowResized);
         $(window).on('resize', this.windowResized);
 
         this.root.delegate(
@@ -1464,7 +1502,10 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         // LOAD
         this.load_btn.on('click', () => {
-          this.init();   // re-initialize
+          // Re-initialize to a clean state
+          this.init();
+          // Reset file input value to allow opening the same file again
+          this.file_input.val('');
           this.file_input.click();
         });
 
@@ -1502,7 +1543,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
         this.notepad_btn.on('click', $.proxy(this.showNotepad, this));
 
-        $(document).on('keydown', $.proxy(this.keyPressed, this));
+        $(document).off('keydown').on('keydown', $.proxy(this.keyPressed, this));
 
         this.svgContainer.addEventListener('click', (e) => {
           if (e.target.tagName === 'rect') {

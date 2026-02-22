@@ -52,7 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Found existing solver profile:', displayName);
                 } else {
                     // Prompt for name if no profile found
-                    let enteredName = prompt('Welcome! Please enter your full name for the leaderboard:');
+                    let enteredName = prompt(
+                        'Welcome!\\n\\n' +
+                        'Please enter a name for the leaderboard. This can be your real name, a nickname, or any identifier you choose. ' +
+                        'This name will be publicly displayed on leaderboards to track your progress in the tournament.\\n\\n' +
+                        'Your Name:'
+                    );
                     if (enteredName) {
                         enteredName = enteredName.trim();
                         if (enteredName.length === 0) {

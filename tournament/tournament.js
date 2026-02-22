@@ -2,6 +2,7 @@
 // This file will interact with Firebase, manage the tournament UI, etc.
 
 const SOLVERS_COLLECTION = 'solvers'; // Firestore collection for solver profiles
+const PUZZLES_COLLECTION = 'puzzles'; // Firestore collection for puzzle metadata
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Tournament page loaded.');
@@ -15,6 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize Firebase services
             const auth = firebase.auth();
             const db = firebase.firestore();
+
+            // Store references to the solver's profile and the main app div
+            let currentSolver = null;
+            const tournamentAppDiv = document.getElementById('tournament-app');
 
             // Function to handle solver initialization (auth, name prompt)
             async function initSolver() {
@@ -38,9 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const solverDoc = await solverRef.get();
 
                 let displayName = '';
+                let name = ''; // Store the raw entered name as well
 
                 if (solverDoc.exists) {
-                    displayName = solverDoc.data().displayName;
+                    const data = solverDoc.data();
+                    name = data.name;
+                    displayName = data.displayName;
                     console.log('Found existing solver profile:', displayName);
                 } else {
                     // Prompt for name if no profile found
@@ -65,28 +73,123 @@ document.addEventListener('DOMContentLoaded', () => {
                         uid: user.uid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    name = enteredName;
                     displayName = uniqueDisplayName;
                     console.log('Created new solver profile:', displayName);
                 }
 
-                // Update UI with solver's name
-                const appDiv = document.getElementById('tournament-app');
-                if (appDiv) {
-                    appDiv.innerHTML = `
-                        <h2>Welcome, ${displayName}!</h2>
-                        <p>Your unique solver ID is: ${user.uid}</p>
-                        <p>Loading tournament puzzles...</p>
-                        <!-- Crossword UI will be rendered here -->
-                        <div class="crossword"></div>
-                    `;
-                }
-
-                // Now you can start loading puzzles, etc.
-                // Example: Initialize the crossword engine (uncomment and adapt when puzzles are ready)
-                // const params = CrosswordShared.getCrosswordParams();
-                // window.gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+                currentSolver = { uid: user.uid, name: name, displayName: displayName };
+                renderPuzzleList(); // After solver is initialized, render the puzzles
             }
 
+            // Placeholder for loading a puzzle
+            function loadPuzzle(puzzleData) {
+                console.log('Loading puzzle:', puzzleData.name);
+                // In the future, this will fetch the actual puzzle file from Storage
+                // and initialize CrosswordNexus.createCrossword
+                tournamentAppDiv.innerHTML = `
+                    <h2>Loading "${puzzleData.name}"...</h2>
+                    <p>Author: ${puzzleData.author}</p>
+                    <p>Time Limit: ${puzzleData.timeLimitSeconds / 60} minutes</p>
+                    <p>${puzzleData.isWarmup ? '(Warm-up Puzzle - scores not recorded)' : ''}</p>
+                    <p>This is where the crossword will be displayed.</p>
+                    <button id="backToPuzzles">Back to Puzzle List</button>
+                    <div id="crossword-container"></div>
+                `;
+                document.getElementById('backToPuzzles').addEventListener('click', renderPuzzleList);
+                // Here, you'd load the puzzle:
+                // window.gCrossword = CrosswordNexus.createCrossword($('#crossword-container'), {
+                //   puzzle_file: { url: puzzleData.filePath, type: puzzleData.fileType }
+                // });
+            }
+
+            async function renderPuzzleList() {
+                if (!currentSolver) {
+                    tournamentAppDiv.innerHTML = `<p>Error: Solver not initialized.</p>`;
+                    return;
+                }
+
+                tournamentAppDiv.innerHTML = `
+                    <h2>Welcome, ${currentSolver.displayName}!</h2>
+                    <p>Your solver ID: ${currentSolver.uid}</p>
+                    <h3>Available Puzzles</h3>
+                    <div id="warmup-puzzle-section"></div>
+                    <div id="tournament-puzzles-section"></div>
+                `;
+
+                const warmUpSection = document.getElementById('warmup-puzzle-section');
+                const tournamentSection = document.getElementById('tournament-puzzles-section');
+
+                try {
+                    const querySnapshot = await db.collection(PUZZLES_COLLECTION)
+                        .where('status', '==', 'available')
+                        .orderBy('puzzleNumber', 'asc')
+                        .get();
+
+                    let warmUpPuzzle = null;
+                    const tournamentPuzzles = [];
+
+                    querySnapshot.forEach(doc => {
+                        const puzzle = { id: doc.id, ...doc.data() };
+                        if (puzzle.isWarmup) {
+                            warmUpPuzzle = puzzle;
+                        } else {
+                            tournamentPuzzles.push(puzzle);
+                        }
+                    });
+
+                    // Render Warm-Up Puzzle
+                    if (warmUpPuzzle) {
+                        warmUpSection.innerHTML = `
+                            <h4>Warm-up: ${warmUpPuzzle.name}</h4>
+                            <p>Author: ${warmUpPuzzle.author}</p>
+                            <p>Time Limit: ${warmUpPuzzle.timeLimitSeconds / 60} minutes (Scores not recorded)</p>
+                            <button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>
+                        `;
+                    } else {
+                        warmUpSection.innerHTML = `<p>No warm-up puzzle available yet.</p>`;
+                    }
+
+                    // Render Tournament Puzzles
+                    if (tournamentPuzzles.length > 0) {
+                        tournamentSection.innerHTML = '<h4>Tournament Puzzles</h4>';
+                        const ul = document.createElement('ul');
+                        ul.className = 'puzzle-list';
+                        tournamentPuzzles.forEach(puzzle => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `
+                                <span>#${puzzle.puzzleNumber}: ${puzzle.name} by ${puzzle.author}</span>
+                                <span>(${puzzle.timeLimitSeconds / 60} min)</span>
+                                <button data-puzzle-id="${puzzle.id}" class="start-puzzle-btn">Start Puzzle</button>
+                            `;
+                            ul.appendChild(li);
+                        });
+                        tournamentSection.appendChild(ul);
+                    } else {
+                        tournamentSection.innerHTML = `<p>No tournament puzzles available yet.</p>`;
+                    }
+
+                    // Add event listeners to all start buttons
+                    document.querySelectorAll('.start-puzzle-btn').forEach(button => {
+                        button.addEventListener('click', async (event) => {
+                            const puzzleId = event.target.dataset.puzzleId;
+                            const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
+                            if (puzzleDoc.exists) {
+                                loadPuzzle({ id: puzzleDoc.id, ...puzzleDoc.data() });
+                            } else {
+                                alert('Puzzle not found!');
+                            }
+                        });
+                    });
+
+                } catch (error) {
+                    console.error('Error fetching puzzles:', error);
+                    tournamentAppDiv.innerHTML = `<p>Error loading puzzles: ${error.message}</p>`;
+                }
+            }
+
+
+            // Start the solver initialization process
             initSolver();
 
         } catch (e) {

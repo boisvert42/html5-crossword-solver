@@ -467,25 +467,8 @@ function createCustomKeyboard() {
       }
 
       function performBackspace() {
-        if (gCrossword.selected_cell && !gCrossword.selected_cell.fixed) {
-          gCrossword.selected_cell.letter = '';
-          gCrossword.selected_cell.checked = false;
-          gCrossword.autofill();
-
-          if (gCrossword.diagramless_mode) {
-            // Move to the previous editable cell based on current diagramless direction
-            const prev = gCrossword.nextDiagramlessCell(this.selected_cell, this.diagramless_dir, -1);
-            if (prev) gCrossword.setActiveCell(prev);
-          } else if (gCrossword.selected_word) {
-            const prev_cell = gCrossword.selected_word.getPreviousCell(
-              gCrossword.selected_cell.x,
-              gCrossword.selected_cell.y
-            );
-            gCrossword.setActiveCell(prev_cell);
-          }
-
-          gCrossword.renderCells();
-          gCrossword.checkIfSolved();
+        if (gCrossword) {
+          gCrossword.backspace();
         }
       }
 

@@ -2538,26 +2538,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             this.checkIfSolved();
             break;
           case 8: // backspace
-            if (this.selected_cell && !this.selected_cell.fixed) {
-              this.selected_cell.letter = '';
-              this.selected_cell.checked = false;
-              this.autofill();
-
-              if (this.diagramless_mode) {
-                // Move to the previous editable cell based on current diagramless direction
-                const prev = this.nextDiagramlessCell(this.selected_cell, this.diagramless_dir, -1);
-                if (prev) this.setActiveCell(prev);
-              } else if (this.selected_word) {
-                const prev_cell = this.selected_word.getPreviousCell(
-                  this.selected_cell.x,
-                  this.selected_cell.y
-                );
-                this.setActiveCell(prev_cell);
-              }
-
-              this.renderCells();
-              this.checkIfSolved();
-            }
+            this.backspace();
             break;
           case 9: // tab
           case 13: // enter key -- same as tab
@@ -2660,6 +2641,29 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         if (prevent) {
           e.preventDefault();
           e.stopPropagation();
+        }
+      }
+
+      backspace() {
+        if (this.selected_cell && !this.selected_cell.fixed) {
+          this.selected_cell.letter = '';
+          this.selected_cell.checked = false;
+          this.autofill();
+
+          if (this.diagramless_mode) {
+            // Move to the previous editable cell based on current diagramless direction
+            const prev = this.nextDiagramlessCell(this.selected_cell, this.diagramless_dir, -1);
+            if (prev) this.setActiveCell(prev);
+          } else if (this.selected_word) {
+            const prev_cell = this.selected_word.getPreviousCell(
+              this.selected_cell.x,
+              this.selected_cell.y
+            );
+            this.setActiveCell(prev_cell);
+          }
+
+          this.renderCells();
+          this.checkIfSolved();
         }
       }
 

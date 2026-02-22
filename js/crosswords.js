@@ -30,58 +30,6 @@ try {
 // one-time check for mobile device status
 const IS_MOBILE = CrosswordShared.isMobileDevice();
 
-
-// Helper function to draw an arrow in a square
-function drawArrow(context, top_x, top_y, square_size, direction = "right") {
-  const headlen = square_size / 5; // length of the arrowhead
-  const centerX = top_x + square_size / 2;
-  const centerY = top_y + square_size / 2;
-  let fromX, fromY, toX, toY;
-
-  switch (direction) {
-    case "right":
-      fromX = top_x + square_size / 4;
-      fromY = centerY;
-      toX = top_x + (3 * square_size) / 4;
-      toY = centerY;
-      break;
-    case "left":
-      fromX = top_x + (3 * square_size) / 4;
-      fromY = centerY;
-      toX = top_x + square_size / 4;
-      toY = centerY;
-      break;
-    case "up":
-      fromX = centerX;
-      fromY = top_y + (3 * square_size) / 4;
-      toX = centerX;
-      toY = top_y + square_size / 4;
-      break;
-    case "down":
-      fromX = centerX;
-      fromY = top_y + square_size / 4;
-      toX = centerX;
-      toY = top_y + (3 * square_size) / 4;
-      break;
-  }
-
-  const dx = toX - fromX;
-  const dy = toY - fromY;
-  const angle = Math.atan2(dy, dx);
-
-  context.beginPath();
-  context.moveTo(fromX, fromY);
-  context.lineTo(toX, toY);
-  context.stroke();
-
-  context.beginPath();
-  context.moveTo(toX, toY);
-  context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-  context.moveTo(toX, toY);
-  context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-  context.stroke();
-}
-
 // Main crossword javascript for the Crossword Nexus HTML5 Solver
 (function(global, factory) {
   if (typeof module === 'object' && typeof module.exports === 'object') {

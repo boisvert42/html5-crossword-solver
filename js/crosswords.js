@@ -30,90 +30,6 @@ try {
 // one-time check for mobile device status
 const IS_MOBILE = CrosswordShared.isMobileDevice();
 
-// Helper function for PWA setup
-function setupPWAInstallButton(btn) {
-  if (!btn) {
-    console.warn("Install button not found.");
-    return; // Safe early exit
-  }
-
-  let deferredPrompt = null;  // <-- persist between handlers
-
-  // Listen only if button exists
-  window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    deferredPrompt = event;  // <-- now correctly stored
-
-    btn.show();
-
-    btn.off('click').on('click', async () => {
-      if (!deferredPrompt) return; // extra safety
-
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-
-      btn.hide();
-      deferredPrompt = null;  // prevents reuse
-    });
-  });
-
-  window.addEventListener('appinstalled', () => {
-    btn.hide();
-  });
-}
-
-
-// Helper function to draw an arrow in a square
-function drawArrow(context, top_x, top_y, square_size, direction = "right") {
-  const headlen = square_size / 5; // length of the arrowhead
-  const centerX = top_x + square_size / 2;
-  const centerY = top_y + square_size / 2;
-  let fromX, fromY, toX, toY;
-
-  switch (direction) {
-    case "right":
-      fromX = top_x + square_size / 4;
-      fromY = centerY;
-      toX = top_x + (3 * square_size) / 4;
-      toY = centerY;
-      break;
-    case "left":
-      fromX = top_x + (3 * square_size) / 4;
-      fromY = centerY;
-      toX = top_x + square_size / 4;
-      toY = centerY;
-      break;
-    case "up":
-      fromX = centerX;
-      fromY = top_y + (3 * square_size) / 4;
-      toX = centerX;
-      toY = top_y + square_size / 4;
-      break;
-    case "down":
-      fromX = centerX;
-      fromY = top_y + square_size / 4;
-      toX = centerX;
-      toY = top_y + (3 * square_size) / 4;
-      break;
-  }
-
-  const dx = toX - fromX;
-  const dy = toY - fromY;
-  const angle = Math.atan2(dy, dx);
-
-  context.beginPath();
-  context.moveTo(fromX, fromY);
-  context.lineTo(toX, toY);
-  context.stroke();
-
-  context.beginPath();
-  context.moveTo(toX, toY);
-  context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-  context.moveTo(toX, toY);
-  context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-  context.stroke();
-}
-
 // Main crossword javascript for the Crossword Nexus HTML5 Solver
 (function(global, factory) {
   if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -787,7 +703,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
 
           // Show PWA install button
           const btn = this.root.find('#installAppBtn');
-          setupPWAInstallButton(btn);
+          CrosswordShared.setupPWAInstallButton(btn);
 
           // drag-and-drop
           if (isAdvancedUpload) {
@@ -2538,26 +2454,7 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
             this.checkIfSolved();
             break;
           case 8: // backspace
-            if (this.selected_cell && !this.selected_cell.fixed) {
-              this.selected_cell.letter = '';
-              this.selected_cell.checked = false;
-              this.autofill();
-
-              if (this.diagramless_mode) {
-                // Move to the previous editable cell based on current diagramless direction
-                const prev = this.nextDiagramlessCell(this.selected_cell, this.diagramless_dir, -1);
-                if (prev) this.setActiveCell(prev);
-              } else if (this.selected_word) {
-                const prev_cell = this.selected_word.getPreviousCell(
-                  this.selected_cell.x,
-                  this.selected_cell.y
-                );
-                this.setActiveCell(prev_cell);
-              }
-
-              this.renderCells();
-              this.checkIfSolved();
-            }
+            this.backspace();
             break;
           case 9: // tab
           case 13: // enter key -- same as tab
@@ -2660,6 +2557,29 @@ function drawArrow(context, top_x, top_y, square_size, direction = "right") {
         if (prevent) {
           e.preventDefault();
           e.stopPropagation();
+        }
+      }
+
+      backspace() {
+        if (this.selected_cell && !this.selected_cell.fixed) {
+          this.selected_cell.letter = '';
+          this.selected_cell.checked = false;
+          this.autofill();
+
+          if (this.diagramless_mode) {
+            // Move to the previous editable cell based on current diagramless direction
+            const prev = this.nextDiagramlessCell(this.selected_cell, this.diagramless_dir, -1);
+            if (prev) this.setActiveCell(prev);
+          } else if (this.selected_word) {
+            const prev_cell = this.selected_word.getPreviousCell(
+              this.selected_cell.x,
+              this.selected_cell.y
+            );
+            this.setActiveCell(prev_cell);
+          }
+
+          this.renderCells();
+          this.checkIfSolved();
         }
       }
 

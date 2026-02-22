@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossword Tournament Solver</title>
+    <link rel="stylesheet" href="../css/crossword.shared.css">
+    <link rel="stylesheet" href="tournament.css">
+    <!-- jQuery is a dependency for the main crossword engine -->
+    <script src="../lib/jquery.js"></script>
+    <!-- JS Crossword (main engine) -->
+    <script src="../lib/jscrossword_combined.js"></script>
+    <!-- Shared Crossword functions -->
+    <script src="../js/crossword.shared.js"></script>
+</head>
+<body>
+    <h1>Crossword Tournament Solver</h1>
+    <div id="tournament-app">
+        <!-- Tournament-specific UI will go here -->
+        <p>Loading tournament...</p>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+    <!-- Firebase Config (user provided) -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Tournament-specific JavaScript -->
+    <script src="tournament.js"></script>
+</body>
+</html>

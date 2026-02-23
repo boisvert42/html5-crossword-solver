@@ -3840,7 +3840,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       updateClueAppearance(word) {
-        const clueEl = this.clues_holder.find(`.cw-clue.word-${word.id} .cw-clue-text`);
+        const clueEl = $(document).find(`.cw-clue.word-${word.id} .cw-clue-text`);
 
         if (!this.config.gray_completed_clues && !this.fakeclues) {
           // Reset clue styling if the setting is turned off and this is not fakeclues

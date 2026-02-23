@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 const CONFIGURABLE_SETTINGS = [
   "skip_filled_letters", "arrow_direction", "space_bar", "tab_key",
   "timer_autostart", "dark_mode_enabled", "gray_completed_clues",
-  "confetti_enabled"
+  "confetti_enabled", "notepad_name",
 ];
 
 // Since DarkReader is an external library, make sure it exists
@@ -72,7 +72,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       forced_theme: null,
       lock_theme: false,
       min_sidebar_clue_width: 220,
-      save_game_limit: 10
+      save_game_limit: 10,
+      notepad_name: 'Notes',
     };
 
     // constants
@@ -1162,7 +1163,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           ${
             this.notepad
               ? `<button class="cw-button cw-button-notepad">
-                   <span class="cw-button-icon">📝</span> Notes
+                   <span class="cw-button-icon">📝</span> ${this.config.notepad_name}
                  </button>`
               : ''
           }
@@ -3067,7 +3068,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       showNotepad() {
-        this.createModalBox('Notes', escape(this.notepad));
+        this.createModalBox(this.config.notepad_name, escape(this.notepad));
       }
 
       /**

@@ -92,38 +92,25 @@ This guide outlines the manual steps required to set up your Firebase project fo
 
 You need to manually add initial puzzle data to the `puzzles` collection in Firestore.
 
-1.  In the Firebase console, navigate to **Firestore Database** -> `puzzles` collection.
-2.  Add documents with the following fields for each puzzle:
+*   **Warm-Up Puzzle (Example):**
+    *   **Document ID:** (Auto-ID)
+    *   **Field:** `name`, **Type:** `string`, **Value:** `Warm-Up Puzzle`
+    *   **Field:** `author`, **Type:** `string`, **Value:** `Various`
+    *   **Field:** `filePath`, **Type:** `string`, **Value:** `puzzles/warmup.puz` (This is the path to the file in Firebase Storage)
+    *   **Field:** `isWarmup`, **Type:** `boolean`, **Value:** `true`
+    *   **Field:** `puzzleNumber`, **Type:** `number`, **Value:** `0`
+    *   **Field:** `status`, **Type:** `string`, **Value:** `available`
+    *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `600`
 
-    *   **Warm-Up Puzzle (Example):**
-        *   **Document ID:** (Auto-ID)
-        *   **Field:** `name`, **Type:** `string`, **Value:** `Warm-Up Puzzle`
-        *   **Field:** `author`, **Type:** `string`, **Value:** `Various`
-        *   **Field:** `fileName`, **Type:** `string`, **Value:** `warmup.jpz` (This is the name of the file in Firebase Storage)
-        *   **Field:** `isWarmup`, **Type:** `boolean`, **Value:** `true`
-        *   **Field:** `puzzleNumber`, **Type:** `number`, **Value:** `0`
-        *   **Field:** `status`, **Type:** `string`, **Value:** `available`
-        *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `600`
-
-    *   **Tournament Puzzle 1 (Example):**
-        *   **Document ID:** (Auto-ID)
-        *   **Field:** `name`, **Type:** `string`, **Value:** `Tournament Puzzle 1`
-        *   **Field:** `author`, **Type:** `string`, **Value:** `Jane Doe`
-        *   **Field:** `fileName`, **Type:** `string`, **Value:** `puzzle1.jpz`
-        *   **Field:** `isWarmup`, **Type:** `boolean`, **Value:** `false`
-        *   **Field:** `puzzleNumber`, **Type:** `number`, **Value:** `1`
-        *   **Field:** `status`, **Type:** `string`, **Value:** `available`
-        *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `900`
-
-    *   **Tournament Puzzle 2 (Example):**
-        *   **Document ID:** (Auto-ID)
-        *   **Field:** `name`, **Type:** `string`, **Value:** `Tournament Puzzle 2`
-        *   **Field:** `author`, **Type:** `string`, **Value:** `John Smith`
-        *   **Field:** `fileName`, **Type:** `string`, **Value:** `puzzle2.jpz`
-        *   **Field:** `isWarmup`, **Type:** `boolean`, **Value:** `false`
-        *   **Field:** `puzzleNumber`, **Type:** `number`, **Value:** `2`
-        *   **Field:** `status`, **Type:** `string`, **Value:** `available`
-        *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `1200`
+*   **Tournament Puzzle 1 (Example):**
+    *   **Document ID:** (Auto-ID)
+    *   **Field:** `name`, **Type:** `string`, **Value:** `Tournament Puzzle 1`
+    *   **Field:** `author`, **Type:** `string`, **Value:** `Jane Doe`
+    *   **Field:** `filePath`, **Type:** `string`, **Value:** `puzzles/puzzle1.puz`
+    *   **Field:** `isWarmup`, **Type:** `boolean`, **Value:** `false`
+    *   **Field:** `puzzleNumber`, **Type:** `number`, **Value:** `1`
+    *   **Field:** `status`, **Type:** `string`, **Value:** `available`
+    *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `900`
 
 ### 8. Create Firestore Index
 
@@ -134,6 +121,50 @@ To enable efficient querying of puzzles, you need to create a composite index.
 3.  The Firebase console will pre-fill the details for the required index (for `status` and `puzzleNumber`).
 4.  Click **"Create Index"**.
 5.  It might take a few minutes for the index to build. Once it's "Enabled", your puzzles will load correctly.
+
+### 9. Setting Up Divisions (Optional)
+
+The tournament solver supports different "divisions" (e.g., "Harder", "Easier"), allowing you to serve different puzzles to different groups of solvers.
+
+#### a. Define Available Divisions
+
+1.  In the Firebase console, go to **Firestore Database**.
+2.  Create a new collection named `tournament_config`.
+3.  Inside this collection, create a new document with the **specific ID** `divisions`.
+4.  In the `divisions` document, add a field:
+    *   **Field:** `list`
+    *   **Type:** `array`
+    *   **Value:** An array of strings representing the names of your divisions.
+        *   **Example Value:** `["Harder", "Easier", "Pairs"]`
+
+Your `tournament_config/divisions` document should look like this:
+
+![image](https://user-images.githubusercontent.com/1028/235338101-70529d47-380d-4581-98e3-535d8869c996.png)
+
+When a new user logs in, they will be prompted to choose from one of these divisions.
+
+#### b. Configure Puzzles for Divisions
+
+For any puzzle that should be different across divisions, you need to modify its document in the `puzzles` collection.
+
+1.  Instead of a single `filePath` field, add a new field named `filesByDivision`.
+2.  Set its **Type** to `map`.
+3.  Add key-value pairs to this map, where the **key** is the exact division name (from your `divisions` list) and the **value** is the path to that division's puzzle file in Firebase Storage.
+4.  **Include a `default` key** as a fallback for any division not explicitly listed.
+
+**Example: A puzzle with different files for "Harder" and "Easier" divisions.**
+
+*   **Field:** `filesByDivision`, **Type:** `map`, **Value:**
+    *   `Harder`: (string) `puzzles/p6-hard.puz`
+    *   `Easier`: (string) `puzzles/p6-easy.puz`
+    *   `default`: (string) `puzzles/p6-easy.puz`
+
+**Example: A puzzle that is the same for all divisions.**
+You can continue to use the simple `filePath` field. The application will automatically fall back to it if `filesByDivision` is not present.
+
+*   **Field:** `filePath`, **Type:** `string`, **Value:** `puzzles/puzzle7.puz`
+
+When a user in a specific division starts a puzzle, the solver will first look for a `filesByDivision` map and try to find a puzzle file matching their division. If it can't, it will use the `default` path, and finally, it will look for the top-level `filePath`.
 
 ## Next Steps
 

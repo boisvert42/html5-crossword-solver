@@ -3,6 +3,7 @@
 
 const SOLVERS_COLLECTION = 'solvers'; // Firestore collection for solver profiles
 const PUZZLES_COLLECTION = 'puzzles'; // Firestore collection for puzzle metadata
+const CONFIG_COLLECTION = 'tournament_config'; // Firestore collection for tournament configuration
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Tournament page loaded.');
@@ -42,14 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const solverRef = db.collection(SOLVERS_COLLECTION).doc(user.uid);
                 const solverDoc = await solverRef.get();
 
-                let displayName = '';
-                let name = ''; // Store the raw entered name as well
+                let name, displayName, division;
 
-                if (solverDoc.exists) {
+                if (solverDoc.exists && solverDoc.data().name) {
                     const data = solverDoc.data();
                     name = data.name;
                     displayName = data.displayName;
-                    console.log('Found existing solver profile:', displayName);
+                    division = data.division; // May be undefined
+                    console.log(`Found existing solver profile for ${displayName}.`);
                 } else {
                     // Prompt for name if no profile found
                     let enteredName = prompt(
@@ -66,30 +67,90 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         enteredName = 'Anonymous Solver'; // Default if prompt is cancelled or empty
                     }
+                    name = enteredName;
 
                     // Generate a short unique suffix from the UID for display disambiguation
                     const uidSuffix = user.uid.substring(0, 4); // First 4 chars of UID
-                    const uniqueDisplayName = `${enteredName} (#${uidSuffix})`;
+                    displayName = `${name} (#${uidSuffix})`;
 
-                    // Store the chosen name and unique display name
+                    // Set initial profile data (without division yet)
                     await solverRef.set({
-                        name: enteredName,
-                        displayName: uniqueDisplayName, // This is what goes on the leaderboard
+                        name: name,
+                        displayName: displayName,
                         uid: user.uid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    name = enteredName;
-                    displayName = uniqueDisplayName;
-                    console.log('Created new solver profile:', displayName);
+                    }, { merge: true });
+                    console.log(`Created new solver profile for ${displayName}.`);
                 }
 
-                currentSolver = { uid: user.uid, name: name, displayName: displayName };
-                renderPuzzleList(); // After solver is initialized, render the puzzles
+                // Now, check if a division needs to be selected
+                if (!division) {
+                    console.log('Solver does not have a division. Prompting for selection.');
+                    try {
+                        const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
+                        // Fallback to default divisions if Firebase config is missing
+                        const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
+                        
+                        let chosenDivision = null;
+                        let promptMessage = 'Please choose your division for the tournament.\\n\\n' +
+                                            `Available divisions: ${availableDivisions.join(', ')}\\n\\n` +
+                                            'Your choice will determine which puzzles you receive.';
+                        
+                        while (true) {
+                            let input = prompt(promptMessage);
+                            if (input === null) {
+                                // User hit cancel. We can't proceed without a division.
+                                // For now, we'll just keep prompting. A better UI would handle this more gracefully.
+                                promptMessage = 'A division must be selected to continue.\\n\\n' +
+                                                `Available divisions: ${availableDivisions.join(', ')}`;
+                                continue;
+                            }
+                            input = input.trim();
+                            // Case-insensitive matching
+                            const matchedDivision = availableDivisions.find(d => d.toLowerCase() === input.toLowerCase());
+                            if (matchedDivision) {
+                                chosenDivision = matchedDivision;
+                                break;
+                            } else {
+                                promptMessage = `Invalid division "${input}". Please choose from: ${availableDivisions.join(', ')}`;
+                            }
+                        }
+
+                        division = chosenDivision;
+                        await solverRef.set({ division: division }, { merge: true });
+                        console.log(`Solver ${displayName} selected division: ${division}`);
+                    } catch (error) {
+                        console.error('Error fetching divisions or updating solver:', error);
+                        alert('Could not set your division. Please try reloading the page.');
+                        return;
+                    }
+                }
+
+                currentSolver = { uid: user.uid, name, displayName, division };
+                renderPuzzleList();
             }
 
             // Placeholder for loading a puzzle
             function loadPuzzle(puzzleData) {
-                console.log('Loading puzzle:', puzzleData.name);
+                // Determine the correct puzzle file based on the solver's division
+                let puzzlePath = null;
+                if (puzzleData.filesByDivision && currentSolver.division) {
+                    puzzlePath = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
+                }
+                // Fallback to the old filePath field for backward compatibility
+                if (!puzzlePath) {
+                    puzzlePath = puzzleData.filePath; 
+                }
+
+                if (!puzzlePath) {
+                    console.error('Could not determine puzzle path for puzzle:', puzzleData.name, 'and division:', currentSolver.division);
+                    alert('Error: Could not find the puzzle file for your division.');
+                    renderPuzzleList(); // Go back to the list
+                    return;
+                }
+
+                console.log(`Loading puzzle: "${puzzleData.name}" for division "${currentSolver.division}" from ${puzzlePath}`);
+                
                 // In the future, this will fetch the actual puzzle file from Storage
                 // and initialize CrosswordNexus.createCrossword
                 tournamentAppDiv.innerHTML = `
@@ -104,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('backToPuzzles').addEventListener('click', renderPuzzleList);
                 // Here, you'd load the puzzle:
                 // window.gCrossword = CrosswordNexus.createCrossword($('#crossword-container'), {
-                //   puzzle_file: { url: puzzleData.filePath, type: puzzleData.fileType }
+                //   puzzle_file: { url: puzzlePath, type: 'puz' } // Assuming .puz, might need to store type in firebase
                 // });
             }
 
@@ -115,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 tournamentAppDiv.innerHTML = `
-                    <h2>Welcome, ${currentSolver.displayName}!</h2>
+                    <h2>Welcome, ${currentSolver.displayName}! (Division: ${currentSolver.division})</h2>
                     <p>Your solver ID: ${currentSolver.uid}</p>
                     <h3>Available Puzzles</h3>
                     <div id="warmup-puzzle-section"></div>
@@ -180,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const puzzleId = event.target.dataset.puzzleId;
                             const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
                             if (puzzleDoc.exists) {
-                                loadPuzzle({ id: puzzleDoc.id, ...puzzleDoc.data() });
+                                loadPuzzle({ id: puzzleDoc.id, ...doc.data() });
                             } else {
                                 alert('Puzzle not found!');
                             }

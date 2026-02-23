@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize Firebase services
             const auth = firebase.auth();
             const db = firebase.firestore();
+            const storage = firebase.storage();
 
             // Store references to the solver's profile and the main app div
             let currentSolver = null;
@@ -130,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderPuzzleList();
             }
 
-            // Placeholder for loading a puzzle
-            function loadPuzzle(puzzleData) {
+            // Function to load and render a specified puzzle
+            async function loadPuzzle(puzzleData) {
                 // Determine the correct puzzle file based on the solver's division
                 let puzzlePath = null;
                 if (puzzleData.filesByDivision && currentSolver.division) {
@@ -149,24 +150,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                console.log(`Loading puzzle: "${puzzleData.name}" for division "${currentSolver.division}" from ${puzzlePath}`);
-                
-                // In the future, this will fetch the actual puzzle file from Storage
-                // and initialize CrosswordNexus.createCrossword
+                let puzzleUrl;
+
+                // If path starts with '../', treat as a local relative path. Otherwise, get a Firebase Storage download URL.
+                if (puzzlePath.startsWith('../')) {
+                    console.log(`Loading local puzzle from: ${puzzlePath}`);
+                    puzzleUrl = puzzlePath;
+                } else {
+                    try {
+                        console.log(`Fetching download URL for Firebase Storage path: ${puzzlePath}`);
+                        const storageRef = storage.ref(puzzlePath);
+                        puzzleUrl = await storageRef.getDownloadURL();
+                        console.log('Got download URL:', puzzleUrl);
+                    } catch (error) {
+                        console.error(`Failed to get download URL for ${puzzlePath}`, error);
+                        alert(`Error: Could not load puzzle file from cloud storage. ${error.message}`);
+                        renderPuzzleList();
+                        return;
+                    }
+                }
+
+                // Render the puzzle container UI
                 tournamentAppDiv.innerHTML = `
-                    <h2>Loading "${puzzleData.name}"...</h2>
-                    <p>Author: ${puzzleData.author}</p>
-                    <p>Time Limit: ${puzzleData.timeLimitSeconds / 60} minutes</p>
+                    <h2>"${puzzleData.name}"</h2>
+                    <p>Author: ${puzzleData.author} | Time Limit: ${puzzleData.timeLimitSeconds / 60} minutes</p>
                     <p>${puzzleData.isWarmup ? '(Warm-up Puzzle - scores not recorded)' : ''}</p>
-                    <p>This is where the crossword will be displayed.</p>
                     <button id="backToPuzzles">Back to Puzzle List</button>
                     <div id="crossword-container"></div>
                 `;
                 document.getElementById('backToPuzzles').addEventListener('click', renderPuzzleList);
-                // Here, you'd load the puzzle:
-                // window.gCrossword = CrosswordNexus.createCrossword($('#crossword-container'), {
-                //   puzzle_file: { url: puzzlePath, type: 'puz' } // Assuming .puz, might need to store type in firebase
-                // });
+
+                // Now, load the crossword into the container
+                try {
+                    console.log(`Initializing crossword with URL: ${puzzleUrl}`);
+                    const crosswordContainer = $('#crossword-container');
+                    crosswordContainer.show();
+
+                    window.gCrossword = CrosswordNexus.createCrossword(crosswordContainer, {
+                       puzzle_file: { url: puzzleUrl }
+                    });
+                } catch (e) {
+                    console.error("Error creating crossword:", e);
+                    alert("Failed to render the crossword puzzle.");
+                }
             }
 
             async function renderPuzzleList() {

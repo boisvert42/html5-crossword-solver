@@ -88,9 +88,20 @@ This guide outlines the manual steps required to set up your Firebase project fo
     *   Add the line `tournament/firebase-config.js`.
     *   If you've previously committed this file, you'll need to remove it from Git's tracking: `git rm --cached tournament/firebase-config.js` and then commit this removal.
 
-### 7. Add Sample Puzzle Metadata to Firestore
+### 7. Upload Puzzle Files to Firebase Storage
 
-You need to manually add initial puzzle data to the `puzzles` collection in Firestore.
+Before you can add puzzle metadata to Firestore, you need to upload the actual puzzle files (e.g., `.puz`, `.jpz` files) to Firebase Storage. These files will be served to the solver client.
+
+1.  In the Firebase console, navigate to **"Storage"** in the left-hand menu.
+2.  You should see a default storage bucket. Click on the **"Files"** tab.
+3.  Create a new folder named `puzzles`. This helps organize your puzzle assets. To do this, click the "Create folder" icon (or similar UI element), type `puzzles`, and confirm.
+4.  Navigate into the `puzzles` folder.
+5.  Click the **"Upload file"** button and select your puzzle files from your local computer.
+6.  Once uploaded, note the full path to your files (e.g., `puzzles/warmup.puz`, `puzzles/puzzle1.puz`). These paths will be used in your Firestore puzzle metadata.
+
+### 8. Add Sample Puzzle Metadata to Firestore
+
+After uploading your puzzle files to Firebase Storage, you need to manually add initial puzzle data to the `puzzles` collection in Firestore. Ensure the `filePath` values (or paths within `filesByDivision`) exactly match the paths of your uploaded files in Firebase Storage.
 
 *   **Warm-Up Puzzle (Example):**
     *   **Document ID:** (Auto-ID)
@@ -99,7 +110,7 @@ You need to manually add initial puzzle data to the `puzzles` collection in Fire
     *   **Field:** `filePath`, **Type:** `string`, **Value:** `puzzles/warmup.puz` (This is the path to the file in Firebase Storage)
     *   **Field:** `isWarmup`, **Type:** `boolean`, **Value:** `true`
     *   **Field:** `puzzleNumber`, **Type:** `number`, **Value:** `0`
-    *   **Field:** `status`, **Type:** `string`, **Value:** `available`
+    *   **Field:** `status`, **Type:** `string`, `Value:** `available`
     *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `600`
 
 *   **Tournament Puzzle 1 (Example):**
@@ -112,7 +123,7 @@ You need to manually add initial puzzle data to the `puzzles` collection in Fire
     *   **Field:** `status`, **Type:** `string`, **Value:** `available`
     *   **Field:** `timeLimitSeconds`, **Type:** `number`, **Value:** `900`
 
-### 8. Create Firestore Index
+### 9. Create Firestore Index
 
 To enable efficient querying of puzzles, you need to create a composite index.
 
@@ -122,7 +133,7 @@ To enable efficient querying of puzzles, you need to create a composite index.
 4.  Click **"Create Index"**.
 5.  It might take a few minutes for the index to build. Once it's "Enabled", your puzzles will load correctly.
 
-### 9. Setting Up Divisions (Optional)
+### 10. Setting Up Divisions (Optional)
 
 The tournament solver supports different "divisions" (e.g., "Harder", "Easier"), allowing you to serve different puzzles to different groups of solvers.
 
@@ -149,7 +160,7 @@ For any puzzle that should be different across divisions, you need to modify its
 
 1.  Instead of a single `filePath` field, add a new field named `filesByDivision`.
 2.  Set its **Type** to `map`.
-3.  Add key-value pairs to this map, where the **key** is the exact division name (from your `divisions` list) and the **value** is the path to that division's puzzle file in Firebase Storage.
+3.  Add key-value pairs to this map, where the **key** is the exact division name (from your `divisions` list) and the **value** is the path to that division's puzzle file.
 4.  **Include a `default` key** as a fallback for any division not explicitly listed.
 
 **Example: A puzzle with different files for "Harder" and "Easier" divisions.**
@@ -165,6 +176,23 @@ You can continue to use the simple `filePath` field. The application will automa
 *   **Field:** `filePath`, **Type:** `string`, **Value:** `puzzles/puzzle7.puz`
 
 When a user in a specific division starts a puzzle, the solver will first look for a `filesByDivision` map and try to find a puzzle file matching their division. If it can't, it will use the `default` path, and finally, it will look for the top-level `filePath`.
+
+#### c. Using Local Puzzle Files (Optional, Zero-Cost)
+
+As an alternative to uploading files to Firebase Storage, you can store puzzle files directly within the project and serve them locally. This is a good option for testing or for running a tournament without incurring any Firebase Storage costs.
+
+1.  **Place Files:** Place your puzzle files in the `puzzles/` directory at the root of the project (the same directory where you find `sample_puzzles`).
+
+2.  **Use a Relative Path in Firestore:** When defining your puzzle in Firestore, use a relative path for the `filePath` (or in the `filesByDivision` map) that points from the `tournament/` directory to your file. **The path must start with `../`**.
+
+**Example `puzzles` document using a local file:**
+
+*   **Field:** `name`, **Type:** `string`, **Value:** `Local Test Puzzle`
+*   **Field:** `author`, **Type:** `string`, **Value:** `Local Host`
+*   **Field:** `filePath`, **Type:** `string`, **Value:** `../puzzles/my-local-puzzle.puz`
+*   ... (other fields)
+
+The application will detect that the path is local and will load it directly from the project files instead of trying to fetch it from Firebase Storage.
 
 ## Next Steps
 

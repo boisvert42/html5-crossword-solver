@@ -882,8 +882,6 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           }
         });
 
-        console.log(puzzle);
-
         // Metadata
         this.title = puzzle.metadata.title || '';
         this.author = puzzle.metadata.author || '';

@@ -888,6 +888,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.copyright = puzzle.metadata.copyright || '';
         this.crossword_type = puzzle.metadata.crossword_type;
         this.fakeclues = puzzle.metadata.fakeclues || false;
+        this.realwords = puzzle.metadata.realwords || false;
         this.notepad = puzzle.metadata.description || '';
         this.grid_width = puzzle.metadata.width;
         this.grid_height = puzzle.metadata.height;

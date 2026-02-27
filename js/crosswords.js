@@ -903,8 +903,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           this.is_autofill = true;
         }
 
-        if (this.fakeclues || this.crossword_type === 'diagramless' || this.crossword_type === 'coded') {
-          // top-text is meaningless for fakeclues and diagramless puzzles (and coded!)
+        const allGroupsFake = this.fakeclues || (puzzle.clues || []).every(g => g.fake);
+        if (allGroupsFake || this.crossword_type === 'diagramless' || this.crossword_type === 'coded') {
+          // top-text is meaningless if all groups are fake, or for diagramless/coded puzzles
           $('div.cw-top-text-wrapper').css({
             display: 'none'
           });
@@ -1068,6 +1069,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               title,
               clues,
               words_ids,
+              fake: Boolean(clueSet.fake || this.fakeclues),
             });
 
             this.clueGroups.push(group);
@@ -3034,7 +3036,12 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         const word = this.words[target.data('word')];
         if (!word) return;
 
-        if (this.fakeclues) {
+        // Find which clue group this clue belongs to
+        const clickedGroupId = target.data('clues');
+        const groupIndex = this.clueGroups.findIndex(g => g.id === clickedGroupId);
+        const group = this.clueGroups[groupIndex];
+
+        if (group && group.isFake) {
           word.fakeClueCompleted = !Boolean(word.fakeClueCompleted);
           this.updateClueAppearance(word);
           return;
@@ -3044,10 +3051,6 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         const cell = word.getFirstEmptyCell() || word.getFirstCell();
         if (!cell) return;
-
-        // Find which clue group this clue belongs to
-        const clickedGroupId = target.data('clues');
-        const groupIndex = this.clueGroups.findIndex(g => g.id === clickedGroupId);
 
         // Switch directly to that group if needed
         if (groupIndex !== -1 && groupIndex !== this.activeClueGroupIndex) {
@@ -3843,24 +3846,34 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       updateClueAppearance(word) {
-        const clueEl = $(document).find(`.cw-clue.word-${word.id} .cw-clue-text`);
+        const clueEls = $(document).find(`.cw-clue.word-${word.id}`);
 
-        if (!this.config.gray_completed_clues && !this.fakeclues) {
-          // Reset clue styling if the setting is turned off and this is not fakeclues
-          clueEl.css({
+        clueEls.each((i, el) => {
+          const $el = $(el);
+          const $text = $el.find('.cw-clue-text');
+
+          const groupId = $el.data('clues');
+          const group = this.clueGroups.find(g => g.id === groupId);
+
+          if (!group) return;
+
+          if (!this.config.gray_completed_clues && !group.isFake) {
+            // Reset clue styling if the setting is turned off and this is not a fake group
+            $text.css({
+              "text-decoration": "",
+              "color": ""
+            });
+            return;
+          }
+
+          const shouldGray = group.isFake ?
+            Boolean(word.fakeClueCompleted) :
+            word.isFilled();
+
+          $text.css({
             "text-decoration": "",
-            "color": ""
+            "color": shouldGray ? "#aaa" : ""
           });
-          return;
-        }
-
-        const shouldGray = this.fakeclues
-          ? Boolean(word.fakeClueCompleted)
-          : word.isFilled();
-
-        clueEl.css({
-          "text-decoration": "",
-          "color": shouldGray ? "#aaa" : ""
         });
       }
     }
@@ -3874,6 +3887,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.clues_container = null;
         this.words_ids = [];
         this.crossword = crossword;
+        this.isFake = data.fake || false;
         if (data) {
           if (
             data.hasOwnProperty('id') &&
@@ -3961,7 +3975,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       // in clues list, marks clue for word that has cell with given coordinates
       markActive(x, y, is_passive, fakeclues = false) {
         // don't mark anything as active if fake clues
-        if (fakeclues || this.crossword.diagramless_mode) {
+        if (this.isFake || this.crossword.diagramless_mode) {
           return;
         }
         var classname = is_passive ? 'passive' : 'active',

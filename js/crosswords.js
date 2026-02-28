@@ -794,6 +794,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           });
         }
 
+        //console.log(puzzle);
+
         puzzle.kind = puzzle.metadata.kind;
 
         this.jsxw = puzzle;
@@ -1698,7 +1700,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       setActiveWord(word) {
         if (word) {
           this.selected_word = word;
-          if (this.fakeclues) {
+          const group = this.clueGroups[this.activeClueGroupIndex];
+          if (this.fakeclues || (group && group.isFake)) {
+            this.top_text.html('');
             return;
           }
           this.top_text.html(`
@@ -2328,6 +2332,12 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         // If still nothing found, just stay on current group
         if (matchingWord) {
           this.setActiveWord(matchingWord);
+        } else {
+          // If no matching word found and current group is fake, clear top text
+          const currentGroup = this.clueGroups[this.activeClueGroupIndex];
+          if (this.fakeclues || (currentGroup && currentGroup.isFake)) {
+            this.top_text.html('');
+          }
         }
 
         // Update cell selection and redraw
@@ -3052,8 +3062,6 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
           // Update this specific clue element immediately
           this.updateClueAppearance(clue, target);
-          return;
-        }
           return;
         }
 

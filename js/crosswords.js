@@ -1778,10 +1778,11 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
           // attach metadata
           clue_el.data({
+            clue: clue,
             word: clue.word,
             number: clue.number,
             clues: clues_group.id,
-          }).addClass(`cw-clue word-${clue.word}`);
+          }).addClass(`cw-clue word-${clue.word} group-${clues_group.id}`);
 
           // restore any saved note
           const clueNote = notes.get(clue.word);
@@ -2174,9 +2175,12 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
         setTimeout(() => this.syncTopTextWidth(), 0);
 
-        for (const wordId in this.words) {
-          this.updateClueAppearance(this.words[wordId]);
-        }
+        // Update all clues in the sidebar
+        this.clues_holder.find('.cw-clue').each((i, el) => {
+          const $el = $(el);
+          const clue = $el.data('clue');
+          this.updateClueAppearance(clue, $el);
+        });
       }
 
       drawSelectedWordBorder(svg, word) {
@@ -3033,19 +3037,27 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       // callback for clicking a clue in the sidebar
       clueClicked(e) {
         const target = $(e.currentTarget);
-        const word = this.words[target.data('word')];
-        if (!word) return;
+        const clue = target.data('clue');
+        const wordId = target.data('word');
+        const word = this.words[wordId];
 
         // Find which clue group this clue belongs to
         const clickedGroupId = target.data('clues');
         const groupIndex = this.clueGroups.findIndex(g => g.id === clickedGroupId);
         const group = this.clueGroups[groupIndex];
 
-        if (group && group.isFake) {
-          word.fakeClueCompleted = !Boolean(word.fakeClueCompleted);
-          this.updateClueAppearance(word);
+        if (this.fakeclues || (group && group.isFake)) {
+          // Toggle "completed" state on the clue itself
+          clue.fakeClueCompleted = !Boolean(clue.fakeClueCompleted);
+
+          // Update this specific clue element immediately
+          this.updateClueAppearance(clue, target);
           return;
         }
+          return;
+        }
+
+        if (!word) return;
 
         if (this.diagramless_mode) return;
 
@@ -3464,9 +3476,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
                 // If the toggled setting is gray_completed_clues, re-render clues immediately
                 if (event.target.name === 'gray_completed_clues') {
-                  for (const wordId in this.words) {
-                    this.updateClueAppearance(this.words[wordId]);
-                  }
+                  this.renderCells();
                   this.syncTopTextWidth();
                 }
 
@@ -3845,35 +3855,38 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
       }
 
-      updateClueAppearance(word) {
-        const clueEls = $(document).find(`.cw-clue.word-${word.id}`);
+      updateClueAppearance(clue, $el) {
+        if (!clue) return;
 
-        clueEls.each((i, el) => {
-          const $el = $(el);
-          const $text = $el.find('.cw-clue-text');
+        // Use provided $el or look it up in the DOM using unique identifying info
+        const clueEl = $el || $(document).find(`.cw-clue.word-${clue.word}[data-number="${clue.number}"]`);
 
-          const groupId = $el.data('clues');
-          const group = this.clueGroups.find(g => g.id === groupId);
+        // We specifically target the clue-text span to avoid graying out the clue number
+        const textEl = clueEl.hasClass('cw-clue-text') ? clueEl : clueEl.find('.cw-clue-text');
 
-          if (!group) return;
+        const groupId = clueEl.data('clues');
+        const group = this.clueGroups.find(g => g.id === groupId);
 
-          if (!this.config.gray_completed_clues && !group.isFake) {
-            // Reset clue styling if the setting is turned off and this is not a fake group
-            $text.css({
-              "text-decoration": "",
-              "color": ""
-            });
-            return;
-          }
-
-          const shouldGray = group.isFake ?
-            Boolean(word.fakeClueCompleted) :
-            word.isFilled();
-
-          $text.css({
+        if (!this.config.gray_completed_clues && (!group || !group.isFake) && !this.fakeclues) {
+          // Reset clue styling if the setting is turned off and this is not a fake clue context
+          textEl.css({
             "text-decoration": "",
-            "color": shouldGray ? "#aaa" : ""
+            "color": ""
           });
+          return;
+        }
+
+        // Determine if it should be gray based on fakeclues context or word fill state
+        let shouldGray = false;
+        if (this.fakeclues || (group && group.isFake)) {
+          shouldGray = Boolean(clue.fakeClueCompleted);
+        } else if (clue.word && this.words[clue.word]) {
+          shouldGray = this.words[clue.word].isFilled();
+        }
+
+        textEl.css({
+          "text-decoration": "",
+          "color": shouldGray ? "#aaa" : ""
         });
       }
     }

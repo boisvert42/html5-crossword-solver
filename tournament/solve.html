@@ -64,7 +64,13 @@
             console.log('Tournament params loaded:', params);
             
             if (params.tournament_mode) {
-                console.log('Tournament Mode Detected');
+                console.log('Tournament Mode Detected: Applying overrides');
+                params.has_reveal = false;
+                params.has_check = false;
+                params.timer_autostart = true;
+                params.show_timer_option = false;
+                params.allow_timer_toggle = false;
+
                 if (!window.opener) {
                     console.warn('WARNING: window.opener is null! Score reporting will fail.');
                 }

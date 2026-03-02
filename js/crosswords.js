@@ -64,6 +64,10 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       space_bar: 'space_clear',
       filled_clue_color: '#999999',
       timer_autostart: false,
+      show_timer_option: true,
+      allow_timer_toggle: true,
+      has_reveal: true,
+      has_check: true,
       confetti_enabled: true,
       dark_mode_enabled: false,
       tab_key: 'tab_noskip',
@@ -611,8 +615,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.clueGroups = [];
         this.displayClueGroups = null;
 
-        this.has_reveal = true;
-        this.has_check = true;
+        this.has_reveal = this.config.has_reveal;
+        this.has_check = this.config.has_check;
         this.is_autofill = false;
         this.completion_message = "Puzzle solved!";
         this.notes = new Map();
@@ -883,6 +887,14 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               this.notes.set(entry.key, entry.value);
             }
           }
+          
+          // Restore timer
+          const savedTimer = localStorage.getItem(this.savegame_name + "_timer");
+          if (savedTimer !== null) {
+            xw_timer_seconds = parseInt(savedTimer, 10) || 0;
+            console.log('Restored timer from localStorage:', xw_timer_seconds);
+          }
+
           puzzle.cells = jsxw2_cells;
         }
 
@@ -927,13 +939,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
 
         // disable check and reveal in certain cases
-        if (puzzle.metadata.has_reveal === false) {
+        if (this.has_reveal === false || puzzle.metadata.has_reveal === false) {
           this.has_reveal = false;
           $('.cw-reveal').css({
             display: 'none'
           });
         }
-        if (puzzle.metadata.has_check === false) {
+        if (this.has_check === false || puzzle.metadata.has_check === false) {
           this.has_check = false;
           $('.cw-check').css({
             display: 'none'
@@ -3430,13 +3442,14 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             <div class="settings-description">
               Miscellaneous
             </div>
+            ${this.config.show_timer_option ? `
             <div class="settings-option">
               <label class="settings-label">
                 <input id="timer_autostart" checked="" type="checkbox" name="timer_autostart" class="settings-changer">
                   Start timer on puzzle open
                 </input>
               </label>
-            </div>
+            </div>` : ''}
             <div class="settings-option">
               <label class="settings-label">
                 <input id="confetti_enabled" checked="" type="checkbox" name="confetti_enabled" class="settings-changer">
@@ -3444,6 +3457,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
                 </input>
               </label>
             </div>
+
             <!--
             <div class="settings-option">
               <label class="settings-label">
@@ -3570,6 +3584,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               value: n[1]
             }
           })));
+          localStorage.setItem(this.savegame_name + "_timer", xw_timer_seconds.toString());
           localStorage.setItem(this.savegame_name + "_lastmodified", Date.now());
           /*localStorage.setItem(this.savegame_name + '_version', PUZZLE_STORAGE_VERSION);*/
         } catch (e) {
@@ -3579,13 +3594,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           try {
             // try again once
             localStorage.setItem(this.savegame_name, jsxw_str);
+            localStorage.setItem(this.savegame_name + "_timer", xw_timer_seconds.toString());
             localStorage.setItem(this.savegame_name + "_lastmodified", Date.now());
           } catch (e2) {
             console.error('[Crossword] localStorage save failed even after cleanup.', e2);
           }
         }
       }
-
       /* Keep only the most recent saves */
       cleanupSaves(limit = null) {
         if (limit === null) {
@@ -3604,6 +3619,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           if (key.startsWith(STORAGE_KEY + '_') &&
             !key.endsWith('_notes') &&
             !key.endsWith('_version') &&
+            !key.endsWith('_timer') &&
             !key.endsWith('_lastmodified')) {
 
             const lastModifiedStr = localStorage.getItem(key + '_lastmodified');
@@ -3625,6 +3641,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           localStorage.removeItem(key);
           localStorage.removeItem(key + '_notes');
           localStorage.removeItem(key + '_version');
+          localStorage.removeItem(key + '_timer');
           localStorage.removeItem(key + '_lastmodified');
         });
 
@@ -3640,6 +3657,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           localStorage.removeItem(keyToDelete);
           localStorage.removeItem(keyToDelete + '_notes');
           localStorage.removeItem(keyToDelete + '_version');
+          localStorage.removeItem(keyToDelete + '_timer');
           localStorage.removeItem(keyToDelete + '_lastmodified');
         }
       }
@@ -3831,6 +3849,11 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       toggleTimer() {
+        if (!this.config.allow_timer_toggle && this.timer_running) {
+          console.log('Timer toggle disabled in tournament mode.');
+          this.timer_button.css('cursor', 'default');
+          return;
+        }
         var display_seconds, display_minutes;
         var timer_btn = this.timer_button;
 

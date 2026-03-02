@@ -155,13 +155,13 @@ async function renderPuzzleForm(puzzle = null) {
                 </div>
 
                 <div class="form-group" style="margin-top:15px">
-                    <label>Puzzle Files (Storage Paths)</label>
-                    <p style="font-size:0.8em; color:#666; margin-bottom:10px">Enter the path in Firebase Storage (e.g., <code>puzzles/my-puzzle.puz</code>) or a local path starting with <code>../</code></p>
+                    <label>Puzzle File Path</label>
+                    <p style="font-size:0.8em; color:#666; margin-bottom:10px">Place files in <code>tournament/puzzles/</code> and use the path <code>./puzzles/your-file.ipuz</code></p>
                     <div class="division-mapping">
                         ${divisions.map(div => `
                             <div class="mapping-row">
                                 <label>${div}:</label>
-                                <input type="text" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? puzzle?.filePath || '' : '')}" placeholder="path/to/file.puz">
+                                <input type="text" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? puzzle?.filePath || puzzle?.fileName || '' : '')}" placeholder="./puzzles/filename.ipuz">
                             </div>
                         `).join('')}
                     </div>
@@ -415,9 +415,9 @@ async function renderResultsTab() {
                     r.totalWords,
                     r.timeTaken,
                     r.submittedAt?.toDate().toISOString() || ''
-                ].join(','))
-            ].join('
-');
+                ].join(',')
+                )
+            ].join('\n');
 
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);

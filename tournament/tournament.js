@@ -170,10 +170,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Function to calculate score based on rules
             function calculateScore(xw, puzzleData, timeTakenSeconds) {
-                const words = Object.values(xw.words);
-                const totalWords = words.length;
-                const correctWordsCount = words.filter(w => w.isCorrect()).length;
-                const isFullyCorrect = correctWordsCount === totalWords;
+                // Determine if we have a full xw object or just counts
+                let correctWordsCount, totalWords;
+                if (xw.words && Array.isArray(xw.words)) {
+                    // This is a mock object from external submission
+                    totalWords = xw.words.length;
+                    correctWordsCount = xw.words.filter(w => w.isCorrect()).length;
+                } else if (xw.words) {
+                    // This is the full xw object from the internal engine
+                    const words = Object.values(xw.words);
+                    totalWords = words.length;
+                    correctWordsCount = words.filter(w => w.isCorrect()).length;
+                } else {
+                    // Fallback
+                    totalWords = 0;
+                    correctWordsCount = 0;
+                }
+
+                const isFullyCorrect = correctWordsCount === totalWords && totalWords > 0;
                 const timeLimit = puzzleData.timeLimitSeconds || 0;
 
                 let score = correctWordsCount * scoringRules.pointsPerWord;
@@ -369,6 +383,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // Function to handle messages from the fullscreen solver
+            window.addEventListener('message', async (event) => {
+                if (event.data && event.data.type === 'CROSSWORD_SOLVED') {
+                    const { puzzleId, timeTakenSeconds, correctWords, totalWords } = event.data;
+                    console.log('Received puzzle solved message for:', puzzleId);
+                    await handleExternalSubmission(puzzleId, timeTakenSeconds, correctWords, totalWords);
+                }
+            });
+
+            async function handleExternalSubmission(puzzleId, timeTakenSeconds, correctWords, totalWords) {
+                try {
+                    const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
+                    if (!puzzleDoc.exists) return;
+                    
+                    const puzzleData = { id: puzzleDoc.id, ...puzzleDoc.data() };
+                    
+                    // Use a slightly modified calculation since we already have the counts
+                    const scoreInfo = calculateScore({
+                        words: Array(correctWords).fill({ isCorrect: () => true })
+                            .concat(Array(totalWords - correctWords).fill({ isCorrect: () => false }))
+                    }, puzzleData, timeTakenSeconds);
+
+                    await submitPuzzle(puzzleData, scoreInfo);
+                    renderPuzzleList();
+                } catch (e) {
+                    console.error('Error handling external submission:', e);
+                }
+            }
+
             // Function to load and render a specified puzzle
             async function loadPuzzle(puzzleData) {
                 // Determine the correct puzzle file based on the solver's division
@@ -376,86 +419,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (puzzleData.filesByDivision && currentSolver.division) {
                     puzzlePath = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
                 }
-                // Fallback to the old filePath field for backward compatibility
                 if (!puzzlePath) {
-                    puzzlePath = puzzleData.filePath; 
+                    puzzlePath = puzzleData.filePath || puzzleData.fileName; 
                 }
 
                 if (!puzzlePath) {
-                    console.error('Could not determine puzzle path for puzzle:', puzzleData.name, 'and division:', currentSolver.division);
+                    console.error('Could not determine puzzle path for puzzle:', puzzleData.name);
                     alert('Error: Could not find the puzzle file for your division.');
-                    renderPuzzleList(); // Go back to the list
                     return;
                 }
 
-                let puzzleUrl;
+                // Construct the URL for the fullscreen solver
+                const solverUrl = new URL('../index.html', window.location.href);
+                // Prefix with tournament/ because the index.html is in the parent folder
+                solverUrl.searchParams.set('puzzle', 'tournament/' + puzzlePath);
+                
+                // Add a config object that the solver can use to report back
+                const config = {
+                    tournament_mode: true,
+                    puzzle_id: puzzleData.id,
+                    time_limit: puzzleData.timeLimitSeconds,
+                    is_warmup: !!puzzleData.isWarmup
+                };
+                solverUrl.searchParams.set('config', btoa(JSON.stringify(config)));
 
-                // If path starts with '../', treat as a local relative path. Otherwise, get a Firebase Storage download URL.
-                if (puzzlePath.startsWith('../')) {
-                    console.log(`Loading local puzzle from: ${puzzlePath}`);
-                    puzzleUrl = puzzlePath;
-                } else {
-                    try {
-                        console.log(`Fetching download URL for Firebase Storage path: ${puzzlePath}`);
-                        const storageRef = storage.ref(puzzlePath);
-                        puzzleUrl = await storageRef.getDownloadURL();
-                        console.log('Got download URL:', puzzleUrl);
-                    } catch (error) {
-                        console.error(`Failed to get download URL for ${puzzlePath}`, error);
-                        alert(`Error: Could not load puzzle file from cloud storage. ${error.message}`);
-                        renderPuzzleList();
-                        return;
-                    }
-                }
-
-                // Render the puzzle container UI
-                tournamentAppDiv.innerHTML = `
-                    <div class="puzzle-header">
-                        <h2>"${puzzleData.name}"</h2>
-                        <div class="puzzle-meta">
-                            Author: ${puzzleData.author} | Time Limit: ${puzzleData.timeLimitSeconds / 60} minutes
-                            ${puzzleData.isWarmup ? ' <span class="warmup-tag">(Warm-up)</span>' : ''}
-                        </div>
-                        <div class="puzzle-actions">
-                            <button id="backToPuzzles">Exit to List</button>
-                            <button id="submitPuzzleBtn" class="primary-btn">Submit Puzzle</button>
-                        </div>
-                    </div>
-                    <div id="crossword-container"></div>
-                `;
-                document.getElementById('backToPuzzles').addEventListener('click', () => {
-                    if (confirm('Are you sure you want to exit? Your progress will be saved locally, but your score won\\'t be submitted yet.')) {
-                        renderPuzzleList();
-                    }
-                });
-
-                const submitBtn = document.getElementById('submitPuzzleBtn');
-                submitBtn.addEventListener('click', () => {
-                    if (confirm('Are you ready to submit your puzzle? This will finalize your score for this puzzle.')) {
-                        const scoreInfo = calculateScore(window.gCrossword, puzzleData, window.gCrossword.xw_timer_seconds);
-                        submitPuzzle(puzzleData, scoreInfo);
-                    }
-                });
-
-                // Now, load the crossword into the container
-                try {
-                    console.log(`Initializing crossword with URL: ${puzzleUrl}`);
-                    const crosswordContainer = $('#crossword-container');
-                    crosswordContainer.show();
-
-                    window.gCrossword = CrosswordNexus.createCrossword(crosswordContainer, {
-                       puzzle_file: { url: puzzleUrl },
-                       onSolved: (xw) => {
-                           console.log('Puzzle solved! Enabling quick submit.');
-                           // We could auto-submit here, but it's safer to let the user click the button
-                           // maybe highlight it?
-                           document.getElementById('submitPuzzleBtn').classList.add('ready');
-                       }
-                    });
-                } catch (e) {
-                    console.error("Error creating crossword:", e);
-                    alert("Failed to render the crossword puzzle.");
-                }
+                // Open in new tab
+                console.log('Opening fullscreen solver:', solverUrl.toString());
+                window.open(solverUrl.toString(), '_blank');
             }
 
             async function renderPuzzleList() {

@@ -471,6 +471,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                // Fetch Tournament Name
+                let tournamentName = 'Crossword Tournament Solver';
+                try {
+                    const metaDoc = await db.collection(CONFIG_COLLECTION).doc('metadata').get();
+                    if (metaDoc.exists && metaDoc.data().tournamentName) {
+                        tournamentName = metaDoc.data().tournamentName;
+                        document.title = tournamentName;
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch tournament name', e);
+                }
+
                 // Check for already submitted scores
                 let submittedPuzzleIds = new Set();
                 try {
@@ -485,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 tournamentAppDiv.innerHTML = `
+                    <h1>${tournamentName}</h1>
                     <div class="solver-info">
                         <h2>Welcome, ${currentSolver.displayName}!</h2>
                         <div class="solver-meta">

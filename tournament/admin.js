@@ -38,8 +38,8 @@ async function loadTab(tab) {
         case 'divisions':
             renderDivisionsTab();
             break;
-        case 'scoring':
-            renderScoringTab();
+        case 'settings':
+            renderSettingsTab();
             break;
         case 'results':
             renderResultsTab();
@@ -285,11 +285,18 @@ async function renderDivisionsTab() {
     }
 }
 
-/* SCORING TAB */
-async function renderScoringTab() {
+/* SETTINGS TAB */
+async function renderSettingsTab() {
     try {
-        const doc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
-        const rules = doc.exists ? doc.data() : {
+        // Fetch Metadata
+        const metaDoc = await db.collection(CONFIG_COLLECTION).doc('metadata').get();
+        const metadata = metaDoc.exists ? metaDoc.data() : {
+            tournamentName: 'Crossword Tournament Solver'
+        };
+
+        // Fetch Scoring
+        const scoreDoc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
+        const rules = scoreDoc.exists ? scoreDoc.data() : {
             pointsPerWord: 10,
             timeBonusPerSecond: 1,
             completionBonus: 180,
@@ -298,6 +305,19 @@ async function renderScoringTab() {
         };
 
         let html = `
+            <div class="admin-card">
+                <h3>Tournament Metadata</h3>
+                <form id="metadataForm">
+                    <div class="form-group">
+                        <label>Tournament Name</label>
+                        <input type="text" name="tournamentName" value="${metadata.tournamentName}" placeholder="Enter tournament title">
+                    </div>
+                    <div class="action-row">
+                        <button type="submit" class="primary-btn btn-success">Save Metadata</button>
+                    </div>
+                </form>
+            </div>
+
             <div class="admin-card">
                 <h3>Scoring Rules</h3>
                 <form id="scoringForm">
@@ -332,6 +352,16 @@ async function renderScoringTab() {
             </div>
         `;
         adminContent.innerHTML = html;
+
+        document.getElementById('metadataForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newMeta = {
+                tournamentName: formData.get('tournamentName')
+            };
+            await db.collection(CONFIG_COLLECTION).doc('metadata').set(newMeta);
+            alert('Metadata updated!');
+        };
 
         document.getElementById('scoringForm').onsubmit = async (e) => {
             e.preventDefault();

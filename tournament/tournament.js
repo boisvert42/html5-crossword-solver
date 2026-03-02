@@ -4,6 +4,7 @@
 const SOLVERS_COLLECTION = 'solvers'; // Firestore collection for solver profiles
 const PUZZLES_COLLECTION = 'puzzles'; // Firestore collection for puzzle metadata
 const CONFIG_COLLECTION = 'tournament_config'; // Firestore collection for tournament configuration
+const SCORES_COLLECTION = 'scores'; // Firestore collection for puzzle scores
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Tournament page loaded.');
@@ -23,8 +24,31 @@ document.addEventListener('DOMContentLoaded', () => {
             let currentSolver = null;
             const tournamentAppDiv = document.getElementById('tournament-app');
 
+            // Default scoring rules (can be overridden by Firestore)
+            let scoringRules = {
+                pointsPerWord: 10,
+                timeBonusPerSecond: 1,
+                completionBonus: 180,
+                overtimePenaltyPer4Seconds: 1,
+                minCorrectPercentageForTimeBonus: 0.5
+            };
+
+            // Fetch scoring rules from Firestore
+            async function fetchScoringRules() {
+                try {
+                    const doc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
+                    if (doc.exists) {
+                        scoringRules = { ...scoringRules, ...doc.data() };
+                        console.log('Loaded custom scoring rules:', scoringRules);
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch scoring rules, using defaults.', e);
+                }
+            }
+
             // Function to handle solver initialization (auth, name prompt)
             async function initSolver() {
+                await fetchScoringRules();
                 let user = auth.currentUser;
 
                 if (!user) {
@@ -131,6 +155,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderPuzzleList();
             }
 
+            // Function to calculate score based on rules
+            function calculateScore(xw, puzzleData, timeTakenSeconds) {
+                const words = Object.values(xw.words);
+                const totalWords = words.length;
+                const correctWordsCount = words.filter(w => w.isCorrect()).length;
+                const isFullyCorrect = correctWordsCount === totalWords;
+                const timeLimit = puzzleData.timeLimitSeconds || 0;
+
+                let score = correctWordsCount * scoringRules.pointsPerWord;
+
+                if (isFullyCorrect) {
+                    score += scoringRules.completionBonus;
+                }
+
+                const correctPercentage = correctWordsCount / totalWords;
+                let timeBonus = 0;
+                let overtimePenalty = 0;
+
+                if (timeTakenSeconds <= timeLimit) {
+                    if (correctPercentage >= scoringRules.minCorrectPercentageForTimeBonus) {
+                        timeBonus = (timeLimit - timeTakenSeconds) * scoringRules.timeBonusPerSecond;
+                    }
+                } else {
+                    const overtimeSeconds = timeTakenSeconds - timeLimit;
+                    overtimePenalty = Math.floor(overtimeSeconds / 4) * scoringRules.overtimePenaltyPer4Seconds;
+                }
+
+                score += timeBonus;
+                score -= overtimePenalty;
+
+                return {
+                    totalScore: Math.max(0, score), // Score can't be negative
+                    correctWords: correctWordsCount,
+                    totalWords: totalWords,
+                    timeTaken: timeTakenSeconds,
+                    timeLimit: timeLimit,
+                    timeBonus: timeBonus,
+                    overtimePenalty: overtimePenalty,
+                    isFullyCorrect: isFullyCorrect
+                };
+            }
+
+            async function submitPuzzle(puzzleData, scoreInfo) {
+                if (puzzleData.isWarmup) {
+                    alert('Warm-up puzzle complete! Scores are not recorded for warm-ups.');
+                    renderPuzzleList();
+                    return;
+                }
+
+                try {
+                    const scoreRef = db.collection(SCORES_COLLECTION).doc(`${currentSolver.uid}_${puzzleData.id}`);
+                    await scoreRef.set({
+                        uid: currentSolver.uid,
+                        solverName: currentSolver.displayName,
+                        division: currentSolver.division,
+                        puzzleId: puzzleData.id,
+                        puzzleName: puzzleData.name,
+                        puzzleNumber: puzzleData.puzzleNumber,
+                        ...scoreInfo,
+                        submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('Score submitted successfully!');
+                    showSubmissionResult(scoreInfo);
+                } catch (e) {
+                    console.error('Error submitting score:', e);
+                    alert('Failed to submit score. Please check your connection.');
+                }
+            }
+
+            function showSubmissionResult(scoreInfo) {
+                tournamentAppDiv.innerHTML = `
+                    <div class="submission-result">
+                        <h2>Puzzle Submitted!</h2>
+                        <div class="score-card">
+                            <p class="total-score">Total Score: <span>${scoreInfo.totalScore}</span></p>
+                            <p>Correct Words: ${scoreInfo.correctWords} / ${scoreInfo.totalWords}</p>
+                            <p>Time Taken: ${Math.floor(scoreInfo.timeTaken / 60)}m ${scoreInfo.timeTaken % 60}s</p>
+                            ${scoreInfo.timeBonus > 0 ? `<p class="bonus">Time Bonus: +${scoreInfo.timeBonus}</p>` : ''}
+                            ${scoreInfo.overtimePenalty > 0 ? `<p class="penalty">Overtime Penalty: -${scoreInfo.overtimePenalty}</p>` : ''}
+                            ${scoreInfo.isFullyCorrect ? `<p class="bonus">Completion Bonus: +${scoringRules.completionBonus}</p>` : ''}
+                        </div>
+                        <button id="backToListAfterSubmit">Back to Puzzle List</button>
+                    </div>
+                `;
+                document.getElementById('backToListAfterSubmit').addEventListener('click', renderPuzzleList);
+            }
+
             // Function to load and render a specified puzzle
             async function loadPuzzle(puzzleData) {
                 // Determine the correct puzzle file based on the solver's division
@@ -172,13 +283,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Render the puzzle container UI
                 tournamentAppDiv.innerHTML = `
-                    <h2>"${puzzleData.name}"</h2>
-                    <p>Author: ${puzzleData.author} | Time Limit: ${puzzleData.timeLimitSeconds / 60} minutes</p>
-                    <p>${puzzleData.isWarmup ? '(Warm-up Puzzle - scores not recorded)' : ''}</p>
-                    <button id="backToPuzzles">Back to Puzzle List</button>
+                    <div class="puzzle-header">
+                        <h2>"${puzzleData.name}"</h2>
+                        <div class="puzzle-meta">
+                            Author: ${puzzleData.author} | Time Limit: ${puzzleData.timeLimitSeconds / 60} minutes
+                            ${puzzleData.isWarmup ? ' <span class="warmup-tag">(Warm-up)</span>' : ''}
+                        </div>
+                        <div class="puzzle-actions">
+                            <button id="backToPuzzles">Exit to List</button>
+                            <button id="submitPuzzleBtn" class="primary-btn">Submit Puzzle</button>
+                        </div>
+                    </div>
                     <div id="crossword-container"></div>
                 `;
-                document.getElementById('backToPuzzles').addEventListener('click', renderPuzzleList);
+                document.getElementById('backToPuzzles').addEventListener('click', () => {
+                    if (confirm('Are you sure you want to exit? Your progress will be saved locally, but your score won\\'t be submitted yet.')) {
+                        renderPuzzleList();
+                    }
+                });
+
+                const submitBtn = document.getElementById('submitPuzzleBtn');
+                submitBtn.addEventListener('click', () => {
+                    if (confirm('Are you ready to submit your puzzle? This will finalize your score for this puzzle.')) {
+                        const scoreInfo = calculateScore(window.gCrossword, puzzleData, window.gCrossword.xw_timer_seconds);
+                        submitPuzzle(puzzleData, scoreInfo);
+                    }
+                });
 
                 // Now, load the crossword into the container
                 try {
@@ -187,7 +317,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     crosswordContainer.show();
 
                     window.gCrossword = CrosswordNexus.createCrossword(crosswordContainer, {
-                       puzzle_file: { url: puzzleUrl }
+                       puzzle_file: { url: puzzleUrl },
+                       onSolved: (xw) => {
+                           console.log('Puzzle solved! Enabling quick submit.');
+                           // We could auto-submit here, but it's safer to let the user click the button
+                           // maybe highlight it?
+                           document.getElementById('submitPuzzleBtn').classList.add('ready');
+                       }
                     });
                 } catch (e) {
                     console.error("Error creating crossword:", e);
@@ -201,12 +337,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                // Check for already submitted scores
+                let submittedPuzzleIds = new Set();
+                try {
+                    const scoresSnapshot = await db.collection(SCORES_COLLECTION)
+                        .where('uid', '==', currentSolver.uid)
+                        .get();
+                    scoresSnapshot.forEach(doc => {
+                        submittedPuzzleIds.add(doc.data().puzzleId);
+                    });
+                } catch (e) {
+                    console.warn('Could not fetch previous scores:', e);
+                }
+
                 tournamentAppDiv.innerHTML = `
-                    <h2>Welcome, ${currentSolver.displayName}! (Division: ${currentSolver.division})</h2>
-                    <p>Your solver ID: ${currentSolver.uid}</p>
+                    <div class="solver-info">
+                        <h2>Welcome, ${currentSolver.displayName}!</h2>
+                        <div class="solver-meta">
+                            <span>Division: <strong>${currentSolver.division}</strong></span> | 
+                            <span>Solver ID: <code>${currentSolver.uid.substring(0,8)}...</code></span>
+                        </div>
+                    </div>
                     <h3>Available Puzzles</h3>
-                    <div id="warmup-puzzle-section"></div>
-                    <div id="tournament-puzzles-section"></div>
+                    <div id="warmup-puzzle-section" class="puzzle-section"></div>
+                    <div id="tournament-puzzles-section" class="puzzle-section"></div>
                 `;
 
                 const warmUpSection = document.getElementById('warmup-puzzle-section');
@@ -233,10 +387,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Render Warm-Up Puzzle
                     if (warmUpPuzzle) {
                         warmUpSection.innerHTML = `
-                            <h4>Warm-up: ${warmUpPuzzle.name}</h4>
-                            <p>Author: ${warmUpPuzzle.author}</p>
-                            <p>Time Limit: ${warmUpPuzzle.timeLimitSeconds / 60} minutes (Scores not recorded)</p>
-                            <button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>
+                            <div class="puzzle-card warmup">
+                                <h4>Warm-up: ${warmUpPuzzle.name}</h4>
+                                <p>Author: ${warmUpPuzzle.author} (${warmUpPuzzle.timeLimitSeconds / 60} min)</p>
+                                <button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>
+                            </div>
                         `;
                     } else {
                         warmUpSection.innerHTML = `<p>No warm-up puzzle available yet.</p>`;
@@ -248,11 +403,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         const ul = document.createElement('ul');
                         ul.className = 'puzzle-list';
                         tournamentPuzzles.forEach(puzzle => {
+                            const isSubmitted = submittedPuzzleIds.has(puzzle.id);
                             const li = document.createElement('li');
+                            li.className = isSubmitted ? 'submitted' : '';
                             li.innerHTML = `
-                                <span>#${puzzle.puzzleNumber}: ${puzzle.name} by ${puzzle.author}</span>
-                                <span>(${puzzle.timeLimitSeconds / 60} min)</span>
-                                <button data-puzzle-id="${puzzle.id}" class="start-puzzle-btn">Start Puzzle</button>
+                                <div class="puzzle-info">
+                                    <span class="puz-num">#${puzzle.puzzleNumber}</span>
+                                    <span class="puz-name">${puzzle.name}</span>
+                                    <span class="puz-author">by ${puzzle.author}</span>
+                                    <span class="puz-time">(${puzzle.timeLimitSeconds / 60} min)</span>
+                                </div>
+                                <div class="puzzle-status">
+                                    ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
+                                    `<button data-puzzle-id="${puzzle.id}" class="start-puzzle-btn">Start Puzzle</button>`}
+                                </div>
                             `;
                             ul.appendChild(li);
                         });
@@ -267,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const puzzleId = event.target.dataset.puzzleId;
                             const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
                             if (puzzleDoc.exists) {
-                                loadPuzzle({ id: puzzleDoc.id, ...doc.data() });
+                                loadPuzzle({ id: puzzleDoc.id, ...puzzleDoc.data() });
                             } else {
                                 alert('Puzzle not found!');
                             }
@@ -285,12 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
             initSolver();
 
         } catch (e) {
-            console.error('Error initializing Firebase app or services. Ensure firebase-config.js is correctly set up.', e);
-            console.error('Please make sure you have renamed firebase-config.example.js to firebase-config.js and pasted your Firebase configuration there.');
+            console.error('Error initializing Firebase app or services.', e);
             alert('A problem occurred during initialization. Check the console for details.');
         }
     } else {
-        console.warn('Firebase SDK not loaded. Ensure the SDK scripts are correctly included in tournament.html.');
+        console.warn('Firebase SDK not loaded.');
         alert('Firebase SDK not loaded. Cannot run tournament solver.');
     }
 });

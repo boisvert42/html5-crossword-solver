@@ -194,6 +194,30 @@ As an alternative to uploading files to Firebase Storage, you can store puzzle f
 
 The application will detect that the path is local and will load it directly from the project files instead of trying to fetch it from Firebase Storage.
 
+## 11. Customizing Scoring Rules (Optional)
+
+The tournament solver uses a flexible scoring system. You can use the default rules or override them by creating a configuration document in Firestore.
+
+### Default Scoring Rules
+If no custom configuration is found, the following defaults are used:
+*   **Correct Word:** 10 points per correct word.
+*   **Completion Bonus:** 180 points if the entire puzzle is correct.
+*   **Time Bonus:** 1 point per second remaining (requires at least 50% of the puzzle to be correct).
+*   **Overtime Penalty:** 1 point subtracted for every 4 seconds over the time limit.
+
+### Overriding Rules in Firestore
+To customize these values:
+1.  In the Firebase console, go to **Firestore Database**.
+2.  In the `tournament_config` collection, create a document with the ID `scoring`.
+3.  Add any of the following fields (all types are **number**):
+    *   `pointsPerWord`: Points awarded for each correctly filled word.
+    *   `timeBonusPerSecond`: Points awarded for each second under the time limit.
+    *   `completionBonus`: Extra points for a 100% correct puzzle.
+    *   `overtimePenaltyPer4Seconds`: Points subtracted for every 4-second block over the limit.
+    *   `minCorrectPercentageForTimeBonus`: A decimal between 0 and 1 (e.g., `0.5` for 50%) representing the accuracy required to qualify for a time bonus.
+
+If a field is missing from your Firestore `scoring` document, the application will fall back to the default value for that specific rule.
+
 ## Next Steps
 
 Once Firebase is configured and sample data is in place, you can proceed with further development of the Tournament Solver UI and functionality.

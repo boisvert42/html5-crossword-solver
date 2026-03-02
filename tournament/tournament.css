@@ -1,5 +1,194 @@
-/* Tournament-specific styling will go here */
 #tournament-app {
     padding: 20px;
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    color: #333;
+}
+
+h1, h2, h3, h4 {
+    color: #2c3e50;
+}
+
+.solver-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 5px solid #3498db;
+}
+
+.solver-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.puzzle-section {
+    margin-bottom: 30px;
+}
+
+.puzzle-card {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 10px;
+}
+
+.puzzle-card.warmup {
+    border-left: 5px solid #27ae60;
+}
+
+.puzzle-list {
+    list-style: none;
+    padding: 0;
+}
+
+.puzzle-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border: 1px solid #eee;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.puzzle-list li:hover {
+    background: #fcfcfc;
+}
+
+.puzzle-list li.submitted {
+    background-color: #f0f0f0;
+    color: #888;
+}
+
+.puzzle-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.puz-num {
+    font-weight: bold;
+    color: #3498db;
+    min-width: 30px;
+}
+
+.puz-name {
+    font-weight: 600;
+}
+
+.puz-author {
+    color: #777;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.puz-time {
+    font-size: 0.85em;
+    background: #eee;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.status-tag {
+    font-size: 0.8em;
+    background: #95a5a6;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.warmup-tag {
+    color: #27ae60;
+    font-weight: bold;
+    font-size: 0.8em;
+}
+
+button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.start-puzzle-btn {
+    background-color: #3498db;
+    color: white;
+}
+
+.primary-btn {
+    background-color: #e67e22;
+    color: white;
+}
+
+.primary-btn.ready {
+    background-color: #27ae60;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.puzzle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.puzzle-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.submission-result {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.score-card {
+    background: white;
+    border: 2px solid #3498db;
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 400px;
+    margin: 20px auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.total-score {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+.total-score span {
+    font-size: 2em;
+    color: #e67e22;
+    display: block;
+    font-weight: bold;
+}
+
+.bonus { color: #27ae60; font-weight: bold; }
+.penalty { color: #c0392b; font-weight: bold; }
+
+#crossword-container {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    background: #fff;
 }

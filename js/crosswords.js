@@ -2730,6 +2730,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         // show completion message if newly solved
         if (!wasSolved) {
           showSuccessMsg(this.completion_message);
+          if (typeof this.config.onSolved === 'function') {
+            this.config.onSolved(this);
+          }
         }
       }
 
@@ -4083,6 +4086,28 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             load_error = true;
           }
         }
+      }
+
+      isCorrect() {
+        for (let i = 0; i < this.cells.length; i++) {
+          const coords = this.cells[i].split('-');
+          const cell = this.crossword.getCell(coords[0], coords[1]);
+          if (!cell || !isCorrect(cell.letter, cell.solution)) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      isFilled() {
+        for (let i = 0; i < this.cells.length; i++) {
+          const coords = this.cells[i].split('-');
+          const cell = this.crossword.getCell(coords[0], coords[1]);
+          if (!cell || !cell.letter) {
+            return false;
+          }
+        }
+        return true;
       }
 
       // Parses cell ranges and stores cells coordinates as array ['x1-y1', 'x1-y2' ...]

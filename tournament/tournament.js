@@ -46,113 +46,126 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Function to handle solver initialization (auth, name prompt)
+            // Function to handle solver initialization (auth, setup UI)
             async function initSolver() {
                 await fetchScoringRules();
                 let user = auth.currentUser;
 
                 if (!user) {
-                    // Sign in anonymously if not already signed in
                     try {
                         const userCredential = await auth.signInAnonymously();
                         user = userCredential.user;
                         console.log('Signed in anonymously with UID:', user.uid);
                     } catch (error) {
                         console.error('Error signing in anonymously:', error);
-                        alert('Could not sign in. Please check your Firebase configuration and network connection.');
+                        tournamentAppDiv.innerHTML = `<p class="error">Error signing in: ${error.message}</p>`;
                         return;
                     }
                 }
 
-                // Check if solver profile exists in Firestore
                 const solverRef = db.collection(SOLVERS_COLLECTION).doc(user.uid);
                 const solverDoc = await solverRef.get();
 
-                let name, displayName, division;
-
-                if (solverDoc.exists && solverDoc.data().name) {
+                if (solverDoc.exists && solverDoc.data().name && solverDoc.data().division) {
                     const data = solverDoc.data();
-                    name = data.name;
-                    displayName = data.displayName;
-                    division = data.division; // May be undefined
-                    console.log(`Found existing solver profile for ${displayName}.`);
+                    currentSolver = { 
+                        uid: user.uid, 
+                        name: data.name, 
+                        displayName: data.displayName, 
+                        division: data.division 
+                    };
+                    renderPuzzleList();
                 } else {
-                    // Prompt for name if no profile found
-                    let enteredName = prompt(
-                        'Welcome!\\n\\n' +
-                        'Please enter a name for the leaderboard. This can be your real name, a nickname, or any identifier you choose. ' +
-                        'This name will be publicly displayed on leaderboards to track your progress in the tournament.\\n\\n' +
-                        'Your Name:'
-                    );
-                    if (enteredName) {
-                        enteredName = enteredName.trim();
-                        if (enteredName.length === 0) {
-                            enteredName = 'Anonymous Solver';
-                        }
-                    } else {
-                        enteredName = 'Anonymous Solver'; // Default if prompt is cancelled or empty
-                    }
-                    name = enteredName;
-
-                    // Generate a short unique suffix from the UID for display disambiguation
-                    const uidSuffix = user.uid.substring(0, 4); // First 4 chars of UID
-                    displayName = `${name} (#${uidSuffix})`;
-
-                    // Set initial profile data (without division yet)
-                    await solverRef.set({
-                        name: name,
-                        displayName: displayName,
-                        uid: user.uid,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-                    console.log(`Created new solver profile for ${displayName}.`);
+                    renderSetupUI(user, solverDoc.exists ? solverDoc.data() : null);
                 }
+            }
 
-                // Now, check if a division needs to be selected
-                if (!division) {
-                    console.log('Solver does not have a division. Prompting for selection.');
-                    try {
-                        const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
-                        // Fallback to default divisions if Firebase config is missing
-                        const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
+            async function renderSetupUI(user, existingData) {
+                const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
+                const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
+                
+                let html = `
+                    <div class="setup-container">
+                        <h2>Tournament Setup</h2>
+                        <p>Welcome! Please provide a name and select your division to get started.</p>
                         
-                        let chosenDivision = null;
-                        let promptMessage = 'Please choose your division for the tournament.\\n\\n' +
-                                            `Available divisions: ${availableDivisions.join(', ')}\\n\\n` +
-                                            'Your choice will determine which puzzles you receive.';
-                        
-                        while (true) {
-                            let input = prompt(promptMessage);
-                            if (input === null) {
-                                // User hit cancel. We can't proceed without a division.
-                                // For now, we'll just keep prompting. A better UI would handle this more gracefully.
-                                promptMessage = 'A division must be selected to continue.\\n\\n' +
-                                                `Available divisions: ${availableDivisions.join(', ')}`;
-                                continue;
-                            }
-                            input = input.trim();
-                            // Case-insensitive matching
-                            const matchedDivision = availableDivisions.find(d => d.toLowerCase() === input.toLowerCase());
-                            if (matchedDivision) {
-                                chosenDivision = matchedDivision;
-                                break;
-                            } else {
-                                promptMessage = `Invalid division "${input}". Please choose from: ${availableDivisions.join(', ')}`;
-                            }
-                        }
+                        <div id="setupError" class="error-message"></div>
 
-                        division = chosenDivision;
-                        await solverRef.set({ division: division }, { merge: true });
-                        console.log(`Solver ${displayName} selected division: ${division}`);
-                    } catch (error) {
-                        console.error('Error fetching divisions or updating solver:', error);
-                        alert('Could not set your division. Please try reloading the page.');
+                        <div class="form-group">
+                            <label for="solverName">Leaderboard Name:</label>
+                            <input type="text" id="solverName" placeholder="Enter your name or nickname" maxlength="30" value="${existingData?.name || ''}">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Choose Your Division:</label>
+                            <div class="division-grid">
+                                ${availableDivisions.map(div => `
+                                    <div class="division-card ${existingData?.division === div ? 'selected' : ''}" data-division="${div}">
+                                        <h4>${div}</h4>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="setup-actions">
+                            <button id="completeSetupBtn" class="primary-btn">Complete Setup & Start</button>
+                        </div>
+                    </div>
+                `;
+
+                tournamentAppDiv.innerHTML = html;
+
+                let selectedDivision = existingData?.division || null;
+                const errorDiv = document.getElementById('setupError');
+                const nameInput = document.getElementById('solverName');
+
+                // Division selection logic
+                document.querySelectorAll('.division-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.division-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+                        selectedDivision = card.dataset.division;
+                        errorDiv.style.display = 'none';
+                    });
+                });
+
+                document.getElementById('completeSetupBtn').addEventListener('click', async () => {
+                    const name = nameInput.value.trim();
+                    
+                    if (!name) {
+                        errorDiv.textContent = 'Please enter a name.';
+                        errorDiv.style.display = 'block';
                         return;
                     }
-                }
 
-                currentSolver = { uid: user.uid, name, displayName, division };
-                renderPuzzleList();
+                    if (!selectedDivision) {
+                        errorDiv.textContent = 'Please choose a division.';
+                        errorDiv.style.display = 'block';
+                        return;
+                    }
+
+                    const solverRef = db.collection(SOLVERS_COLLECTION).doc(user.uid);
+                    const uidSuffix = user.uid.substring(0, 4);
+                    const displayName = `${name} (#${uidSuffix})`;
+
+                    try {
+                        await solverRef.set({
+                            name: name,
+                            displayName: displayName,
+                            uid: user.uid,
+                            division: selectedDivision,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            createdAt: existingData?.createdAt || firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+
+                        currentSolver = { uid: user.uid, name, displayName, division: selectedDivision };
+                        renderPuzzleList();
+                    } catch (e) {
+                        console.error('Error saving profile:', e);
+                        errorDiv.textContent = 'Error saving profile. Please try again.';
+                        errorDiv.style.display = 'block';
+                    }
+                });
             }
 
             // Function to calculate score based on rules
@@ -236,10 +249,124 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${scoreInfo.overtimePenalty > 0 ? `<p class="penalty">Overtime Penalty: -${scoreInfo.overtimePenalty}</p>` : ''}
                             ${scoreInfo.isFullyCorrect ? `<p class="bonus">Completion Bonus: +${scoringRules.completionBonus}</p>` : ''}
                         </div>
-                        <button id="backToListAfterSubmit">Back to Puzzle List</button>
+                        <div class="puzzle-actions" style="justify-content: center;">
+                            <button id="backToListAfterSubmit">Back to Puzzle List</button>
+                            <button id="viewLeaderboardAfterSubmit" class="secondary-btn">View Leaderboard</button>
+                        </div>
                     </div>
                 `;
                 document.getElementById('backToListAfterSubmit').addEventListener('click', renderPuzzleList);
+                document.getElementById('viewLeaderboardAfterSubmit').addEventListener('click', () => renderLeaderboard());
+            }
+
+            async function renderLeaderboard(selectedDivision = currentSolver.division) {
+                tournamentAppDiv.innerHTML = `
+                    <div class="leaderboard-header">
+                        <h2>Leaderboard</h2>
+                        <div class="nav-actions">
+                            <button id="backToPuzzlesFromLeaderboard">Back to Puzzles</button>
+                            <select id="divisionFilter"></select>
+                        </div>
+                    </div>
+                    <div id="leaderboard-content">
+                        <p>Loading standings for <strong>${selectedDivision}</strong> division...</p>
+                    </div>
+                `;
+
+                document.getElementById('backToPuzzlesFromLeaderboard').addEventListener('click', renderPuzzleList);
+                
+                // Fetch divisions for the filter
+                try {
+                    const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
+                    const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
+                    
+                    const filter = document.getElementById('divisionFilter');
+                    availableDivisions.forEach(div => {
+                        const opt = document.createElement('option');
+                        opt.value = div;
+                        opt.textContent = `${div} Division`;
+                        opt.selected = (div === selectedDivision);
+                        filter.appendChild(opt);
+                    });
+
+                    filter.addEventListener('change', (e) => {
+                        renderLeaderboard(e.target.value);
+                    });
+                } catch (e) {
+                    console.warn('Could not fetch divisions for filter', e);
+                }
+
+                try {
+                    // Query scores for the selected division
+                    const scoresSnapshot = await db.collection(SCORES_COLLECTION)
+                        .where('division', '==', selectedDivision)
+                        .get();
+
+                    const solverScores = {};
+
+                    scoresSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (!solverScores[data.uid]) {
+                            solverScores[data.uid] = {
+                                name: data.solverName,
+                                totalScore: 0,
+                                puzzlesSolved: 0,
+                                totalTime: 0
+                            };
+                        }
+                        solverScores[data.uid].totalScore += data.totalScore;
+                        solverScores[data.uid].puzzlesSolved += 1;
+                        solverScores[data.uid].totalTime += data.timeTaken;
+                    });
+
+                    // Convert to array and sort
+                    const leaderboardData = Object.values(solverScores).sort((a, b) => {
+                        if (b.totalScore !== a.totalScore) {
+                            return b.totalScore - a.totalScore;
+                        }
+                        return a.totalTime - b.totalTime; // Lower time wins ties
+                    });
+
+                    const leaderboardContent = document.getElementById('leaderboard-content');
+                    if (leaderboardData.length === 0) {
+                        leaderboardContent.innerHTML = `<p>No scores submitted for the <strong>${selectedDivision}</strong> division yet.</p>`;
+                        return;
+                    }
+
+                    let tableHtml = `
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th class="rank">Rank</th>
+                                    <th>Solver</th>
+                                    <th>Puzzles</th>
+                                    <th>Total Score</th>
+                                    <th>Total Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    leaderboardData.forEach((entry, index) => {
+                        const isMe = (entry.name === currentSolver.displayName);
+                        tableHtml += `
+                            <tr class="${isMe ? 'current-user' : ''}">
+                                <td class="rank">${index + 1}</td>
+                                <td>${entry.name} ${isMe ? ' (You)' : ''}</td>
+                                <td>${entry.puzzlesSolved}</td>
+                                <td class="score-cell">${entry.totalScore}</td>
+                                <td>${Math.floor(entry.totalTime / 60)}m ${entry.totalTime % 60}s</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHtml += '</tbody></table>';
+                    leaderboardContent.innerHTML = tableHtml;
+
+                } catch (e) {
+                    console.error('Error loading leaderboard:', e);
+                    document.getElementById('leaderboard-content').innerHTML = `<p>Error loading leaderboard: ${e.message}</p>`;
+                }
             }
 
             // Function to load and render a specified puzzle
@@ -354,14 +481,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="solver-info">
                         <h2>Welcome, ${currentSolver.displayName}!</h2>
                         <div class="solver-meta">
-                            <span>Division: <strong>${currentSolver.division}</strong></span> | 
-                            <span>Solver ID: <code>${currentSolver.uid.substring(0,8)}...</code></span>
+                            <div>Division: <strong>${currentSolver.division}</strong> | Solver ID: <code>${currentSolver.uid.substring(0,8)}...</code></div>
+                            <button id="viewLeaderboardBtn" class="secondary-btn">View Leaderboard</button>
                         </div>
                     </div>
                     <h3>Available Puzzles</h3>
                     <div id="warmup-puzzle-section" class="puzzle-section"></div>
                     <div id="tournament-puzzles-section" class="puzzle-section"></div>
                 `;
+
+                document.getElementById('viewLeaderboardBtn').addEventListener('click', () => renderLeaderboard());
 
                 const warmUpSection = document.getElementById('warmup-puzzle-section');
                 const tournamentSection = document.getElementById('tournament-puzzles-section');

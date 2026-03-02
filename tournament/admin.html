@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Admin | Crossword Nexus</title>
+    <link rel="stylesheet" href="../css/crossword.shared.css">
+    <link rel="stylesheet" href="tournament.css">
+    <link rel="stylesheet" href="admin.css">
+    <script src="../lib/jquery.js"></script>
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>Tournament Admin</h1>
+            <nav class="admin-nav">
+                <button data-tab="puzzles" class="tab-btn active">Puzzles</button>
+                <button data-tab="divisions" class="tab-btn">Divisions</button>
+                <button data-tab="scoring" class="tab-btn">Scoring</button>
+                <button data-tab="results" class="tab-btn">Results</button>
+                <a href="tournament.html" class="secondary-btn">View Solver</a>
+            </nav>
+        </header>
+
+        <main id="admin-content" class="admin-main">
+            <div class="loading">Loading admin dashboard...</div>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Admin Logic -->
+    <script src="admin.js"></script>
+</body>
+</html>

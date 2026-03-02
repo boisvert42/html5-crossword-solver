@@ -1,0 +1,163 @@
+.admin-header {
+    background: #2c3e50;
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0 0 12px 12px;
+}
+
+.admin-header h1 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.admin-nav {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.tab-btn {
+    background: transparent;
+    color: #bdc3c7;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: white;
+    background: rgba(255,255,255,0.1);
+}
+
+.tab-btn.active {
+    color: white;
+    background: #3498db;
+    font-weight: 600;
+}
+
+.admin-main {
+    padding: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Section specific */
+.admin-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.admin-section-header h2 { margin: 0; }
+
+.admin-list {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.list-item:last-child { border-bottom: none; }
+
+.list-item-info { flex: 1; }
+.list-item-info h4 { margin: 0 0 5px 0; }
+.list-item-info p { margin: 0; color: #7f8c8d; font-size: 0.9em; }
+
+.list-item-actions { display: flex; gap: 8px; }
+
+/* Forms */
+.admin-card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.admin-card h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group input[type="number"], 
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-group textarea { height: 80px; resize: vertical; }
+
+.action-row {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+/* Division mapping */
+.division-mapping {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.mapping-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.mapping-row label { width: 100px; font-weight: bold; }
+
+.btn-sm { padding: 4px 8px; font-size: 0.85em; }
+.btn-danger { background-color: #e74c3c; color: white; }
+.btn-success { background-color: #2ecc71; color: white; }
+
+.empty-state {
+    padding: 40px;
+    text-align: center;
+    color: #95a5a6;
+    font-style: italic;
+}
+
+/* Results Table */
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th, .results-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.results-table th { background: #f8f9fa; font-weight: 600; }

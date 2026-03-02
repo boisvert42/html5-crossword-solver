@@ -283,6 +283,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             async function renderLeaderboard(selectedDivision = currentSolver.division) {
+                activeView = 'leaderboard';
+                
+                // Stop any existing puzzle or leaderboard listener
+                if (puzzleListenerUnsubscribe) {
+                    puzzleListenerUnsubscribe();
+                    puzzleListenerUnsubscribe = null;
+                }
+
                 tournamentAppDiv.innerHTML = `
                     <div class="leaderboard-header">
                         <h2>Leaderboard</h2>
@@ -296,7 +304,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
 
-                document.getElementById('backToPuzzlesFromLeaderboard').addEventListener('click', renderPuzzleList);
+                document.getElementById('backToPuzzlesFromLeaderboard').addEventListener('click', () => {
+                    if (puzzleListenerUnsubscribe) {
+                        puzzleListenerUnsubscribe();
+                        puzzleListenerUnsubscribe = null;
+                    }
+                    renderPuzzleList();
+                });
                 
                 // Fetch divisions for the filter
                 try {
@@ -313,83 +327,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     filter.addEventListener('change', (e) => {
+                        if (puzzleListenerUnsubscribe) {
+                            puzzleListenerUnsubscribe();
+                            puzzleListenerUnsubscribe = null;
+                        }
                         renderLeaderboard(e.target.value);
                     });
                 } catch (e) {
                     console.warn('Could not fetch divisions for filter', e);
                 }
 
-                try {
-                    // Query scores for the selected division
-                    const scoresSnapshot = await db.collection(SCORES_COLLECTION)
-                        .where('division', '==', selectedDivision)
-                        .get();
+                // Start Live Listener for scores
+                puzzleListenerUnsubscribe = db.collection(SCORES_COLLECTION)
+                    .where('division', '==', selectedDivision)
+                    .onSnapshot((scoresSnapshot) => {
+                        if (activeView !== 'leaderboard') return;
 
-                    const solverScores = {};
+                        console.log('Leaderboard updated live!');
+                        const solverScores = {};
 
-                    scoresSnapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (!solverScores[data.uid]) {
-                            solverScores[data.uid] = {
-                                name: data.solverName,
-                                totalScore: 0,
-                                puzzlesSolved: 0,
-                                totalTime: 0
-                            };
+                        scoresSnapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (!solverScores[data.uid]) {
+                                solverScores[data.uid] = {
+                                    name: data.solverName,
+                                    totalScore: 0,
+                                    puzzlesSolved: 0,
+                                    totalTime: 0
+                                };
+                            }
+                            solverScores[data.uid].totalScore += data.totalScore;
+                            solverScores[data.uid].puzzlesSolved += 1;
+                            solverScores[data.uid].totalTime += data.timeTaken;
+                        });
+
+                        // Convert to array and sort
+                        const leaderboardData = Object.values(solverScores).sort((a, b) => {
+                            if (b.totalScore !== a.totalScore) {
+                                return b.totalScore - a.totalScore;
+                            }
+                            return a.totalTime - b.totalTime; // Lower time wins ties
+                        });
+
+                        const leaderboardContent = document.getElementById('leaderboard-content');
+                        if (!leaderboardContent) return;
+
+                        if (leaderboardData.length === 0) {
+                            leaderboardContent.innerHTML = `<p>No scores submitted for the <strong>${selectedDivision}</strong> division yet.</p>`;
+                            return;
                         }
-                        solverScores[data.uid].totalScore += data.totalScore;
-                        solverScores[data.uid].puzzlesSolved += 1;
-                        solverScores[data.uid].totalTime += data.timeTaken;
-                    });
 
-                    // Convert to array and sort
-                    const leaderboardData = Object.values(solverScores).sort((a, b) => {
-                        if (b.totalScore !== a.totalScore) {
-                            return b.totalScore - a.totalScore;
-                        }
-                        return a.totalTime - b.totalTime; // Lower time wins ties
-                    });
-
-                    const leaderboardContent = document.getElementById('leaderboard-content');
-                    if (leaderboardData.length === 0) {
-                        leaderboardContent.innerHTML = `<p>No scores submitted for the <strong>${selectedDivision}</strong> division yet.</p>`;
-                        return;
-                    }
-
-                    let tableHtml = `
-                        <table class="leaderboard-table">
-                            <thead>
-                                <tr>
-                                    <th class="rank">Rank</th>
-                                    <th>Solver</th>
-                                    <th>Puzzles</th>
-                                    <th>Total Score</th>
-                                    <th>Total Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-
-                    leaderboardData.forEach((entry, index) => {
-                        const isMe = (entry.name === currentSolver.displayName);
-                        tableHtml += `
-                            <tr class="${isMe ? 'current-user' : ''}">
-                                <td class="rank">${index + 1}</td>
-                                <td>${entry.name} ${isMe ? ' (You)' : ''}</td>
-                                <td>${entry.puzzlesSolved}</td>
-                                <td class="score-cell">${entry.totalScore}</td>
-                                <td>${Math.floor(entry.totalTime / 60)}m ${entry.totalTime % 60}s</td>
-                            </tr>
+                        let tableHtml = `
+                            <table class="leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th class="rank">Rank</th>
+                                        <th>Solver</th>
+                                        <th>Puzzles</th>
+                                        <th>Total Score</th>
+                                        <th>Total Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                         `;
+
+                        leaderboardData.forEach((entry, index) => {
+                            const isMe = (entry.name === currentSolver.displayName);
+                            tableHtml += `
+                                <tr class="${isMe ? 'current-user' : ''}">
+                                    <td class="rank">${index + 1}</td>
+                                    <td>${entry.name} ${isMe ? ' (You)' : ''}</td>
+                                    <td>${entry.puzzlesSolved}</td>
+                                    <td class="score-cell">${entry.totalScore}</td>
+                                    <td>${Math.floor(entry.totalTime / 60)}m ${entry.totalTime % 60}s</td>
+                                </tr>
+                            `;
+                        });
+
+                        tableHtml += '</tbody></table>';
+                        leaderboardContent.innerHTML = tableHtml;
+                    }, (error) => {
+                        console.error('Leaderboard snapshot failed:', error);
                     });
-
-                    tableHtml += '</tbody></table>';
-                    leaderboardContent.innerHTML = tableHtml;
-
-                } catch (e) {
-                    console.error('Error loading leaderboard:', e);
-                    document.getElementById('leaderboard-content').innerHTML = `<p>Error loading leaderboard: ${e.message}</p>`;
-                }
             }
 
             // Function to handle messages from the fullscreen solver

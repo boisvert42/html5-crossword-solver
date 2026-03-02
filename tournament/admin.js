@@ -5,18 +5,54 @@ const CONFIG_COLLECTION = 'tournament_config';
 const SCORES_COLLECTION = 'scores';
 
 let db;
+let auth;
 let currentTab = 'puzzles';
 const adminContent = document.getElementById('admin-content');
+const loginDiv = document.getElementById('admin-login');
+const appDiv = document.getElementById('admin-app');
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof firebase !== 'undefined') {
         db = firebase.firestore();
-        initTabs();
-        loadTab(currentTab);
+        auth = firebase.auth();
+        
+        // Auth State Listener
+        auth.onAuthStateChanged(user => {
+            if (user && !user.isAnonymous) {
+                // Logged in as real user (Admin)
+                loginDiv.style.display = 'none';
+                appDiv.style.display = 'block';
+                initTabs();
+                loadTab(currentTab);
+            } else {
+                // Not logged in or anonymous
+                appDiv.style.display = 'none';
+                loginDiv.style.display = 'block';
+                initLoginForm();
+            }
+        });
     } else {
         adminContent.innerHTML = '<p class="error">Firebase SDK not loaded.</p>';
     }
 });
+
+function initLoginForm() {
+    const form = document.getElementById('loginForm');
+    const errorDiv = document.getElementById('loginError');
+    
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        }
+    };
+}
 
 function initTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => {

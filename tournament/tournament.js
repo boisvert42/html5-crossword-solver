@@ -1,33 +1,29 @@
-// Tournament-specific JavaScript logic will go here
-// This file will interact with Firebase, manage the tournament UI, etc.
+/**
+ * Tournament Solver Dashboard
+ * Manages participant registration, real-time puzzle status, and standings.
+ */
 
-const SOLVERS_COLLECTION = 'solvers'; // Firestore collection for solver profiles
-const PUZZLES_COLLECTION = 'puzzles'; // Firestore collection for puzzle metadata
-const CONFIG_COLLECTION = 'tournament_config'; // Firestore collection for tournament configuration
-const SCORES_COLLECTION = 'scores'; // Firestore collection for puzzle scores
+// Firestore Collection Constants
+const SOLVERS_COLLECTION = 'solvers';
+const PUZZLES_COLLECTION = 'puzzles';
+const CONFIG_COLLECTION = 'tournament_config';
+const SCORES_COLLECTION = 'scores';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Tournament page loaded.');
-
+    // Only proceed if Firebase SDK is present
     if (typeof firebase !== 'undefined') {
-        console.log('Firebase SDK loaded.');
         try {
-            const app = firebase.app();
-            console.log('Firebase app initialized:', app.name);
-
-            // Initialize Firebase services
             const auth = firebase.auth();
             const db = firebase.firestore();
-            const storage = firebase.storage();
 
-            // Store references to the solver's profile and the main app div
+            // --- State Management ---
             let currentSolver = null;
-            const tournamentAppDiv = document.getElementById('tournament-app');
-            
             let puzzleListenerUnsubscribe = null;
-            let activeView = 'puzzles';
+            let activeView = 'setup'; // 'puzzles', 'leaderboard', 'result'
+            
+            const tournamentAppDiv = document.getElementById('tournament-app');
 
-            // Default scoring rules (can be overridden by Firestore)
+            // Default scoring rules (overridden by Firestore if present)
             let scoringRules = {
                 pointsPerWord: 10,
                 timeBonusPerSecond: 1,
@@ -36,36 +32,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 minCorrectPercentageForTimeBonus: 0.5
             };
 
-            // Fetch scoring rules from Firestore
+            /**
+             * Fetches global scoring rules from Firestore configuration.
+             */
             async function fetchScoringRules() {
                 try {
                     const doc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
                     if (doc.exists) {
                         scoringRules = { ...scoringRules, ...doc.data() };
-                        console.log('Loaded custom scoring rules:', scoringRules);
                     }
                 } catch (e) {
-                    console.warn('Could not fetch scoring rules, using defaults.', e);
+                    console.warn('Using default scoring rules.', e);
                 }
             }
 
-            // Function to handle solver initialization (auth, setup UI)
+            /**
+             * Entry Point: Checks for existing profile or triggers Setup UI.
+             */
             async function initSolver() {
                 await fetchScoringRules();
                 let user = auth.currentUser;
 
+                // Sign in anonymously for participants if no session exists
                 if (!user) {
                     try {
                         const userCredential = await auth.signInAnonymously();
                         user = userCredential.user;
-                        console.log('Signed in anonymously with UID:', user.uid);
                     } catch (error) {
-                        console.error('Error signing in anonymously:', error);
+                        console.error('Auth failure:', error);
                         tournamentAppDiv.innerHTML = `<p class="error">Error signing in: ${error.message}</p>`;
                         return;
                     }
                 }
 
+                // Check if this user has already completed the setup
                 const solverRef = db.collection(SOLVERS_COLLECTION).doc(user.uid);
                 const solverDoc = await solverRef.get();
 
@@ -83,22 +83,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            /**
+             * VIEW: Participant Setup (Name entry and Division selection)
+             */
             async function renderSetupUI(user, existingData) {
+                activeView = 'setup';
+                
+                // Fetch available divisions from config
                 const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
                 const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
                 
-                let html = `
+                tournamentAppDiv.innerHTML = `
                     <div class="setup-container">
                         <h2>Tournament Setup</h2>
                         <p>Welcome! Please provide a name and select your division to get started.</p>
-                        
                         <div id="setupError" class="error-message"></div>
-
                         <div class="form-group">
                             <label for="solverName">Leaderboard Name:</label>
-                            <input type="text" id="solverName" placeholder="Enter your name or nickname" maxlength="30" value="${existingData?.name || ''}">
+                            <input type="text" id="solverName" placeholder="Enter your nickname" maxlength="30" value="${existingData?.name || ''}">
                         </div>
-
                         <div class="form-group">
                             <label>Choose Your Division:</label>
                             <div class="division-grid">
@@ -109,20 +112,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `).join('')}
                             </div>
                         </div>
-
                         <div class="setup-actions">
                             <button id="completeSetupBtn" class="primary-btn">Complete Setup & Start</button>
                         </div>
                     </div>
                 `;
 
-                tournamentAppDiv.innerHTML = html;
-
                 let selectedDivision = existingData?.division || null;
                 const errorDiv = document.getElementById('setupError');
                 const nameInput = document.getElementById('solverName');
 
-                // Division selection logic
+                // Handle card selection styling
                 document.querySelectorAll('.division-card').forEach(card => {
                     card.addEventListener('click', () => {
                         document.querySelectorAll('.division-card').forEach(c => c.classList.remove('selected'));
@@ -132,31 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
 
+                // Profile submission logic
                 document.getElementById('completeSetupBtn').addEventListener('click', async () => {
                     const name = nameInput.value.trim();
-                    
-                    if (!name) {
-                        errorDiv.textContent = 'Please enter a name.';
-                        errorDiv.style.display = 'block';
-                        return;
-                    }
-
-                    if (!selectedDivision) {
-                        errorDiv.textContent = 'Please choose a division.';
+                    if (!name || !selectedDivision) {
+                        errorDiv.textContent = 'Please provide both a name and a division.';
                         errorDiv.style.display = 'block';
                         return;
                     }
 
                     const solverRef = db.collection(SOLVERS_COLLECTION).doc(user.uid);
-                    const uidSuffix = user.uid.substring(0, 4);
-                    const displayName = `${name} (#${uidSuffix})`;
+                    const displayName = `${name} (#${user.uid.substring(0, 4)})`;
 
                     try {
                         await solverRef.set({
-                            name: name,
-                            displayName: displayName,
-                            uid: user.uid,
-                            division: selectedDivision,
+                            name, displayName, division: selectedDivision, uid: user.uid,
                             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                             createdAt: existingData?.createdAt || firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
@@ -164,46 +154,46 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentSolver = { uid: user.uid, name, displayName, division: selectedDivision };
                         renderPuzzleList();
                     } catch (e) {
-                        console.error('Error saving profile:', e);
                         errorDiv.textContent = 'Error saving profile. Please try again.';
                         errorDiv.style.display = 'block';
                     }
                 });
             }
 
-            // Function to calculate score based on rules
+            /**
+             * UTILITY: Logic for calculating final score based on accuracy and speed.
+             */
             function calculateScore(xw, puzzleData, timeTakenSeconds) {
-                // Determine if we have a full xw object or just counts
                 let correctWordsCount, totalWords;
+                
+                // Handle different input formats (full engine object vs simple result map)
                 if (xw.words && Array.isArray(xw.words)) {
-                    // This is a mock object from external submission
                     totalWords = xw.words.length;
                     correctWordsCount = xw.words.filter(w => w.isCorrect()).length;
                 } else if (xw.words) {
-                    // This is the full xw object from the internal engine
                     const words = Object.values(xw.words);
                     totalWords = words.length;
                     correctWordsCount = words.filter(w => w.isCorrect()).length;
                 } else {
-                    // Fallback
-                    totalWords = 0;
-                    correctWordsCount = 0;
+                    totalWords = 0; correctWordsCount = 0;
                 }
 
                 const isFullyCorrect = correctWordsCount === totalWords && totalWords > 0;
                 const timeLimit = puzzleData.timeLimitSeconds || 0;
 
+                // 1. Base Score (Accuracy)
                 let score = correctWordsCount * scoringRules.pointsPerWord;
 
-                if (isFullyCorrect) {
-                    score += scoringRules.completionBonus;
-                }
+                // 2. Completion Bonus
+                if (isFullyCorrect) score += scoringRules.completionBonus;
 
+                // 3. Time Bonus / Penalty
                 const correctPercentage = correctWordsCount / totalWords;
                 let timeBonus = 0;
                 let overtimePenalty = 0;
 
                 if (timeTakenSeconds <= timeLimit) {
+                    // Only award time bonus if accuracy threshold is met
                     if (correctPercentage >= scoringRules.minCorrectPercentageForTimeBonus) {
                         timeBonus = (timeLimit - timeTakenSeconds) * scoringRules.timeBonusPerSecond;
                     }
@@ -216,25 +206,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 score -= overtimePenalty;
 
                 return {
-                    totalScore: Math.max(0, score), // Score can't be negative
+                    totalScore: Math.max(0, score),
                     correctWords: correctWordsCount,
-                    totalWords: totalWords,
+                    totalWords,
                     timeTaken: timeTakenSeconds,
-                    timeLimit: timeLimit,
-                    timeBonus: timeBonus,
-                    overtimePenalty: overtimePenalty,
-                    isFullyCorrect: isFullyCorrect
+                    timeLimit,
+                    timeBonus,
+                    overtimePenalty,
+                    isFullyCorrect
                 };
             }
 
+            /**
+             * Submits final score to Firestore.
+             */
             async function submitPuzzle(puzzleData, scoreInfo) {
-                if (!currentSolver) {
-                    console.error('No current solver found! Cannot submit score.');
-                    return;
-                }
+                if (!currentSolver) return;
                 
                 if (puzzleData.isWarmup) {
-                    console.log('Warm-up complete. Stats:', scoreInfo);
                     showSubmissionResult(scoreInfo, true);
                     return;
                 }
@@ -251,19 +240,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...scoreInfo,
                         submittedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    console.log('Score submitted successfully!');
                     showSubmissionResult(scoreInfo);
                 } catch (e) {
-                    console.error('Error submitting score:', e);
-                    alert('Failed to submit score. Please check your connection.');
+                    console.error('Submission failed:', e);
+                    alert('Error submitting score. Please check your internet connection.');
                 }
             }
 
+            /**
+             * VIEW: Performance summary screen after puzzle completion.
+             */
             function showSubmissionResult(scoreInfo, isWarmup = false) {
+                activeView = 'result';
                 tournamentAppDiv.innerHTML = `
                     <div class="submission-result">
                         <h2>${isWarmup ? 'Warm-up Complete!' : 'Puzzle Submitted!'}</h2>
-                        ${isWarmup ? '<p>Good practice! This score was not officially recorded.</p>' : ''}
+                        ${isWarmup ? '<p>Practice complete! These scores are not recorded.</p>' : ''}
                         <div class="score-card">
                             <p class="total-score">Total Score: <span>${scoreInfo.totalScore}</span></p>
                             <p>Correct Words: ${scoreInfo.correctWords} / ${scoreInfo.totalWords}</p>
@@ -282,10 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('viewLeaderboardAfterSubmit').addEventListener('click', () => renderLeaderboard());
             }
 
+            /**
+             * VIEW: Standings screen with live updates.
+             */
             async function renderLeaderboard(selectedDivision = currentSolver.division) {
                 activeView = 'leaderboard';
                 
-                // Stop any existing puzzle or leaderboard listener
+                // Unsubscribe from previous views
                 if (puzzleListenerUnsubscribe) {
                     puzzleListenerUnsubscribe();
                     puzzleListenerUnsubscribe = null;
@@ -299,81 +294,53 @@ document.addEventListener('DOMContentLoaded', () => {
                             <select id="divisionFilter"></select>
                         </div>
                     </div>
-                    <div id="leaderboard-content">
-                        <p>Loading standings for <strong>${selectedDivision}</strong> division...</p>
-                    </div>
+                    <div id="leaderboard-content"><p>Loading standings...</p></div>
                 `;
 
-                document.getElementById('backToPuzzlesFromLeaderboard').addEventListener('click', () => {
-                    if (puzzleListenerUnsubscribe) {
-                        puzzleListenerUnsubscribe();
-                        puzzleListenerUnsubscribe = null;
-                    }
-                    renderPuzzleList();
-                });
+                document.getElementById('backToPuzzlesFromLeaderboard').addEventListener('click', renderPuzzleList);
                 
-                // Fetch divisions for the filter
+                // Fetch and render division filter
                 try {
                     const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
                     const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
-                    
                     const filter = document.getElementById('divisionFilter');
                     availableDivisions.forEach(div => {
                         const opt = document.createElement('option');
-                        opt.value = div;
-                        opt.textContent = `${div} Division`;
+                        opt.value = div; opt.textContent = `${div} Division`;
                         opt.selected = (div === selectedDivision);
                         filter.appendChild(opt);
                     });
+                    filter.addEventListener('change', (e) => renderLeaderboard(e.target.value));
+                } catch (e) {}
 
-                    filter.addEventListener('change', (e) => {
-                        if (puzzleListenerUnsubscribe) {
-                            puzzleListenerUnsubscribe();
-                            puzzleListenerUnsubscribe = null;
-                        }
-                        renderLeaderboard(e.target.value);
-                    });
-                } catch (e) {
-                    console.warn('Could not fetch divisions for filter', e);
-                }
-
-                // Start Live Listener for scores
+                // LIVE LISTENER: Update rankings as scores are submitted
                 puzzleListenerUnsubscribe = db.collection(SCORES_COLLECTION)
                     .where('division', '==', selectedDivision)
                     .onSnapshot((scoresSnapshot) => {
                         if (activeView !== 'leaderboard') return;
 
-                        console.log('Leaderboard updated live!');
                         const solverScores = {};
-
                         scoresSnapshot.forEach(doc => {
                             const data = doc.data();
                             if (!solverScores[data.uid]) {
-                                solverScores[data.uid] = {
-                                    name: data.solverName,
-                                    totalScore: 0,
-                                    puzzlesSolved: 0,
-                                    totalTime: 0
-                                };
+                                solverScores[data.uid] = { name: data.solverName, totalScore: 0, puzzlesSolved: 0, totalTime: 0 };
                             }
                             solverScores[data.uid].totalScore += data.totalScore;
                             solverScores[data.uid].puzzlesSolved += 1;
                             solverScores[data.uid].totalTime += data.timeTaken;
                         });
 
-                        // Convert to array and sort
+                        // Sort by total score (DESC) and tie-break with total time (ASC)
                         const leaderboardData = Object.values(solverScores).sort((a, b) => {
-                            if (b.totalScore !== a.totalScore) {
-                                return b.totalScore - a.totalScore;
-                            }
-                            return a.totalTime - b.totalTime; // Lower time wins ties
+                            if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+                            return a.totalTime - b.totalTime;
                         });
 
                         const leaderboardContent = document.getElementById('leaderboard-content');
                         if (!leaderboardContent) return;
 
                         if (leaderboardData.length === 0) {
-                            leaderboardContent.innerHTML = `<p>No scores submitted for the <strong>${selectedDivision}</strong> division yet.</p>`;
+                            leaderboardContent.innerHTML = `<p>No submissions for the <strong>${selectedDivision}</strong> division yet.</p>`;
                             return;
                         }
 
@@ -404,76 +371,55 @@ document.addEventListener('DOMContentLoaded', () => {
                             `;
                         });
 
-                        tableHtml += '</tbody></table>';
-                        leaderboardContent.innerHTML = tableHtml;
-                    }, (error) => {
-                        console.error('Leaderboard snapshot failed:', error);
+                        leaderboardContent.innerHTML = tableHtml + '</tbody></table>';
                     });
             }
 
-            // Function to handle messages from the fullscreen solver
+            /**
+             * POST-MESSAGE LISTENER: Listens for signals from the solve.html tab.
+             */
             window.addEventListener('message', async (event) => {
-                console.log('Tournament received message event:', event);
                 if (event.data && event.data.type === 'CROSSWORD_SOLVED') {
                     const { puzzleId, timeTakenSeconds, correctWords, totalWords } = event.data;
-                    console.log(`CROSSWORD_SOLVED received: ID=${puzzleId}, Time=${timeTakenSeconds}, Correct=${correctWords}/${totalWords}`);
-                    await handleExternalSubmission(puzzleId, timeTakenSeconds, correctWords, totalWords);
+                    
+                    // Fetch puzzle meta to perform final calculation
+                    try {
+                        const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
+                        if (!puzzleDoc.exists) return;
+                        
+                        const puzzleData = { id: puzzleDoc.id, ...puzzleDoc.data() };
+                        const scoreInfo = calculateScore({
+                            words: Array(parseInt(correctWords)).fill({ isCorrect: () => true })
+                                .concat(Array(Math.max(0, parseInt(totalWords) - parseInt(correctWords))).fill({ isCorrect: () => false }))
+                        }, puzzleData, parseInt(timeTakenSeconds));
+
+                        await submitPuzzle(puzzleData, scoreInfo);
+                    } catch (e) {
+                        console.error('External submission error:', e);
+                    }
                 }
             });
 
-            async function handleExternalSubmission(puzzleId, timeTakenSeconds, correctWords, totalWords) {
-                console.log(`Processing submission for puzzle ${puzzleId}. Correct: ${correctWords}/${totalWords}, Time: ${timeTakenSeconds}s`);
-                try {
-                    const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
-                    if (!puzzleDoc.exists) {
-                        console.error('Puzzle not found in Firestore:', puzzleId);
-                        return;
-                    }
-                    
-                    const puzzleData = { id: puzzleDoc.id, ...puzzleDoc.data() };
-                    
-                    // Ensure counts are numbers
-                    const cWords = parseInt(correctWords) || 0;
-                    const tWords = parseInt(totalWords) || 0;
-                    const tSeconds = parseInt(timeTakenSeconds) || 0;
-
-                    const scoreInfo = calculateScore({
-                        words: Array(cWords).fill({ isCorrect: () => true })
-                            .concat(Array(Math.max(0, tWords - cWords)).fill({ isCorrect: () => false }))
-                    }, puzzleData, tSeconds);
-
-                    console.log('Calculated score info:', scoreInfo);
-                    await submitPuzzle(puzzleData, scoreInfo);
-                    // Note: submitPuzzle calls showSubmissionResult, so we don't call renderPuzzleList here
-                } catch (e) {
-                    console.error('Error handling external submission:', e);
-                    alert('Error processing your score: ' + e.message);
-                }
-            }
-
-            // Function to load and render a specified puzzle
+            /**
+             * BOOTSTRAPPER: Opens the fullscreen solver.
+             */
             async function loadPuzzle(puzzleData) {
-                // Determine the correct puzzle file based on the solver's division
+                // Find correct file for solver division
                 let puzzlePath = null;
                 if (puzzleData.filesByDivision && currentSolver.division) {
                     puzzlePath = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
                 }
-                if (!puzzlePath) {
-                    puzzlePath = puzzleData.filePath || puzzleData.fileName; 
-                }
+                if (!puzzlePath) puzzlePath = puzzleData.filePath || puzzleData.fileName; 
 
                 if (!puzzlePath) {
-                    console.error('Could not determine puzzle path for puzzle:', puzzleData.name);
-                    alert('Error: Could not find the puzzle file for your division.');
+                    alert('Error: File not found for your division.');
                     return;
                 }
 
-                // Construct the URL for the fullscreen solver
                 const solverUrl = new URL('solve.html', window.location.href);
-                // The puzzle path is already relative to the tournament folder (e.g., ./puzzles/...)
                 solverUrl.searchParams.set('puzzle', puzzlePath);
                 
-                // Add a config object that the solver can use to report back
+                // Config passed to solve.html
                 const config = {
                     tournament_mode: true,
                     puzzle_id: puzzleData.id,
@@ -482,24 +428,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 solverUrl.searchParams.set('config', btoa(JSON.stringify(config)));
 
-                // Open in new tab
-                console.log('Opening fullscreen solver:', solverUrl.toString());
                 window.open(solverUrl.toString(), '_blank');
             }
 
+            /**
+             * VIEW: Main puzzle list with live status updates.
+             */
             async function renderPuzzleList() {
-                if (!currentSolver) {
-                    tournamentAppDiv.innerHTML = `<p>Error: Solver not initialized.</p>`;
-                    return;
-                }
-                
+                if (!currentSolver) return;
                 activeView = 'puzzles';
-                if (puzzleListenerUnsubscribe) {
-                    puzzleListenerUnsubscribe();
-                    puzzleListenerUnsubscribe = null;
-                }
+                if (puzzleListenerUnsubscribe) { puzzleListenerUnsubscribe(); puzzleListenerUnsubscribe = null; }
 
-                // Fetch Tournament Name
+                // Fetch Custom Tournament Name
                 let tournamentName = 'Crossword Tournament Solver';
                 try {
                     const metaDoc = await db.collection(CONFIG_COLLECTION).doc('metadata').get();
@@ -507,22 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         tournamentName = metaDoc.data().tournamentName;
                         document.title = tournamentName;
                     }
-                } catch (e) {
-                    console.warn('Could not fetch tournament name', e);
-                }
-
-                // Check for already submitted scores
-                let submittedPuzzleIds = new Set();
-                try {
-                    const scoresSnapshot = await db.collection(SCORES_COLLECTION)
-                        .where('uid', '==', currentSolver.uid)
-                        .get();
-                    scoresSnapshot.forEach(doc => {
-                        submittedPuzzleIds.add(doc.data().puzzleId);
-                    });
-                } catch (e) {
-                    console.warn('Could not fetch previous scores:', e);
-                }
+                } catch (e) {}
 
                 tournamentAppDiv.innerHTML = `
                     <h1>${tournamentName}</h1>
@@ -541,53 +466,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div id="tournament-puzzles-section" class="puzzle-section"></div>
                 `;
 
-                document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
-                    activeView = 'leaderboard';
-                    if (puzzleListenerUnsubscribe) {
-                        puzzleListenerUnsubscribe();
-                        puzzleListenerUnsubscribe = null;
-                    }
-                    renderLeaderboard();
-                });
+                document.getElementById('viewLeaderboardBtn').addEventListener('click', renderLeaderboard);
 
                 const warmUpSection = document.getElementById('warmup-puzzle-section');
                 const tournamentSection = document.getElementById('tournament-puzzles-section');
 
-                // Start Live Listener for puzzles
+                // LIVE LISTENER: Instantly update list when Admin unlocks/adds puzzles
                 puzzleListenerUnsubscribe = db.collection(PUZZLES_COLLECTION)
                     .where('status', 'in', ['available', 'locked'])
                     .orderBy('puzzleNumber', 'asc')
                     .onSnapshot(async (querySnapshot) => {
                         if (activeView !== 'puzzles') return;
 
-                        console.log('Puzzles updated live!');
-                        
-                        // Check for already submitted scores
+                        // Fetch my previous submissions to hide "Start" buttons
                         let submittedPuzzleIds = new Set();
                         try {
-                            const scoresSnapshot = await db.collection(SCORES_COLLECTION)
-                                .where('uid', '==', currentSolver.uid)
-                                .get();
-                            scoresSnapshot.forEach(doc => {
-                                submittedPuzzleIds.add(doc.data().puzzleId);
-                            });
-                        } catch (e) {
-                            console.warn('Error fetching previous scores:', e);
-                        }
+                            const scoresSnapshot = await db.collection(SCORES_COLLECTION).where('uid', '==', currentSolver.uid).get();
+                            scoresSnapshot.forEach(doc => submittedPuzzleIds.add(doc.data().puzzleId));
+                        } catch (e) {}
 
                         let warmUpPuzzle = null;
                         const tournamentPuzzles = [];
-
                         querySnapshot.forEach(doc => {
-                            const puzzle = { id: doc.id, ...doc.data() };
-                            if (puzzle.isWarmup) {
-                                warmUpPuzzle = puzzle;
-                            } else {
-                                tournamentPuzzles.push(puzzle);
-                            }
+                            const p = { id: doc.id, ...doc.data() };
+                            if (p.isWarmup) warmUpPuzzle = p; else tournamentPuzzles.push(p);
                         });
 
-                        // Render Warm-Up Puzzle
+                        // Render Warm-Up
                         if (warmUpPuzzle) {
                             const isSubmitted = submittedPuzzleIds.has(warmUpPuzzle.id);
                             const isLocked = warmUpPuzzle.status === 'locked';
@@ -602,15 +507,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                 </div>
                             `;
-                        } else {
-                            warmUpSection.innerHTML = `<p>No warm-up puzzle available yet.</p>`;
-                        }
+                        } else warmUpSection.innerHTML = `<p>No warm-up available.</p>`;
 
-                        // Render Tournament Puzzles
+                        // Render Main Puzzles
                         if (tournamentPuzzles.length > 0) {
                             tournamentSection.innerHTML = '<h4>Tournament Puzzles</h4>';
-                            const ul = document.createElement('ul');
-                            ul.className = 'puzzle-list';
+                            const ul = document.createElement('ul'); ul.className = 'puzzle-list';
                             tournamentPuzzles.forEach(puzzle => {
                                 const isSubmitted = submittedPuzzleIds.has(puzzle.id);
                                 const isLocked = puzzle.status === 'locked';
@@ -632,47 +534,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ul.appendChild(li);
                             });
                             tournamentSection.appendChild(ul);
-                        } else {
-                            tournamentSection.innerHTML = `<p>No tournament puzzles available yet.</p>`;
-                        }
+                        } else tournamentSection.innerHTML = `<p>No puzzles available yet.</p>`;
 
-                        // Add event listeners to all start buttons
-                        document.querySelectorAll('.start-puzzle-btn').forEach(button => {
-                            button.addEventListener('click', async (event) => {
-                                const puzzleId = event.target.dataset.puzzleId;
-                                // Clean up listener before opening new view
-                                activeView = 'solving';
-                                if (puzzleListenerUnsubscribe) {
-                                    puzzleListenerUnsubscribe();
-                                    puzzleListenerUnsubscribe = null;
-                                }
-                                
-                                const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
-                                if (puzzleDoc.exists) {
-                                    loadPuzzle({ id: puzzleDoc.id, ...puzzleDoc.data() });
-                                } else {
-                                    alert('Puzzle not found!');
-                                }
-                            });
+                        // Event Delegation for Start Buttons
+                        document.querySelectorAll('.start-puzzle-btn').forEach(btn => {
+                            btn.onclick = async () => {
+                                const pDoc = await db.collection(PUZZLES_COLLECTION).doc(btn.dataset.puzzleId).get();
+                                if (pDoc.exists) loadPuzzle({ id: pDoc.id, ...pDoc.data() });
+                            };
                         });
-                    }, (error) => {
-                        console.error('Snapshot listener failed:', error);
-                        if (activeView === 'puzzles') {
-                            tournamentAppDiv.innerHTML += `<p class="error">Lost connection to server. Please refresh.</p>`;
-                        }
                     });
             }
 
-
-            // Start the solver initialization process
             initSolver();
 
         } catch (e) {
-            console.error('Error initializing Firebase app or services.', e);
-            alert('A problem occurred during initialization. Check the console for details.');
+            console.error('Firebase init error:', e);
         }
-    } else {
-        console.warn('Firebase SDK not loaded.');
-        alert('Firebase SDK not loaded. Cannot run tournament solver.');
     }
 });

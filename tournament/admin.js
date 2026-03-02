@@ -1,4 +1,9 @@
-// Tournament Admin Logic
+/**
+ * Tournament Admin Dashboard
+ * Handles puzzle management, scoring configuration, and live result monitoring.
+ */
+
+// Firestore Collection Constants
 const SOLVERS_COLLECTION = 'solvers';
 const PUZZLES_COLLECTION = 'puzzles';
 const CONFIG_COLLECTION = 'tournament_config';
@@ -7,35 +12,44 @@ const SCORES_COLLECTION = 'scores';
 let db;
 let auth;
 let currentTab = 'puzzles';
+
+// UI Element References
 const adminContent = document.getElementById('admin-content');
 const loginDiv = document.getElementById('admin-login');
 const appDiv = document.getElementById('admin-app');
 
+/**
+ * Initialization: Connects to Firebase and sets up the Auth listener.
+ * The dashboard is hidden until a valid Admin user is detected.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof firebase !== 'undefined') {
         db = firebase.firestore();
         auth = firebase.auth();
         
-        // Auth State Listener
+        // Listen for authentication state changes
         auth.onAuthStateChanged(user => {
             if (user && !user.isAnonymous) {
-                // Logged in as real user (Admin)
+                // User is signed in with email/password (Admin)
                 loginDiv.style.display = 'none';
                 appDiv.style.display = 'block';
                 initTabs();
                 loadTab(currentTab);
             } else {
-                // Not logged in or anonymous
+                // User is not signed in or is using an anonymous solver account
                 appDiv.style.display = 'none';
                 loginDiv.style.display = 'block';
                 initLoginForm();
             }
         });
     } else {
-        adminContent.innerHTML = '<p class="error">Firebase SDK not loaded.</p>';
+        adminContent.innerHTML = '<p class="error">Firebase SDK not loaded. Check your configuration.</p>';
     }
 });
 
+/**
+ * Sets up the Admin Login form logic.
+ */
 function initLoginForm() {
     const form = document.getElementById('loginForm');
     const errorDiv = document.getElementById('loginError');
@@ -54,6 +68,9 @@ function initLoginForm() {
     };
 }
 
+/**
+ * Initializes navigation tab click handlers.
+ */
 function initTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -65,6 +82,9 @@ function initTabs() {
     });
 }
 
+/**
+ * Routes the UI rendering based on the active tab.
+ */
 async function loadTab(tab) {
     adminContent.innerHTML = '<div class="loading">Loading section...</div>';
     switch (tab) {
@@ -83,9 +103,13 @@ async function loadTab(tab) {
     }
 }
 
-/* PUZZLES TAB */
+/* ==========================================
+   PUZZLES TAB: Manage individual puzzle meta
+   ========================================== */
+
 async function renderPuzzlesTab() {
     try {
+        // Fetch all puzzles ordered by their sequence number
         const querySnapshot = await db.collection(PUZZLES_COLLECTION).orderBy('puzzleNumber', 'asc').get();
         const puzzles = [];
         querySnapshot.forEach(doc => puzzles.push({ id: doc.id, ...doc.data() }));
@@ -119,7 +143,7 @@ async function renderPuzzlesTab() {
         html += '</div>';
         adminContent.innerHTML = html;
 
-        // Event listeners
+        // Hook up action buttons
         document.getElementById('addPuzzleBtn').onclick = () => renderPuzzleForm();
         document.querySelectorAll('.edit-puzzle-btn').forEach(btn => {
             btn.onclick = () => {
@@ -141,10 +165,14 @@ async function renderPuzzlesTab() {
     }
 }
 
+/**
+ * Renders the form to Add or Edit a puzzle.
+ * Includes mapping for division-specific puzzle files.
+ */
 async function renderPuzzleForm(puzzle = null) {
     const isEdit = !!puzzle;
     
-    // Fetch divisions to allow per-division file mapping
+    // Fetch current divisions to build the mapping grid
     let divisions = ['default'];
     try {
         const divDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
@@ -179,9 +207,9 @@ async function renderPuzzleForm(puzzle = null) {
                     <div class="form-group">
                         <label>Status</label>
                         <select name="status">
-                            <option value="available" ${puzzle?.status === 'available' ? 'selected' : ''}>Available</option>
-                            <option value="hidden" ${puzzle?.status === 'hidden' ? 'selected' : ''}>Hidden</option>
-                            <option value="locked" ${puzzle?.status === 'locked' ? 'selected' : ''}>Locked</option>
+                            <option value="available" ${puzzle?.status === 'available' ? 'selected' : ''}>Available (Live)</option>
+                            <option value="locked" ${puzzle?.status === 'locked' ? 'selected' : ''}>Locked (Visible but not playable)</option>
+                            <option value="hidden" ${puzzle?.status === 'hidden' ? 'selected' : ''}>Hidden (Invisible)</option>
                         </select>
                     </div>
                     <div class="form-group" style="display:flex; align-items:center; padding-top:20px; gap:10px;">
@@ -192,12 +220,12 @@ async function renderPuzzleForm(puzzle = null) {
 
                 <div class="form-group" style="margin-top:15px">
                     <label>Puzzle File Path</label>
-                    <p style="font-size:0.8em; color:#666; margin-bottom:10px">Place files in <code>tournament/puzzles/</code> and use the path <code>./puzzles/your-file.ipuz</code></p>
+                    <p style="font-size:0.8em; color:#666; margin-bottom:10px">Place files in <code>tournament/puzzles/</code> and reference them here.</p>
                     <div class="division-mapping">
                         ${divisions.map(div => `
                             <div class="mapping-row">
                                 <label>${div}:</label>
-                                <input type="text" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? puzzle?.filePath || puzzle?.fileName || '' : '')}" placeholder="./puzzles/filename.ipuz">
+                                <input type="text" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? (puzzle?.filePath || puzzle?.fileName || '') : '')}" placeholder="./puzzles/filename.ipuz">
                             </div>
                         `).join('')}
                     </div>
@@ -218,6 +246,7 @@ async function renderPuzzleForm(puzzle = null) {
         e.preventDefault();
         const formData = new FormData(e.target);
         
+        // Collate division files into a map
         const filesByDivision = {};
         divisions.forEach(div => {
             const val = formData.get(`file_${div}`);
@@ -232,6 +261,7 @@ async function renderPuzzleForm(puzzle = null) {
             status: formData.get('status'),
             isWarmup: formData.get('isWarmup') === 'on',
             filesByDivision: filesByDivision,
+            // Fallback filePath for older code
             filePath: filesByDivision.default || Object.values(filesByDivision)[0] || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -252,7 +282,10 @@ async function renderPuzzleForm(puzzle = null) {
     };
 }
 
-/* DIVISIONS TAB */
+/* ==========================================
+   DIVISIONS TAB: Define tournament categories
+   ========================================== */
+
 async function renderDivisionsTab() {
     try {
         const doc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
@@ -261,7 +294,7 @@ async function renderDivisionsTab() {
         let html = `
             <div class="admin-card">
                 <h3>Manage Divisions</h3>
-                <p>Define the divisions available for participants. Each division can have its own puzzle files.</p>
+                <p>Define categories for participants. Each category can have unique puzzle files mapped to it.</p>
                 <div id="divisionList" class="admin-list" style="box-shadow:none; border:1px solid #eee">
                     ${list.map(div => `
                         <div class="list-item">
@@ -312,7 +345,7 @@ async function renderDivisionsTab() {
 
         document.getElementById('saveDivisionsBtn').onclick = async () => {
             await db.collection(CONFIG_COLLECTION).doc('divisions').set({ list });
-            alert('Divisions saved!');
+            alert('Divisions saved! These will now appear in the registration screen.');
             renderDivisionsTab();
         };
 
@@ -321,16 +354,19 @@ async function renderDivisionsTab() {
     }
 }
 
-/* SETTINGS TAB */
+/* ==========================================
+   SETTINGS TAB: Meta-data and Scoring Rules
+   ========================================== */
+
 async function renderSettingsTab() {
     try {
-        // Fetch Metadata
+        // Fetch Metadata (Tournament Title)
         const metaDoc = await db.collection(CONFIG_COLLECTION).doc('metadata').get();
         const metadata = metaDoc.exists ? metaDoc.data() : {
             tournamentName: 'Crossword Tournament Solver'
         };
 
-        // Fetch Scoring
+        // Fetch Scoring Config
         const scoreDoc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
         const rules = scoreDoc.exists ? scoreDoc.data() : {
             pointsPerWord: 10,
@@ -392,24 +428,22 @@ async function renderSettingsTab() {
         document.getElementById('metadataForm').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const newMeta = {
+            await db.collection(CONFIG_COLLECTION).doc('metadata').set({
                 tournamentName: formData.get('tournamentName')
-            };
-            await db.collection(CONFIG_COLLECTION).doc('metadata').set(newMeta);
-            alert('Metadata updated!');
+            });
+            alert('Metadata updated! Dashboard titles have been updated live.');
         };
 
         document.getElementById('scoringForm').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const newRules = {
+            await db.collection(CONFIG_COLLECTION).doc('scoring').set({
                 pointsPerWord: parseInt(formData.get('pointsPerWord')),
                 completionBonus: parseInt(formData.get('completionBonus')),
                 timeBonusPerSecond: parseInt(formData.get('timeBonusPerSecond')),
                 overtimePenaltyPer4Seconds: parseInt(formData.get('overtimePenaltyPer4Seconds')),
                 minCorrectPercentageForTimeBonus: parseFloat(formData.get('minCorrectPercentageForTimeBonus'))
-            };
-            await db.collection(CONFIG_COLLECTION).doc('scoring').set(newRules);
+            });
             alert('Scoring rules updated!');
         };
     } catch (e) {
@@ -417,9 +451,13 @@ async function renderSettingsTab() {
     }
 }
 
-/* RESULTS TAB */
+/* ==========================================
+   RESULTS TAB: Monitoring and Export
+   ========================================== */
+
 async function renderResultsTab() {
     try {
+        // Fetch 100 most recent submissions
         const querySnapshot = await db.collection(SCORES_COLLECTION).orderBy('submittedAt', 'desc').limit(100).get();
         
         let html = `
@@ -466,6 +504,9 @@ async function renderResultsTab() {
         html += '</tbody></table></div>';
         adminContent.innerHTML = html;
 
+        /**
+         * CSV Export logic: Aggregates current results view into a downloadable file.
+         */
         document.getElementById('exportResultsBtn').onclick = () => {
             if (results.length === 0) return;
             const headers = ['Solver', 'Division', 'Puzzle ID', 'Puzzle Name', 'Score', 'Correct Words', 'Total Words', 'Time Taken', 'Submitted At'];
@@ -497,6 +538,6 @@ async function renderResultsTab() {
         };
 
     } catch (e) {
-        adminContent.innerHTML = `<p class="error">Error: ${e.message}</p>`;
+        adminContent.innerHTML = `<p class="error">Error loading results: ${e.message}</p>`;
     }
 }

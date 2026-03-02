@@ -6,25 +6,18 @@
     <meta name="HandheldFriendly" content="True">
     <title>Tournament Solver | Crossword Nexus</title>
 
-    <!-- jQuery -->
+    <!-- External Dependencies -->
     <script src="../lib/jquery.js"></script>
-
-    <!-- for loading crosswords -->
     <script src="../lib/jscrossword_combined.js"></script>
-
-    <!-- confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <!-- GG animation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha512-16esztaSRplJROstbIIdwX3N97V1+pZvV33ABoG1H2OyTttBxEGkTsoIVsiP1iaTtM8b3+hu2kB6pQ4Clr5yug==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <!-- Shared JS -->
+    <!-- Core Solver Assets -->
     <script src="../js/crossword.shared.js"></script>
-
-    <!-- Shared CSS -->
     <link rel="stylesheet" href="../css/crossword.shared.css">
 
     <style>
+      /* Full-screen layout for the solver */
       body {
           margin: 0;
           padding: 0;
@@ -33,7 +26,8 @@
           height: 100vh;
           overflow: hidden;
       }
-      /* Tournament Mode Highlight */
+      
+      /* Distinct banner to remind users they are in tournament mode */
       .tournament-banner {
           background: #e67e22;
           color: white;
@@ -46,6 +40,8 @@
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
           z-index: 100;
       }
+
+      /* Solver container fills the remaining viewport height */
       .crossword {
           flex: 1;
           position: relative;
@@ -56,42 +52,52 @@
     </style>
 
     <script>
-        console.log('--- Tournament Solver Active ---');
+        /**
+         * solve.html - Dedicated Tournament Solver Bridge
+         * 
+         * This page hosts the main crossword engine but wraps it with tournament-specific
+         * behavior: auto-starting the timer, disabling help features, and reporting
+         * the final score back to the dashboard via postMessage.
+         */
+
         const mobile = CrosswordShared.isMobileDevice();
         
+        /**
+         * Fetches parameters from the URL and applies tournament overrides.
+         */
         function getTournamentParams() {
             const params = CrosswordShared.getCrosswordParams();
-            console.log('Tournament params loaded:', params);
             
+            // Apply strict tournament rules if tournament_mode is detected
             if (params.tournament_mode) {
-                console.log('Tournament Mode Detected: Applying overrides');
-                params.has_reveal = false;
-                params.has_check = false;
-                params.timer_autostart = true;
-                params.show_timer_option = false;
-                params.allow_timer_toggle = false;
+                params.has_reveal = false;        // No cheating!
+                params.has_check = false;         // No checking individual letters
+                params.timer_autostart = true;    // Start clock immediately
+                params.show_timer_option = false; // Hide "autostart" setting
+                params.allow_timer_toggle = false;// Prevent pausing the clock
 
+                // Warn if the connection to the dashboard is broken
                 if (!window.opener) {
-                    console.warn('WARNING: window.opener is null! Score reporting will fail.');
+                    console.warn('WARNING: Dashboard connection lost. Score reporting will fail.');
                 }
             }
             
-            // Add the tournament reporting logic to the onSolved callback
+            /**
+             * The onSolved callback is triggered by the core engine when the grid is 100% correct.
+             */
             params.onSolved = (xw) => {
                 const finalTime = xw.xw_timer_seconds || 0;
-                console.log('Puzzle solved! Time captured:', finalTime);
                 
                 if (!window.opener) {
-                    console.error('window.opener is null! Cannot report score.');
                     alert('Tournament window not found. Score could not be reported automatically.');
                     return;
                 }
 
+                // Gather word statistics for final scoring
                 const words = Object.values(xw.words);
                 const correctWords = words.filter(w => w.isCorrect()).length;
-                console.log(`Reporting score back to dashboard: ID=${params.puzzle_id}, Time=${finalTime}, Correct=${correctWords}/${words.length}`);
                 
-                // Report back to the opener (tournament.html)
+                // Report back to the dashboard (tournament.html)
                 window.opener.postMessage({
                     type: 'CROSSWORD_SOLVED',
                     puzzleId: params.puzzle_id,
@@ -100,9 +106,10 @@
                     totalWords: words.length
                 }, '*');
                 
-                // Show a custom message for tournament solvers
+                // Custom success message for tournament players
                 setTimeout(() => {
-                    const msg = (xw.completion_message || 'Puzzle solved!') + '<br><br><b>Tournament result reported!</b> You can now close this tab and return to the tournament page.';
+                    const msg = (xw.completion_message || 'Puzzle solved!') + 
+                                '<br><br><b>Tournament result reported!</b> You can now close this tab and return to the tournament dashboard.';
                     xw.createModalBox('🎉🎉🎉', msg);
                 }, 100);
             };
@@ -110,7 +117,12 @@
             return params;
         }
 
+        // --- Platform-specific Initialization ---
+
         if (mobile) {
+          /**
+           * Mobile Init: Loads mobile CSS and bootstrapper.
+           */
           const core = document.createElement('script');
           core.src = '../js/crosswords.js';
 
@@ -120,13 +132,11 @@
             link.href = '../css/crossword.mobile.css';
             document.head.appendChild(link);
 
-            // Re-define how gCrossword is initialized for mobile
-            const mobileScript = document.createElement('script');
-            mobileScript.src = '../js/crossword.mobile.js';
-            
-            // Overwrite the params before mobile initialization
+            // Override parameter fetching before mobile JS initializes
             CrosswordShared.getCrosswordParams = getTournamentParams;
 
+            const mobileScript = document.createElement('script');
+            mobileScript.src = '../js/crossword.mobile.js';
             document.body.appendChild(mobileScript);
           };
 
@@ -135,25 +145,25 @@
           });
 
         } else {
-          // Desktop CSS
+          /**
+           * Desktop Init: Loads desktop CSS and initializes the crossword instance.
+           */
           const link = document.createElement('link');
           link.rel = 'stylesheet';
           link.href = '../css/crosswordnexus.css';
           document.head.appendChild(link);
 
-          // Desktop JS + Init
           const script = document.createElement('script');
           script.src = '../js/crosswords.js';
           script.onload = () => {
-            console.log('Desktop engine loaded. Initializing...');
             const params = getTournamentParams();
             window.gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
 
+            // Ensure grid rendering syncs with the viewport
             setTimeout(() => {
               const svg = document.getElementById('cw-puzzle-grid');
               const cw = window.gCrossword;
               if (svg && cw?.renderCells) {
-                console.log('Performing layout sync...');
                 cw.renderCells();
                 cw.windowResized?.();
               }

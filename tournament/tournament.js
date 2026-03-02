@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Store references to the solver's profile and the main app div
             let currentSolver = null;
             const tournamentAppDiv = document.getElementById('tournament-app');
+            
+            let puzzleListenerUnsubscribe = null;
+            let activeView = 'puzzles';
 
             // Default scoring rules (can be overridden by Firestore)
             let scoringRules = {
@@ -470,6 +473,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     tournamentAppDiv.innerHTML = `<p>Error: Solver not initialized.</p>`;
                     return;
                 }
+                
+                activeView = 'puzzles';
+                if (puzzleListenerUnsubscribe) {
+                    puzzleListenerUnsubscribe();
+                    puzzleListenerUnsubscribe = null;
+                }
 
                 // Fetch Tournament Name
                 let tournamentName = 'Crossword Tournament Solver';
@@ -499,7 +508,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 tournamentAppDiv.innerHTML = `
                     <h1>${tournamentName}</h1>
                     <div class="solver-info">
-                        <h2>Welcome, ${currentSolver.displayName}!</h2>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                            <h2>Welcome, ${currentSolver.displayName}!</h2>
+                            <div style="font-size:0.8em; color:#27ae60; font-weight:bold"><span class="status-dot"></span>Live Connection</div>
+                        </div>
                         <div class="solver-meta">
                             <div>Division: <strong>${currentSolver.division}</strong> | Solver ID: <code>${currentSolver.uid.substring(0,8)}...</code></div>
                             <button id="viewLeaderboardBtn" class="secondary-btn">View Leaderboard</button>
@@ -510,91 +522,126 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div id="tournament-puzzles-section" class="puzzle-section"></div>
                 `;
 
-                document.getElementById('viewLeaderboardBtn').addEventListener('click', () => renderLeaderboard());
+                document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
+                    activeView = 'leaderboard';
+                    if (puzzleListenerUnsubscribe) {
+                        puzzleListenerUnsubscribe();
+                        puzzleListenerUnsubscribe = null;
+                    }
+                    renderLeaderboard();
+                });
 
                 const warmUpSection = document.getElementById('warmup-puzzle-section');
                 const tournamentSection = document.getElementById('tournament-puzzles-section');
 
-                try {
-                    const querySnapshot = await db.collection(PUZZLES_COLLECTION)
-                        .where('status', '==', 'available')
-                        .orderBy('puzzleNumber', 'asc')
-                        .get();
+                // Start Live Listener for puzzles
+                puzzleListenerUnsubscribe = db.collection(PUZZLES_COLLECTION)
+                    .where('status', 'in', ['available', 'locked'])
+                    .orderBy('puzzleNumber', 'asc')
+                    .onSnapshot(async (querySnapshot) => {
+                        if (activeView !== 'puzzles') return;
 
-                    let warmUpPuzzle = null;
-                    const tournamentPuzzles = [];
-
-                    querySnapshot.forEach(doc => {
-                        const puzzle = { id: doc.id, ...doc.data() };
-                        if (puzzle.isWarmup) {
-                            warmUpPuzzle = puzzle;
-                        } else {
-                            tournamentPuzzles.push(puzzle);
+                        console.log('Puzzles updated live!');
+                        
+                        // Check for already submitted scores
+                        let submittedPuzzleIds = new Set();
+                        try {
+                            const scoresSnapshot = await db.collection(SCORES_COLLECTION)
+                                .where('uid', '==', currentSolver.uid)
+                                .get();
+                            scoresSnapshot.forEach(doc => {
+                                submittedPuzzleIds.add(doc.data().puzzleId);
+                            });
+                        } catch (e) {
+                            console.warn('Error fetching previous scores:', e);
                         }
-                    });
 
-                    // Render Warm-Up Puzzle
-                    if (warmUpPuzzle) {
-                        const isSubmitted = submittedPuzzleIds.has(warmUpPuzzle.id);
-                        warmUpSection.innerHTML = `
-                            <div class="puzzle-card warmup ${isSubmitted ? 'submitted' : ''}">
-                                <h4>Warm-up: ${warmUpPuzzle.name}</h4>
-                                <p>Author: ${warmUpPuzzle.author} (${warmUpPuzzle.timeLimitSeconds / 60} min)</p>
-                                <div class="puzzle-status">
-                                    ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
-                                    `<button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>`}
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        warmUpSection.innerHTML = `<p>No warm-up puzzle available yet.</p>`;
-                    }
+                        let warmUpPuzzle = null;
+                        const tournamentPuzzles = [];
 
-                    // Render Tournament Puzzles
-                    if (tournamentPuzzles.length > 0) {
-                        tournamentSection.innerHTML = '<h4>Tournament Puzzles</h4>';
-                        const ul = document.createElement('ul');
-                        ul.className = 'puzzle-list';
-                        tournamentPuzzles.forEach(puzzle => {
-                            const isSubmitted = submittedPuzzleIds.has(puzzle.id);
-                            const li = document.createElement('li');
-                            li.className = isSubmitted ? 'submitted' : '';
-                            li.innerHTML = `
-                                <div class="puzzle-info">
-                                    <span class="puz-num">#${puzzle.puzzleNumber}</span>
-                                    <span class="puz-name">${puzzle.name}</span>
-                                    <span class="puz-author">by ${puzzle.author}</span>
-                                    <span class="puz-time">(${puzzle.timeLimitSeconds / 60} min)</span>
-                                </div>
-                                <div class="puzzle-status">
-                                    ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
-                                    `<button data-puzzle-id="${puzzle.id}" class="start-puzzle-btn">Start Puzzle</button>`}
-                                </div>
-                            `;
-                            ul.appendChild(li);
-                        });
-                        tournamentSection.appendChild(ul);
-                    } else {
-                        tournamentSection.innerHTML = `<p>No tournament puzzles available yet.</p>`;
-                    }
-
-                    // Add event listeners to all start buttons
-                    document.querySelectorAll('.start-puzzle-btn').forEach(button => {
-                        button.addEventListener('click', async (event) => {
-                            const puzzleId = event.target.dataset.puzzleId;
-                            const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
-                            if (puzzleDoc.exists) {
-                                loadPuzzle({ id: puzzleDoc.id, ...puzzleDoc.data() });
+                        querySnapshot.forEach(doc => {
+                            const puzzle = { id: doc.id, ...doc.data() };
+                            if (puzzle.isWarmup) {
+                                warmUpPuzzle = puzzle;
                             } else {
-                                alert('Puzzle not found!');
+                                tournamentPuzzles.push(puzzle);
                             }
                         });
-                    });
 
-                } catch (error) {
-                    console.error('Error fetching puzzles:', error);
-                    tournamentAppDiv.innerHTML = `<p>Error loading puzzles: ${error.message}</p>`;
-                }
+                        // Render Warm-Up Puzzle
+                        if (warmUpPuzzle) {
+                            const isSubmitted = submittedPuzzleIds.has(warmUpPuzzle.id);
+                            const isLocked = warmUpPuzzle.status === 'locked';
+                            warmUpSection.innerHTML = `
+                                <div class="puzzle-card warmup ${isSubmitted ? 'submitted' : ''} ${isLocked ? 'locked' : ''}">
+                                    <h4>Warm-up: ${warmUpPuzzle.name}</h4>
+                                    <p>Author: ${warmUpPuzzle.author} (${warmUpPuzzle.timeLimitSeconds / 60} min)</p>
+                                    <div class="puzzle-status">
+                                        ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
+                                          isLocked ? '<span class="status-tag locked">Locked</span>' :
+                                        `<button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>`}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            warmUpSection.innerHTML = `<p>No warm-up puzzle available yet.</p>`;
+                        }
+
+                        // Render Tournament Puzzles
+                        if (tournamentPuzzles.length > 0) {
+                            tournamentSection.innerHTML = '<h4>Tournament Puzzles</h4>';
+                            const ul = document.createElement('ul');
+                            ul.className = 'puzzle-list';
+                            tournamentPuzzles.forEach(puzzle => {
+                                const isSubmitted = submittedPuzzleIds.has(puzzle.id);
+                                const isLocked = puzzle.status === 'locked';
+                                const li = document.createElement('li');
+                                li.className = `${isSubmitted ? 'submitted' : ''} ${isLocked ? 'locked' : ''}`;
+                                li.innerHTML = `
+                                    <div class="puzzle-info">
+                                        <span class="puz-num">#${puzzle.puzzleNumber}</span>
+                                        <span class="puz-name">${puzzle.name}</span>
+                                        <span class="puz-author">by ${puzzle.author}</span>
+                                        <span class="puz-time">(${puzzle.timeLimitSeconds / 60} min)</span>
+                                    </div>
+                                    <div class="puzzle-status">
+                                        ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
+                                          isLocked ? '<span class="status-tag locked">Locked</span>' :
+                                        `<button data-puzzle-id="${puzzle.id}" class="start-puzzle-btn">Start Puzzle</button>`}
+                                    </div>
+                                `;
+                                ul.appendChild(li);
+                            });
+                            tournamentSection.appendChild(ul);
+                        } else {
+                            tournamentSection.innerHTML = `<p>No tournament puzzles available yet.</p>`;
+                        }
+
+                        // Add event listeners to all start buttons
+                        document.querySelectorAll('.start-puzzle-btn').forEach(button => {
+                            button.addEventListener('click', async (event) => {
+                                const puzzleId = event.target.dataset.puzzleId;
+                                // Clean up listener before opening new view
+                                activeView = 'solving';
+                                if (puzzleListenerUnsubscribe) {
+                                    puzzleListenerUnsubscribe();
+                                    puzzleListenerUnsubscribe = null;
+                                }
+                                
+                                const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
+                                if (puzzleDoc.exists) {
+                                    loadPuzzle({ id: puzzleDoc.id, ...puzzleDoc.data() });
+                                } else {
+                                    alert('Puzzle not found!');
+                                }
+                            });
+                        });
+                    }, (error) => {
+                        console.error('Snapshot listener failed:', error);
+                        if (activeView === 'puzzles') {
+                            tournamentAppDiv.innerHTML += `<p class="error">Lost connection to server. Please refresh.</p>`;
+                        }
+                    });
             }
 
 

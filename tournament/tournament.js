@@ -225,9 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             async function submitPuzzle(puzzleData, scoreInfo) {
+                if (!currentSolver) {
+                    console.error('No current solver found! Cannot submit score.');
+                    return;
+                }
+                
                 if (puzzleData.isWarmup) {
-                    alert('Warm-up puzzle complete! Scores are not recorded for warm-ups.');
-                    renderPuzzleList();
+                    console.log('Warm-up complete. Stats:', scoreInfo);
+                    showSubmissionResult(scoreInfo, true);
                     return;
                 }
 
@@ -251,10 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            function showSubmissionResult(scoreInfo) {
+            function showSubmissionResult(scoreInfo, isWarmup = false) {
                 tournamentAppDiv.innerHTML = `
                     <div class="submission-result">
-                        <h2>Puzzle Submitted!</h2>
+                        <h2>${isWarmup ? 'Warm-up Complete!' : 'Puzzle Submitted!'}</h2>
+                        ${isWarmup ? '<p>Good practice! This score was not officially recorded.</p>' : ''}
                         <div class="score-card">
                             <p class="total-score">Total Score: <span>${scoreInfo.totalScore}</span></p>
                             <p>Correct Words: ${scoreInfo.correctWords} / ${scoreInfo.totalWords}</p>
@@ -385,30 +391,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Function to handle messages from the fullscreen solver
             window.addEventListener('message', async (event) => {
+                console.log('Tournament received message event:', event);
                 if (event.data && event.data.type === 'CROSSWORD_SOLVED') {
                     const { puzzleId, timeTakenSeconds, correctWords, totalWords } = event.data;
-                    console.log('Received puzzle solved message for:', puzzleId);
+                    console.log(`CROSSWORD_SOLVED received: ID=${puzzleId}, Time=${timeTakenSeconds}, Correct=${correctWords}/${totalWords}`);
                     await handleExternalSubmission(puzzleId, timeTakenSeconds, correctWords, totalWords);
                 }
             });
 
             async function handleExternalSubmission(puzzleId, timeTakenSeconds, correctWords, totalWords) {
+                console.log(`Processing submission for puzzle ${puzzleId}. Correct: ${correctWords}/${totalWords}, Time: ${timeTakenSeconds}s`);
                 try {
                     const puzzleDoc = await db.collection(PUZZLES_COLLECTION).doc(puzzleId).get();
-                    if (!puzzleDoc.exists) return;
+                    if (!puzzleDoc.exists) {
+                        console.error('Puzzle not found in Firestore:', puzzleId);
+                        return;
+                    }
                     
                     const puzzleData = { id: puzzleDoc.id, ...puzzleDoc.data() };
                     
-                    // Use a slightly modified calculation since we already have the counts
-                    const scoreInfo = calculateScore({
-                        words: Array(correctWords).fill({ isCorrect: () => true })
-                            .concat(Array(totalWords - correctWords).fill({ isCorrect: () => false }))
-                    }, puzzleData, timeTakenSeconds);
+                    // Ensure counts are numbers
+                    const cWords = parseInt(correctWords) || 0;
+                    const tWords = parseInt(totalWords) || 0;
+                    const tSeconds = parseInt(timeTakenSeconds) || 0;
 
+                    const scoreInfo = calculateScore({
+                        words: Array(cWords).fill({ isCorrect: () => true })
+                            .concat(Array(Math.max(0, tWords - cWords)).fill({ isCorrect: () => false }))
+                    }, puzzleData, tSeconds);
+
+                    console.log('Calculated score info:', scoreInfo);
                     await submitPuzzle(puzzleData, scoreInfo);
-                    renderPuzzleList();
+                    // Note: submitPuzzle calls showSubmissionResult, so we don't call renderPuzzleList here
                 } catch (e) {
                     console.error('Error handling external submission:', e);
+                    alert('Error processing your score: ' + e.message);
                 }
             }
 
@@ -430,9 +447,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Construct the URL for the fullscreen solver
-                const solverUrl = new URL('../index.html', window.location.href);
-                // Prefix with tournament/ because the index.html is in the parent folder
-                solverUrl.searchParams.set('puzzle', 'tournament/' + puzzlePath);
+                const solverUrl = new URL('solve.html', window.location.href);
+                // The puzzle path is already relative to the tournament folder (e.g., ./puzzles/...)
+                solverUrl.searchParams.set('puzzle', puzzlePath);
                 
                 // Add a config object that the solver can use to report back
                 const config = {
@@ -505,11 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Render Warm-Up Puzzle
                     if (warmUpPuzzle) {
+                        const isSubmitted = submittedPuzzleIds.has(warmUpPuzzle.id);
                         warmUpSection.innerHTML = `
-                            <div class="puzzle-card warmup">
+                            <div class="puzzle-card warmup ${isSubmitted ? 'submitted' : ''}">
                                 <h4>Warm-up: ${warmUpPuzzle.name}</h4>
                                 <p>Author: ${warmUpPuzzle.author} (${warmUpPuzzle.timeLimitSeconds / 60} min)</p>
-                                <button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>
+                                <div class="puzzle-status">
+                                    ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
+                                    `<button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>`}
+                                </div>
                             </div>
                         `;
                     } else {

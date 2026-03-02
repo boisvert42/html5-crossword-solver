@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+    <meta name="HandheldFriendly" content="True">
+    <title>Tournament Solver | Crossword Nexus</title>
+
+    <!-- jQuery -->
+    <script src="../lib/jquery.js"></script>
+
+    <!-- for loading crosswords -->
+    <script src="../lib/jscrossword_combined.js"></script>
+
+    <!-- confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- GG animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha512-16esztaSRplJROstbIIdwX3N97V1+pZvV33ABoG1H2OyTttBxEGkTsoIVsiP1iaTtM8b3+hu2kB6pQ4Clr5yug==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Shared JS -->
+    <script src="../js/crossword.shared.js"></script>
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="../css/crossword.shared.css">
+
+    <style>
+      body {
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          overflow: hidden;
+      }
+      /* Tournament Mode Highlight */
+      .tournament-banner {
+          background: #e67e22;
+          color: white;
+          text-align: center;
+          padding: 8px;
+          font-weight: bold;
+          font-size: 0.9em;
+          letter-spacing: 1px;
+          flex-shrink: 0;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          z-index: 100;
+      }
+      .crossword {
+          flex: 1;
+          position: relative;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+      }
+    </style>
+
+    <script>
+        console.log('--- Tournament Solver Active ---');
+        const mobile = CrosswordShared.isMobileDevice();
+        
+        function getTournamentParams() {
+            const params = CrosswordShared.getCrosswordParams();
+            console.log('Tournament params loaded:', params);
+            
+            if (params.tournament_mode) {
+                console.log('Tournament Mode Detected');
+                if (!window.opener) {
+                    console.warn('WARNING: window.opener is null! Score reporting will fail.');
+                }
+            }
+            
+            // Add the tournament reporting logic to the onSolved callback
+            params.onSolved = (xw) => {
+                const finalTime = xw.xw_timer_seconds || 0;
+                console.log('Puzzle solved! Time captured:', finalTime);
+                
+                if (!window.opener) {
+                    console.error('window.opener is null! Cannot report score.');
+                    alert('Tournament window not found. Score could not be reported automatically.');
+                    return;
+                }
+
+                const words = Object.values(xw.words);
+                const correctWords = words.filter(w => w.isCorrect()).length;
+                console.log(`Reporting score back to dashboard: ID=${params.puzzle_id}, Time=${finalTime}, Correct=${correctWords}/${words.length}`);
+                
+                // Report back to the opener (tournament.html)
+                window.opener.postMessage({
+                    type: 'CROSSWORD_SOLVED',
+                    puzzleId: params.puzzle_id,
+                    timeTakenSeconds: finalTime,
+                    correctWords: correctWords,
+                    totalWords: words.length
+                }, '*');
+                
+                // Show a custom message for tournament solvers
+                setTimeout(() => {
+                    const msg = (xw.completion_message || 'Puzzle solved!') + '<br><br><b>Tournament result reported!</b> You can now close this tab and return to the tournament page.';
+                    xw.createModalBox('🎉🎉🎉', msg);
+                }, 100);
+            };
+            
+            return params;
+        }
+
+        if (mobile) {
+          const core = document.createElement('script');
+          core.src = '../js/crosswords.js';
+
+          core.onload = () => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '../css/crossword.mobile.css';
+            document.head.appendChild(link);
+
+            // Re-define how gCrossword is initialized for mobile
+            const mobileScript = document.createElement('script');
+            mobileScript.src = '../js/crossword.mobile.js';
+            
+            // Overwrite the params before mobile initialization
+            CrosswordShared.getCrosswordParams = getTournamentParams;
+
+            document.body.appendChild(mobileScript);
+          };
+
+          window.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(core);
+          });
+
+        } else {
+          // Desktop CSS
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = '../css/crosswordnexus.css';
+          document.head.appendChild(link);
+
+          // Desktop JS + Init
+          const script = document.createElement('script');
+          script.src = '../js/crosswords.js';
+          script.onload = () => {
+            console.log('Desktop engine loaded. Initializing...');
+            const params = getTournamentParams();
+            window.gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+
+            setTimeout(() => {
+              const svg = document.getElementById('cw-puzzle-grid');
+              const cw = window.gCrossword;
+              if (svg && cw?.renderCells) {
+                console.log('Performing layout sync...');
+                cw.renderCells();
+                cw.windowResized?.();
+              }
+            }, 350);
+          };
+
+          window.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(script);
+          });
+        }
+      </script>
+</head>
+<body>
+    <div class="tournament-banner">TOURNAMENT MODE — SCORE WILL BE REPORTED UPON COMPLETION</div>
+    <div class="crossword crosswordnexus-theme"></div>
+</body>
+</html>

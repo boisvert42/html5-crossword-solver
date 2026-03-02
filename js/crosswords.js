@@ -421,6 +421,16 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             }
           }
         }
+        
+        // Copy any other properties from user_config that aren't in default_config
+        // This is important for custom callbacks like onSolved
+        if (user_config) {
+          for (i in user_config) {
+            if (user_config.hasOwnProperty(i) && !this.config.hasOwnProperty(i)) {
+              this.config[i] = user_config[i];
+            }
+          }
+        }
 
 
         /* Update config values based on `color_word` */
@@ -2701,6 +2711,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           this.timer_button.removeClass('running');
           this.timer_running = false;
         }
+        this.xw_timer_seconds = xw_timer_seconds;
         // reveal all (in case there were rebuses)
         if (do_reveal) {
           this.check_reveal('puzzle', 'reveal');

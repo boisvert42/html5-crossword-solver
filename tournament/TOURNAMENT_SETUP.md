@@ -29,12 +29,13 @@ The Tournament Solver uses **Firebase** for authentication, database (Firestore)
     *   Click **Save**.
 
 ### 4. Authorize Admins (Firestore)
-Access to the Admin Dashboard is restricted to emails found in the `admins` collection.
+Access to the Admin Dashboard is restricted to emails found in the `admins` collection with the authorized role.
 1.  In the Firebase console, go to **Firestore Database**.
 2.  Click **"Start collection"**.
 3.  Collection ID: `admins`
-4.  Document ID: (Your Google Email, e.g., `example@gmail.com`)
-5.  Add any field (e.g., `role: "admin"`) and click **Save**.
+4.  Document ID: (Your Google Email, e.g., `boisvert@gmail.com`)
+5.  Add a field: **Field Name:** `role`, **Type:** `string`, **Value:** `admin`
+6.  Click **Save**.
 
 ### 5. Register Your Web App & Get Config
 1.  On the project overview, click the **Web icon (</>)** to register a new app.
@@ -57,10 +58,10 @@ For a live tournament, you **must** apply these rules to protect your data.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     // Checks if the user is in the 'admins' collection
     function isAdmin() {
-      return request.auth != null &&
+      return request.auth != null && 
              exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
 
@@ -69,7 +70,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
-
+    
     match /tournament_config/{config} {
       allow read: if request.auth != null;
       allow write: if isAdmin();

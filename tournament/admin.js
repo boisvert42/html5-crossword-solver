@@ -9,6 +9,14 @@ const PUZZLES_COLLECTION = 'puzzles';
 const CONFIG_COLLECTION = 'tournament_config';
 const SCORES_COLLECTION = 'scores';
 
+/**
+ * AUTHORIZATION: List of Google emails allowed to access the admin dashboard.
+ * IMPORTANT: Add your authorized Google email(s) here.
+ */
+const ALLOWED_ADMINS = [
+    'boisvert42@gmail.com' // Replace with your actual email(s)
+];
+
 let db;
 let auth;
 let currentTab = 'puzzles';
@@ -20,23 +28,26 @@ const appDiv = document.getElementById('admin-app');
 
 /**
  * Initialization: Connects to Firebase and sets up the Auth listener.
- * The dashboard is hidden until a valid Admin user is detected.
  */
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof firebase !== 'undefined') {
         db = firebase.firestore();
         auth = firebase.auth();
-        
+
         // Listen for authentication state changes
         auth.onAuthStateChanged(user => {
-            if (user && !user.isAnonymous) {
-                // User is signed in with email/password (Admin)
+            if (user && !user.isAnonymous && ALLOWED_ADMINS.includes(user.email)) {
+                // User is signed in with an authorized Google account
                 loginDiv.style.display = 'none';
                 appDiv.style.display = 'block';
                 initTabs();
                 loadTab(currentTab);
             } else {
-                // User is not signed in or is using an anonymous solver account
+                // User is not signed in or not authorized
+                if (user && !ALLOWED_ADMINS.includes(user.email)) {
+                    showLoginError(`Account ${user.email} is not authorized for Admin access.`);
+                    auth.signOut(); // Sign out unauthorized users immediately
+                }
                 appDiv.style.display = 'none';
                 loginDiv.style.display = 'block';
                 initLoginForm();
@@ -48,30 +59,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Sets up the Admin Login form logic.
+ * Sets up the Google Sign-In logic.
  */
 function initLoginForm() {
-    const form = document.getElementById('loginForm');
-    const errorDiv = document.getElementById('loginError');
-    
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('adminEmail').value;
-        const password = document.getElementById('adminPassword').value;
-        
+    const btn = document.getElementById('googleSignInBtn');
+
+    btn.onclick = async () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
         try {
-            await auth.signInWithEmailAndPassword(email, password);
+            await auth.signInWithPopup(provider);
         } catch (error) {
-            errorDiv.textContent = error.message;
-            errorDiv.style.display = 'block';
+            showLoginError(error.message);
         }
     };
+}
+
+function showLoginError(msg) {
+    const errorDiv = document.getElementById('loginError');
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
 }
 
 /**
  * Initializes navigation tab click handlers.
  */
 function initTabs() {
+    // Prevent multiple event attachments
+    const oldBtns = document.querySelectorAll('.tab-btn');
+    oldBtns.forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -109,7 +128,6 @@ async function loadTab(tab) {
 
 async function renderPuzzlesTab() {
     try {
-        // Fetch all puzzles ordered by their sequence number
         const querySnapshot = await db.collection(PUZZLES_COLLECTION).orderBy('puzzleNumber', 'asc').get();
         const puzzles = [];
         querySnapshot.forEach(doc => puzzles.push({ id: doc.id, ...doc.data() }));
@@ -143,7 +161,6 @@ async function renderPuzzlesTab() {
         html += '</div>';
         adminContent.innerHTML = html;
 
-        // Hook up action buttons
         document.getElementById('addPuzzleBtn').onclick = () => renderPuzzleForm();
         document.querySelectorAll('.edit-puzzle-btn').forEach(btn => {
             btn.onclick = () => {
@@ -165,14 +182,8 @@ async function renderPuzzlesTab() {
     }
 }
 
-/**
- * Renders the form to Add or Edit a puzzle.
- * Includes mapping for division-specific puzzle files.
- */
 async function renderPuzzleForm(puzzle = null) {
     const isEdit = !!puzzle;
-    
-    // Fetch current divisions to build the mapping grid
     let divisions = ['default'];
     try {
         const divDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
@@ -242,35 +253,18 @@ async function renderPuzzleForm(puzzle = null) {
 
     adminContent.innerHTML = html;
 
-    // Hook up validation buttons
+    // Validation buttons logic
     document.querySelectorAll('.check-path-btn').forEach(btn => {
         btn.onclick = async () => {
-            const inputId = btn.dataset.input;
-            const path = document.getElementById(inputId).value.trim();
-            
-            if (!path) {
-                alert('Please enter a path first.');
-                return;
-            }
-
+            const path = document.getElementById(btn.dataset.input).value.trim();
+            if (!path) return;
             btn.textContent = '...';
             btn.classList.remove('path-valid', 'path-invalid');
-
             try {
-                // Perform a HEAD or GET request to see if the file exists
                 const response = await fetch(path, { method: 'HEAD' });
-                if (response.ok) {
-                    btn.textContent = 'Found!';
-                    btn.classList.add('path-valid');
-                } else {
-                    btn.textContent = 'Missing';
-                    btn.classList.add('path-invalid');
-                }
-            } catch (err) {
-                console.warn('Fetch check failed:', err);
-                btn.textContent = 'Error';
-                btn.classList.add('path-invalid');
-            }
+                if (response.ok) { btn.textContent = 'Found!'; btn.classList.add('path-valid'); }
+                else { btn.textContent = 'Missing'; btn.classList.add('path-invalid'); }
+            } catch (err) { btn.textContent = 'Error'; btn.classList.add('path-invalid'); }
         };
     });
 
@@ -278,8 +272,6 @@ async function renderPuzzleForm(puzzle = null) {
     document.getElementById('puzzleForm').onsubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        
-        // Collate division files into a map
         const filesByDivision = {};
         divisions.forEach(div => {
             const val = formData.get(`file_${div}`);
@@ -294,24 +286,15 @@ async function renderPuzzleForm(puzzle = null) {
             status: formData.get('status'),
             isWarmup: formData.get('isWarmup') === 'on',
             filesByDivision: filesByDivision,
-            // Fallback filePath for older code
             filePath: filesByDivision.default || Object.values(filesByDivision)[0] || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         try {
-            if (isEdit) {
-                await db.collection(PUZZLES_COLLECTION).doc(puzzle.id).update(puzzleData);
-            } else {
-                await db.collection(PUZZLES_COLLECTION).add({
-                    ...puzzleData,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
+            if (isEdit) await db.collection(PUZZLES_COLLECTION).doc(puzzle.id).update(puzzleData);
+            else await db.collection(PUZZLES_COLLECTION).add({ ...puzzleData, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             renderPuzzlesTab();
-        } catch (err) {
-            alert('Error saving puzzle: ' + err.message);
-        }
+        } catch (err) { alert('Error: ' + err.message); }
     };
 }
 
@@ -327,64 +310,29 @@ async function renderDivisionsTab() {
         let html = `
             <div class="admin-card">
                 <h3>Manage Divisions</h3>
-                <p>Define categories for participants. Each category can have unique puzzle files mapped to it.</p>
                 <div id="divisionList" class="admin-list" style="box-shadow:none; border:1px solid #eee">
-                    ${list.map(div => `
-                        <div class="list-item">
-                            <span>${div}</span>
-                            <button class="secondary-btn btn-sm btn-danger remove-div-btn" data-name="${div}">Remove</button>
-                        </div>
-                    `).join('')}
+                    ${list.map(div => `<div class="list-item"><span>${div}</span><button class="secondary-btn btn-sm btn-danger remove-div-btn" data-name="${div}">Remove</button></div>`).join('')}
                 </div>
-                <div class="form-group" style="margin-top:20px; display:flex; gap:10px;">
-                    <input type="text" id="newDivisionName" placeholder="New division name">
-                    <button id="addDivisionBtn" class="primary-btn">Add Division</button>
-                </div>
-                <div class="action-row">
-                    <button id="saveDivisionsBtn" class="primary-btn btn-success">Save Changes</button>
-                </div>
+                <div class="form-group" style="margin-top:20px; display:flex; gap:10px;"><input type="text" id="newDivisionName" placeholder="New division name"><button id="addDivisionBtn" class="primary-btn">Add Division</button></div>
+                <div class="action-row"><button id="saveDivisionsBtn" class="primary-btn btn-success">Save Changes</button></div>
             </div>
         `;
         adminContent.innerHTML = html;
 
         document.getElementById('addDivisionBtn').onclick = () => {
             const name = document.getElementById('newDivisionName').value.trim();
-            if (name && !list.includes(name)) {
-                list.push(name);
-                document.getElementById('newDivisionName').value = '';
-                refreshDivList();
-            }
+            if (name && !list.includes(name)) { list.push(name); renderDivisionsTab(); }
         };
 
-        function refreshDivList() {
-            document.getElementById('divisionList').innerHTML = list.map(div => `
-                <div class="list-item">
-                    <span>${div}</span>
-                    <button class="secondary-btn btn-sm btn-danger remove-div-btn" data-name="${div}">Remove</button>
-                </div>
-            `).join('');
-            attachRemoveEvents();
-        }
-
-        function attachRemoveEvents() {
-            document.querySelectorAll('.remove-div-btn').forEach(btn => {
-                btn.onclick = () => {
-                    list = list.filter(d => d !== btn.dataset.name);
-                    refreshDivList();
-                };
-            });
-        }
-        attachRemoveEvents();
+        document.querySelectorAll('.remove-div-btn').forEach(btn => {
+            btn.onclick = () => { list = list.filter(d => d !== btn.dataset.name); renderDivisionsTab(); };
+        });
 
         document.getElementById('saveDivisionsBtn').onclick = async () => {
             await db.collection(CONFIG_COLLECTION).doc('divisions').set({ list });
-            alert('Divisions saved! These will now appear in the registration screen.');
-            renderDivisionsTab();
+            alert('Divisions saved!');
         };
-
-    } catch (e) {
-        adminContent.innerHTML = `<p class="error">Error: ${e.message}</p>`;
-    }
+    } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }
 
 /* ==========================================
@@ -393,66 +341,23 @@ async function renderDivisionsTab() {
 
 async function renderSettingsTab() {
     try {
-        // Fetch Metadata (Tournament Title)
         const metaDoc = await db.collection(CONFIG_COLLECTION).doc('metadata').get();
-        const metadata = metaDoc.exists ? metaDoc.data() : {
-            tournamentName: 'Crossword Tournament Solver'
-        };
-
-        // Fetch Scoring Config
+        const metadata = metaDoc.exists ? metaDoc.data() : { tournamentName: 'Crossword Tournament Solver' };
         const scoreDoc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
-        const rules = scoreDoc.exists ? scoreDoc.data() : {
-            pointsPerWord: 10,
-            timeBonusPerSecond: 1,
-            completionBonus: 180,
-            overtimePenaltyPer4Seconds: 1,
-            minCorrectPercentageForTimeBonus: 0.5
-        };
+        const rules = scoreDoc.exists ? scoreDoc.data() : { pointsPerWord: 10, timeBonusPerSecond: 1, completionBonus: 180, overtimePenaltyPer4Seconds: 1, minCorrectPercentageForTimeBonus: 0.5 };
 
         let html = `
             <div class="admin-card">
                 <h3>Tournament Metadata</h3>
-                <form id="metadataForm">
-                    <div class="form-group">
-                        <label>Tournament Name</label>
-                        <input type="text" name="tournamentName" value="${metadata.tournamentName}" placeholder="Enter tournament title">
-                    </div>
-                    <div class="action-row">
-                        <button type="submit" class="primary-btn btn-success">Save Metadata</button>
-                    </div>
-                </form>
+                <form id="metadataForm"><div class="form-group"><label>Tournament Name</label><input type="text" name="tournamentName" value="${metadata.tournamentName}"></div><div class="action-row"><button type="submit" class="primary-btn btn-success">Save Metadata</button></div></form>
             </div>
-
             <div class="admin-card">
                 <h3>Scoring Rules</h3>
                 <form id="scoringForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Points Per Correct Word</label>
-                            <input type="number" name="pointsPerWord" value="${rules.pointsPerWord}">
-                        </div>
-                        <div class="form-group">
-                            <label>Completion Bonus (100% Correct)</label>
-                            <input type="number" name="completionBonus" value="${rules.completionBonus}">
-                        </div>
-                    </div>
-                    <div class="form-row" style="margin-top:15px">
-                        <div class="form-group">
-                            <label>Time Bonus (Points/Sec)</label>
-                            <input type="number" name="timeBonusPerSecond" value="${rules.timeBonusPerSecond}">
-                        </div>
-                        <div class="form-group">
-                            <label>Overtime Penalty (Points/4 Sec)</label>
-                            <input type="number" name="overtimePenaltyPer4Seconds" value="${rules.overtimePenaltyPer4Seconds}">
-                        </div>
-                    </div>
-                    <div class="form-group" style="margin-top:15px">
-                        <label>Min Accuracy for Time Bonus (0.0 - 1.0)</label>
-                        <input type="number" step="0.1" name="minCorrectPercentageForTimeBonus" value="${rules.minCorrectPercentageForTimeBonus}">
-                    </div>
-                    <div class="action-row">
-                        <button type="submit" class="primary-btn btn-success">Save Scoring Rules</button>
-                    </div>
+                    <div class="form-row"><div class="form-group"><label>Points Per Word</label><input type="number" name="pointsPerWord" value="${rules.pointsPerWord}"></div><div class="form-group"><label>Completion Bonus</label><input type="number" name="completionBonus" value="${rules.completionBonus}"></div></div>
+                    <div class="form-row" style="margin-top:15px"><div class="form-group"><label>Time Bonus (pts/sec)</label><input type="number" name="timeBonusPerSecond" value="${rules.timeBonusPerSecond}"></div><div class="form-group"><label>Overtime Penalty</label><input type="number" name="overtimePenaltyPer4Seconds" value="${rules.overtimePenaltyPer4Seconds}"></div></div>
+                    <div class="form-group" style="margin-top:15px"><label>Min Accuracy for Time Bonus</label><input type="number" step="0.1" name="minCorrectPercentageForTimeBonus" value="${rules.minCorrectPercentageForTimeBonus}"></div>
+                    <div class="action-row"><button type="submit" class="primary-btn btn-success">Save Scoring Rules</button></div>
                 </form>
             </div>
         `;
@@ -460,28 +365,21 @@ async function renderSettingsTab() {
 
         document.getElementById('metadataForm').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
-            await db.collection(CONFIG_COLLECTION).doc('metadata').set({
-                tournamentName: formData.get('tournamentName')
-            });
-            alert('Metadata updated! Dashboard titles have been updated live.');
+            await db.collection(CONFIG_COLLECTION).doc('metadata').set({ tournamentName: new FormData(e.target).get('tournamentName') });
+            alert('Metadata updated!');
         };
 
         document.getElementById('scoringForm').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
+            const fd = new FormData(e.target);
             await db.collection(CONFIG_COLLECTION).doc('scoring').set({
-                pointsPerWord: parseInt(formData.get('pointsPerWord')),
-                completionBonus: parseInt(formData.get('completionBonus')),
-                timeBonusPerSecond: parseInt(formData.get('timeBonusPerSecond')),
-                overtimePenaltyPer4Seconds: parseInt(formData.get('overtimePenaltyPer4Seconds')),
-                minCorrectPercentageForTimeBonus: parseFloat(formData.get('minCorrectPercentageForTimeBonus'))
+                pointsPerWord: parseInt(fd.get('pointsPerWord')), completionBonus: parseInt(fd.get('completionBonus')),
+                timeBonusPerSecond: parseInt(fd.get('timeBonusPerSecond')), overtimePenaltyPer4Seconds: parseInt(fd.get('overtimePenaltyPer4Seconds')),
+                minCorrectPercentageForTimeBonus: parseFloat(fd.get('minCorrectPercentageForTimeBonus'))
             });
             alert('Scoring rules updated!');
         };
-    } catch (e) {
-        adminContent.innerHTML = `<p class="error">Error: ${e.message}</p>`;
-    }
+    } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }
 
 /* ==========================================
@@ -490,87 +388,23 @@ async function renderSettingsTab() {
 
 async function renderResultsTab() {
     try {
-        // Fetch 100 most recent submissions
         const querySnapshot = await db.collection(SCORES_COLLECTION).orderBy('submittedAt', 'desc').limit(100).get();
-        
-        let html = `
-            <div class="admin-section-header">
-                <h2>Recent Results</h2>
-                <button id="exportResultsBtn" class="secondary-btn btn-sm">Export CSV</button>
-            </div>
-            <div class="admin-card" style="padding:0">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Solver</th>
-                            <th>Division</th>
-                            <th>Puzzle</th>
-                            <th>Score</th>
-                            <th>Correct</th>
-                            <th>Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
+        let html = `<div class="admin-section-header"><h2>Recent Results</h2><button id="exportResultsBtn" class="secondary-btn btn-sm">Export CSV</button></div><div class="admin-card" style="padding:0"><table class="results-table"><thead><tr><th>Solver</th><th>Division</th><th>Puzzle</th><th>Score</th><th>Correct</th><th>Time</th></tr></thead><tbody>`;
         const results = [];
         querySnapshot.forEach(doc => {
-            const data = doc.data();
-            results.push(data);
-            const date = data.submittedAt?.toDate().toLocaleString() || 'N/A';
-            html += `
-                <tr>
-                    <td><strong>${data.solverName}</strong><br><small>${date}</small></td>
-                    <td>${data.division}</td>
-                    <td>#${data.puzzleNumber}: ${data.puzzleName}</td>
-                    <td><strong class="score-cell">${data.totalScore}</strong></td>
-                    <td>${data.correctWords} / ${data.totalWords}</td>
-                    <td>${Math.floor(data.timeTaken / 60)}m ${data.timeTaken % 60}s</td>
-                </tr>
-            `;
+            const data = doc.data(); results.push(data);
+            html += `<tr><td><strong>${data.solverName}</strong><br><small>${data.submittedAt?.toDate().toLocaleString() || 'N/A'}</small></td><td>${data.division}</td><td>#${data.puzzleNumber}: ${data.puzzleName}</td><td><strong class="score-cell">${data.totalScore}</strong></td><td>${data.correctWords}/${data.totalWords}</td><td>${Math.floor(data.timeTaken/60)}m ${data.timeTaken%60}s</td></tr>`;
         });
+        if (results.length === 0) html += '<tr><td colspan="6" class="empty-state">No results yet.</td></tr>';
+        adminContent.innerHTML = html + '</tbody></table></div>';
 
-        if (results.length === 0) {
-            html += '<tr><td colspan="6" class="empty-state">No results yet.</td></tr>';
-        }
-
-        html += '</tbody></table></div>';
-        adminContent.innerHTML = html;
-
-        /**
-         * CSV Export logic: Aggregates current results view into a downloadable file.
-         */
         document.getElementById('exportResultsBtn').onclick = () => {
-            if (results.length === 0) return;
             const headers = ['Solver', 'Division', 'Puzzle ID', 'Puzzle Name', 'Score', 'Correct Words', 'Total Words', 'Time Taken', 'Submitted At'];
-            const csvContent = [
-                headers.join(','),
-                ...results.map(r => [
-                    `"${r.solverName}"`,
-                    `"${r.division}"`,
-                    `"${r.puzzleId}"`,
-                    `"${r.puzzleName}"`,
-                    r.totalScore,
-                    r.correctWords,
-                    r.totalWords,
-                    r.timeTaken,
-                    r.submittedAt?.toDate().toISOString() || ''
-                ].join(',')
-                )
-            ].join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const csv = [headers.join(','), ...results.map(r => [`"${r.solverName}"`,`"${r.division}"`,`"${r.puzzleId}"`,`"${r.puzzleName}"`,r.totalScore,r.correctWords,r.totalWords,r.timeTaken,r.submittedAt?.toDate().toISOString()||''].join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'tournament_results.csv');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            a.href = url; a.download = 'tournament_results.csv'; a.click();
         };
-
-    } catch (e) {
-        adminContent.innerHTML = `<p class="error">Error loading results: ${e.message}</p>`;
-    }
+    } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }

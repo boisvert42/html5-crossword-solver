@@ -23,8 +23,18 @@ The Tournament Solver uses **Firebase** for authentication, database (Firestore)
 1.  Navigate to **"Authentication"**.
 2.  Click **"Get started"** and go to the **"Sign-in method"** tab.
 3.  **Anonymous:** Enable "Anonymous" and click "Save". (Used for participants).
-4.  **Email/Password:** Enable "Email/ Password" and click "Save". (Used for you, the Admin).
-5.  Go to the **"Users"** tab and click **"Add user"**. Create your admin account (email + password).
+3.  **Google:** Enable the "Google" provider.
+    *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
+    *   **Support email:** Select your Google email from the dropdown.
+    *   Click **Save**.
+
+
+### 4. Authorize Admins
+Access to the Admin Dashboard is restricted by an email whitelist.
+1.  Open **`tournament/admin.js`**.
+2.  Find the `ALLOWED_ADMINS` constant at the top of the file.
+3.  Add your Google email address to the array.
+4.  Only emails in this list will be granted access after signing in with Google.
 
 ### 4. Register Your Web App & Get Config
 1.  On the project overview, click the **Web icon (</>)** to register a new app.

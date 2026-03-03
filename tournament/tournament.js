@@ -461,7 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button id="viewLeaderboardBtn" class="secondary-btn">View Leaderboard</button>
                         </div>
                     </div>
-                    <h3>Available Puzzles</h3>
                     <div id="warmup-puzzle-section" class="puzzle-section"></div>
                     <div id="tournament-puzzles-section" class="puzzle-section"></div>
                 `;
@@ -485,56 +484,64 @@ document.addEventListener('DOMContentLoaded', () => {
                             scoresSnapshot.forEach(doc => submittedPuzzleIds.add(doc.data().puzzleId));
                         } catch (e) {}
 
-                        let warmUpPuzzle = null;
-                        const tournamentPuzzles = [];
+                        // Handle Warm-ups
+                        const warmUps = [];
+                        const tourneyPuzzles = [];
                         querySnapshot.forEach(doc => {
                             const p = { id: doc.id, ...doc.data() };
-                            if (p.isWarmup) warmUpPuzzle = p; else tournamentPuzzles.push(p);
+                            if (p.isWarmup) warmUps.push(p); else tourneyPuzzles.push(p);
                         });
 
-                        // Render Warm-Up
-                        if (warmUpPuzzle) {
-                            const isSubmitted = submittedPuzzleIds.has(warmUpPuzzle.id);
-                            const isLocked = warmUpPuzzle.status === 'locked';
-                            warmUpSection.innerHTML = `
-                                <div class="puzzle-card warmup ${isSubmitted ? 'submitted' : ''} ${isLocked ? 'locked' : ''}">
-                                    <h4>Warm-up: ${warmUpPuzzle.name}</h4>
-                                    <p>Author: ${warmUpPuzzle.author} (${warmUpPuzzle.timeLimitSeconds / 60} min)</p>
-                                    <div class="puzzle-status">
-                                        ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
-                                          isLocked ? '<span class="status-tag locked">Locked</span>' :
-                                        `<button data-puzzle-id="${warmUpPuzzle.id}" class="start-puzzle-btn">Start Warm-up</button>`}
-                                    </div>
-                                </div>
-                            `;
-                        } else warmUpSection.innerHTML = `<p>No warm-up available.</p>`;
-
-                        // Render Main Puzzles
-                        if (tournamentPuzzles.length > 0) {
-                            tournamentSection.innerHTML = '<h4>Tournament Puzzles</h4>';
-                            const ul = document.createElement('ul'); ul.className = 'puzzle-list';
-                            tournamentPuzzles.forEach(puzzle => {
-                                const isSubmitted = submittedPuzzleIds.has(puzzle.id);
-                                const isLocked = puzzle.status === 'locked';
+                        // Render Warm-Up Section
+                        if (warmUps.length > 0) {
+                            warmUpSection.innerHTML = `<h3>Warm-up Puzzle${warmUps.length > 1 ? 's' : ''}</h3><ul class="puzzle-list"></ul>`;
+                            const ul = warmUpSection.querySelector('ul');
+                            warmUps.forEach(p => {
+                                const isSubmitted = submittedPuzzleIds.has(p.id);
+                                const isLocked = p.status === 'locked';
                                 const li = document.createElement('li');
                                 li.className = `${isSubmitted ? 'submitted' : ''} ${isLocked ? 'locked' : ''}`;
                                 li.innerHTML = `
                                     <div class="puzzle-info">
-                                        <span class="puz-num">#${puzzle.puzzleNumber}</span>
-                                        <span class="puz-name">${puzzle.name}</span>
-                                        <span class="puz-author">by ${puzzle.author}</span>
-                                        <span class="puz-time">(${puzzle.timeLimitSeconds / 60} min)</span>
+                                        <span class="puz-name">${p.name}</span>
+                                        <span class="puz-author">by ${p.author}</span>
+                                        <span class="puz-time">(${p.timeLimitSeconds / 60} min)</span>
                                     </div>
                                     <div class="puzzle-status">
                                         ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
                                           isLocked ? '<span class="status-tag locked">Locked</span>' :
-                                        `<button data-puzzle-id="${puzzle.id}" class="start-puzzle-btn">Start Puzzle</button>`}
+                                        `<button data-puzzle-id="${p.id}" class="start-puzzle-btn">Start Warm-up</button>`}
                                     </div>
                                 `;
                                 ul.appendChild(li);
                             });
-                            tournamentSection.appendChild(ul);
-                        } else tournamentSection.innerHTML = `<p>No puzzles available yet.</p>`;
+                        } else warmUpSection.innerHTML = '';
+
+                        // Render Tournament Section
+                        if (tourneyPuzzles.length > 0) {
+                            tournamentSection.innerHTML = `<h3>Tournament Puzzle${tourneyPuzzles.length > 1 ? 's' : ''}</h3><ul class="puzzle-list"></ul>`;
+                            const ul = tournamentSection.querySelector('ul');
+                            tourneyPuzzles.forEach(p => {
+                                const isSubmitted = submittedPuzzleIds.has(p.id);
+                                const isLocked = p.status === 'locked';
+                                const li = document.createElement('li');
+                                li.className = `${isSubmitted ? 'submitted' : ''} ${isLocked ? 'locked' : ''}`;
+                                li.innerHTML = `
+                                    <div class="puzzle-info">
+                                        <span class="puz-num">#${p.puzzleNumber}</span>
+                                        <span class="puz-name">${p.name}</span>
+                                        <span class="puz-author">by ${p.author}</span>
+                                        <span class="puz-time">(${p.timeLimitSeconds / 60} min)</span>
+                                    </div>
+                                    <div class="puzzle-status">
+                                        ${isSubmitted ? '<span class="status-tag">Submitted</span>' : 
+                                          isLocked ? '<span class="status-tag locked">Locked</span>' :
+                                        `<button data-puzzle-id="${p.id}" class="start-puzzle-btn">Start Puzzle</button>`}
+                                    </div>
+                                `;
+                                ul.appendChild(li);
+                            });
+                        } else tournamentSection.innerHTML = `<h3>Tournament Puzzles</h3><p>No puzzles available yet.</p>`;
 
                         // Event Delegation for Start Buttons
                         document.querySelectorAll('.start-puzzle-btn').forEach(btn => {

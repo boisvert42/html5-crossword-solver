@@ -8,14 +8,7 @@ const SOLVERS_COLLECTION = 'solvers';
 const PUZZLES_COLLECTION = 'puzzles';
 const CONFIG_COLLECTION = 'tournament_config';
 const SCORES_COLLECTION = 'scores';
-
-/**
- * AUTHORIZATION: List of Google emails allowed to access the admin dashboard.
- * IMPORTANT: Add your authorized Google email(s) here.
- */
-const ALLOWED_ADMINS = [
-    'boisvert42@gmail.com' // Replace with your actual email(s)
-];
+const ADMINS_COLLECTION = 'admins'; // Collection containing authorized admin emails
 
 let db;
 let auth;
@@ -33,21 +26,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof firebase !== 'undefined') {
         db = firebase.firestore();
         auth = firebase.auth();
-
+        
         // Listen for authentication state changes
-        auth.onAuthStateChanged(user => {
-            if (user && !user.isAnonymous && ALLOWED_ADMINS.includes(user.email)) {
-                // User is signed in with an authorized Google account
-                loginDiv.style.display = 'none';
-                appDiv.style.display = 'block';
-                initTabs();
-                loadTab(currentTab);
-            } else {
-                // User is not signed in or not authorized
-                if (user && !ALLOWED_ADMINS.includes(user.email)) {
-                    showLoginError(`Account ${user.email} is not authorized for Admin access.`);
-                    auth.signOut(); // Sign out unauthorized users immediately
+        auth.onAuthStateChanged(async (user) => {
+            if (user && !user.isAnonymous) {
+                // User is signed in with Google. Now check if they are an authorized Admin in Firestore.
+                try {
+                    const adminDoc = await db.collection(ADMINS_COLLECTION).doc(user.email).get();
+                    
+                    if (adminDoc.exists) {
+                        // User is authorized
+                        loginDiv.style.display = 'none';
+                        appDiv.style.display = 'block';
+                        initTabs();
+                        loadTab(currentTab);
+                    } else {
+                        // User is NOT in the admins collection
+                        showLoginError(`Account ${user.email} is not authorized for Admin access.`);
+                        await auth.signOut();
+                    }
+                } catch (e) {
+                    console.error('Authorization check failed:', e);
+                    showLoginError("Error checking authorization. You may need to configure your Security Rules first.");
+                    await auth.signOut();
                 }
+            } else {
+                // Not logged in
                 appDiv.style.display = 'none';
                 loginDiv.style.display = 'block';
                 initLoginForm();
@@ -63,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initLoginForm() {
     const btn = document.getElementById('googleSignInBtn');
-
+    
     btn.onclick = async () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         try {
@@ -84,9 +88,8 @@ function showLoginError(msg) {
  * Initializes navigation tab click handlers.
  */
 function initTabs() {
-    // Prevent multiple event attachments
-    const oldBtns = document.querySelectorAll('.tab-btn');
-    oldBtns.forEach(btn => {
+    // Reset listeners by cloning buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
     });
@@ -107,18 +110,10 @@ function initTabs() {
 async function loadTab(tab) {
     adminContent.innerHTML = '<div class="loading">Loading section...</div>';
     switch (tab) {
-        case 'puzzles':
-            renderPuzzlesTab();
-            break;
-        case 'divisions':
-            renderDivisionsTab();
-            break;
-        case 'settings':
-            renderSettingsTab();
-            break;
-        case 'results':
-            renderResultsTab();
-            break;
+        case 'puzzles': renderPuzzlesTab(); break;
+        case 'divisions': renderDivisionsTab(); break;
+        case 'settings': renderSettingsTab(); break;
+        case 'results': renderResultsTab(); break;
     }
 }
 
@@ -158,8 +153,7 @@ async function renderPuzzlesTab() {
                 `;
             });
         }
-        html += '</div>';
-        adminContent.innerHTML = html;
+        adminContent.innerHTML = html + '</div>';
 
         document.getElementById('addPuzzleBtn').onclick = () => renderPuzzleForm();
         document.querySelectorAll('.edit-puzzle-btn').forEach(btn => {
@@ -170,16 +164,13 @@ async function renderPuzzlesTab() {
         });
         document.querySelectorAll('.delete-puzzle-btn').forEach(btn => {
             btn.onclick = async () => {
-                if (confirm('Are you sure you want to delete this puzzle? This cannot be undone.')) {
+                if (confirm('Are you sure you want to delete this puzzle?')) {
                     await db.collection(PUZZLES_COLLECTION).doc(btn.dataset.id).delete();
                     renderPuzzlesTab();
                 }
             };
         });
-
-    } catch (e) {
-        adminContent.innerHTML = `<p class="error">Error loading puzzles: ${e.message}</p>`;
-    }
+    } catch (e) { adminContent.innerHTML = `<p class="error">Error loading puzzles: ${e.message}</p>`; }
 }
 
 async function renderPuzzleForm(puzzle = null) {
@@ -195,24 +186,12 @@ async function renderPuzzleForm(puzzle = null) {
             <h3>${isEdit ? 'Edit' : 'Add'} Puzzle</h3>
             <form id="puzzleForm">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Puzzle Name</label>
-                        <input type="text" name="name" value="${puzzle?.name || ''}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Author</label>
-                        <input type="text" name="author" value="${puzzle?.author || ''}" required>
-                    </div>
+                    <div class="form-group"><label>Puzzle Name</label><input type="text" name="name" value="${puzzle?.name || ''}" required></div>
+                    <div class="form-group"><label>Author</label><input type="text" name="author" value="${puzzle?.author || ''}" required></div>
                 </div>
                 <div class="form-row" style="margin-top:15px">
-                    <div class="form-group">
-                        <label>Puzzle Number</label>
-                        <input type="number" name="puzzleNumber" value="${puzzle?.puzzleNumber || 0}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Time Limit (Seconds)</label>
-                        <input type="number" name="timeLimitSeconds" value="${puzzle?.timeLimitSeconds || 900}" required>
-                    </div>
+                    <div class="form-group"><label>Puzzle Number</label><input type="number" name="puzzleNumber" value="${puzzle?.puzzleNumber || 0}" required></div>
+                    <div class="form-group"><label>Time Limit (Seconds)</label><input type="number" name="timeLimitSeconds" value="${puzzle?.timeLimitSeconds || 900}" required></div>
                 </div>
                 <div class="form-row" style="margin-top:15px">
                     <div class="form-group">
@@ -228,10 +207,8 @@ async function renderPuzzleForm(puzzle = null) {
                         <label for="isWarmup">Mark as Warm-up</label>
                     </div>
                 </div>
-
                 <div class="form-group" style="margin-top:15px">
                     <label>Puzzle File Path</label>
-                    <p style="font-size:0.8em; color:#666; margin-bottom:10px">Place files in <code>tournament/puzzles/</code> and reference them here.</p>
                     <div class="division-mapping">
                         ${divisions.map(div => `
                             <div class="mapping-row">
@@ -242,10 +219,9 @@ async function renderPuzzleForm(puzzle = null) {
                         `).join('')}
                     </div>
                 </div>
-
                 <div class="action-row">
                     <button type="button" id="cancelPuzzleBtn" class="secondary-btn">Cancel</button>
-                    <button type="submit" class="primary-btn">${isEdit ? 'Update' : 'Create'} Puzzle</button>
+                    <button type="submit" class="primary-btn">${isEdit ? 'Update' : 'Create'}</button>
                 </div>
             </form>
         </div>
@@ -253,18 +229,16 @@ async function renderPuzzleForm(puzzle = null) {
 
     adminContent.innerHTML = html;
 
-    // Validation buttons logic
     document.querySelectorAll('.check-path-btn').forEach(btn => {
         btn.onclick = async () => {
             const path = document.getElementById(btn.dataset.input).value.trim();
             if (!path) return;
             btn.textContent = '...';
-            btn.classList.remove('path-valid', 'path-invalid');
             try {
                 const response = await fetch(path, { method: 'HEAD' });
-                if (response.ok) { btn.textContent = 'Found!'; btn.classList.add('path-valid'); }
-                else { btn.textContent = 'Missing'; btn.classList.add('path-invalid'); }
-            } catch (err) { btn.textContent = 'Error'; btn.classList.add('path-invalid'); }
+                if (response.ok) { btn.textContent = 'Found!'; btn.className = 'secondary-btn btn-sm check-path-btn path-valid'; }
+                else { btn.textContent = 'Missing'; btn.className = 'secondary-btn btn-sm check-path-btn path-invalid'; }
+            } catch (err) { btn.textContent = 'Error'; btn.className = 'secondary-btn btn-sm check-path-btn path-invalid'; }
         };
     });
 
@@ -279,14 +253,11 @@ async function renderPuzzleForm(puzzle = null) {
         });
 
         const puzzleData = {
-            name: formData.get('name'),
-            author: formData.get('author'),
+            name: formData.get('name'), author: formData.get('author'),
             puzzleNumber: parseInt(formData.get('puzzleNumber')),
             timeLimitSeconds: parseInt(formData.get('timeLimitSeconds')),
-            status: formData.get('status'),
-            isWarmup: formData.get('isWarmup') === 'on',
-            filesByDivision: filesByDivision,
-            filePath: filesByDivision.default || Object.values(filesByDivision)[0] || '',
+            status: formData.get('status'), isWarmup: formData.get('isWarmup') === 'on',
+            filesByDivision, filePath: filesByDivision.default || Object.values(filesByDivision)[0] || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 

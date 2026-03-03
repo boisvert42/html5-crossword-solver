@@ -16,64 +16,111 @@ The Tournament Solver uses **Firebase** for authentication, database (Firestore)
 ### 2. Enable Firestore Database
 1.  Navigate to **"Firestore Database"**.
 2.  Click **"Create database"**.
-3.  Choose **"Start in test mode"** for initial development. For production, you **must** configure secure rules.
+3.  Choose **"Start in test mode"** for initial development.
 4.  Select a location (e.g., `nam5`) and click **"Enable"**.
 
 ### 3. Enable Authentication
 1.  Navigate to **"Authentication"**.
 2.  Click **"Get started"** and go to the **"Sign-in method"** tab.
 3.  **Anonymous:** Enable "Anonymous" and click "Save". (Used for participants).
-3.  **Google:** Enable the "Google" provider.
-    *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
-    *   **Support email:** Select your Google email from the dropdown.
+4.  **Google:** Enable the "Google" provider.
+    *   **Public-facing name:** Enter your tournament name.
+    *   **Support email:** Select your Google email.
     *   Click **Save**.
 
+### 4. Authorize Admins (Firestore)
+Access to the Admin Dashboard is restricted to emails found in the `admins` collection.
+1.  In the Firebase console, go to **Firestore Database**.
+2.  Click **"Start collection"**.
+3.  Collection ID: `admins`
+4.  Document ID: (Your Google Email, e.g., `example@gmail.com`)
+5.  Add any field (e.g., `role: "admin"`) and click **Save**.
 
-### 4. Authorize Admins
-Access to the Admin Dashboard is restricted by an email whitelist.
-1.  Open **`tournament/admin.js`**.
-2.  Find the `ALLOWED_ADMINS` constant at the top of the file.
-3.  Add your Google email address to the array.
-4.  Only emails in this list will be granted access after signing in with Google.
-
-### 4. Register Your Web App & Get Config
+### 5. Register Your Web App & Get Config
 1.  On the project overview, click the **Web icon (</>)** to register a new app.
 2.  Copy the `firebaseConfig` object provided.
 3.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.
 4.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
 5.  **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
 
-### 5. Create Required Firestore Indices
-To enable the live puzzle list and leaderboard, you must create composite indices.
-1.  Open the Solver (`tournament.html`) or Admin (`admin.html`) in your browser.
-2.  Open the browser console (F12). You will likely see errors like: `The query requires an index...`.
-3.  Click the link in each error message to go directly to the Firebase console and create the required indices.
-    *   One for the **Puzzles** (Status + PuzzleNumber).
-    *   One for the **Leaderboard** (Division + totalScore + totalTime).
+---
+
+## Production Security Setup
+
+For a live tournament, you **must** apply these rules to protect your data.
+
+### 1. Configure Firestore Rules
+1.  In the **Firestore Database** section, click the **"Rules"** tab.
+2.  Paste the following:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Checks if the user is in the 'admins' collection
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    // Puzzles & Config: Publicly readable, only Admin can modify
+    match /puzzles/{puzzle} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /tournament_config/{config} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Admins list: Only Admins can read/write
+    match /admins/{email} {
+      allow read, write: if isAdmin();
+    }
+
+    // Solver Profiles: Users can only modify their own profile
+    match /solvers/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Scores: Users can only create their own score entries
+    match /scores/{scoreId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+  }
+}
+```
+3.  Click **"Publish"**.
+
+### 2. Authorized Domains
+1.  Go to **Authentication > Settings**.
+2.  Click **"Authorized domains"**.
+3.  Ensure your tournament's production domain (e.g., `yourname.github.io`) is in the list.
 
 ---
 
 ## Administrative Tasks
 
 ### Using the Admin Interface
-Once the initial setup is complete, navigate to **`tournament/admin.html`** and log in with your admin credentials.
+Navigate to **`tournament/admin.html`** and sign in with your authorized Google account.
 
 #### 1. Managing Divisions
-*   Go to the **Divisions** tab to define your tournament tiers.
-*   These appear instantly for new participants.
+*   Go to the **Divisions** tab to define your tournament tiers (e.g., Harder, Easier).
 
 #### 2. Configuring Settings
-*   Go to the **Settings** tab.
-*   **Tournament Metadata:** Set the official title of your event.
-*   **Scoring Rules:** Set points for correct words, completion bonuses, and time-based bonuses/penalties.
+*   Go to the **Settings** tab to set your Tournament Title and Scoring Rules.
 
 #### 3. Adding Puzzles
-1.  **Prepare Files:** Place your puzzle files (`.puz`, `.jpz`, `.ipuz`, etc.) in the **`tournament/puzzles/`** folder.
+1.  **Prepare Files:** Place puzzle files in the **`tournament/puzzles/`** folder.
 2.  **Add Metadata:** In the Admin Interface, go to the **Puzzles** tab and click **"Add New Puzzle"**.
-3.  **Mapping:** For each division, enter the path starting with `./puzzles/` (e.g., `./puzzles/my-puzzle.ipuz`).
-4.  **Live Unlocking:** Setting a puzzle to **"Available"** will cause it to instantly appear with a pulse animation on all solver dashboards.
+3.  **Mapping:** Enter the local path (e.g., `./puzzles/my-puzzle.ipuz`) for each division.
+4.  **Live Unlocking:** Setting a puzzle to **"Available"** makes it instantly appear on solver dashboards.
 
-#### 4. Monitoring Results (The Live Dashboard)
-*   The **Results** tab shows a live feed of all submissions as they happen.
-*   The **Solver Dashboard** Leaderboard is also live for the admin, allowing you to show the race to the finish on your stream.
-*   Use the **"Export CSV"** button to download a spreadsheet of the final standings.
+#### 4. Monitoring Results
+*   The **Results** tab shows a live feed of submissions.
+*   The **Solver Dashboard** Leaderboard is also live for authorized admins.
+*   Use **"Export CSV"** for final standings.

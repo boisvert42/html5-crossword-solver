@@ -225,7 +225,8 @@ async function renderPuzzleForm(puzzle = null) {
                         ${divisions.map(div => `
                             <div class="mapping-row">
                                 <label>${div}:</label>
-                                <input type="text" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? (puzzle?.filePath || puzzle?.fileName || '') : '')}" placeholder="./puzzles/filename.ipuz">
+                                <input type="text" id="input_${div}" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? (puzzle?.filePath || puzzle?.fileName || '') : '')}" placeholder="./puzzles/filename.ipuz">
+                                <button type="button" class="secondary-btn btn-sm check-path-btn" data-input="input_${div}">Check</button>
                             </div>
                         `).join('')}
                     </div>
@@ -240,6 +241,38 @@ async function renderPuzzleForm(puzzle = null) {
     `;
 
     adminContent.innerHTML = html;
+
+    // Hook up validation buttons
+    document.querySelectorAll('.check-path-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const inputId = btn.dataset.input;
+            const path = document.getElementById(inputId).value.trim();
+            
+            if (!path) {
+                alert('Please enter a path first.');
+                return;
+            }
+
+            btn.textContent = '...';
+            btn.classList.remove('path-valid', 'path-invalid');
+
+            try {
+                // Perform a HEAD or GET request to see if the file exists
+                const response = await fetch(path, { method: 'HEAD' });
+                if (response.ok) {
+                    btn.textContent = 'Found!';
+                    btn.classList.add('path-valid');
+                } else {
+                    btn.textContent = 'Missing';
+                    btn.classList.add('path-invalid');
+                }
+            } catch (err) {
+                console.warn('Fetch check failed:', err);
+                btn.textContent = 'Error';
+                btn.classList.add('path-invalid');
+            }
+        };
+    });
 
     document.getElementById('cancelPuzzleBtn').onclick = () => renderPuzzlesTab();
     document.getElementById('puzzleForm').onsubmit = async (e) => {

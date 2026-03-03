@@ -135,11 +135,24 @@
     margin-bottom: 8px;
 }
 
-.mapping-row label { width: 100px; font-weight: bold; }
+.mapping-row input { flex: 1; }
+.mapping-row .check-path-btn { 
+    white-space: nowrap; 
+    min-width: 80px;
+    padding: 8px 12px;
+}
 
-.btn-sm { padding: 4px 8px; font-size: 0.85em; }
-.btn-danger { background-color: #e74c3c; color: white; }
-.btn-success { background-color: #2ecc71; color: white; }
+.check-path-btn.path-valid {
+    background-color: #2ecc71 !important;
+    color: white !important;
+    border-color: #27ae60 !important;
+}
+
+.check-path-btn.path-invalid {
+    background-color: #e74c3c !important;
+    color: white !important;
+    border-color: #c0392b !important;
+}
 
 .empty-state {
     padding: 40px;

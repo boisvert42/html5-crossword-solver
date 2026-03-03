@@ -102,6 +102,16 @@ function initTabs() {
             loadTab(currentTab);
         });
     });
+
+    // Sign Out Button
+    const signOutBtn = document.getElementById('adminSignOutBtn');
+    if (signOutBtn) {
+        signOutBtn.onclick = async () => {
+            if (confirm('Are you sure you want to sign out?')) {
+                await auth.signOut();
+            }
+        };
+    }
 }
 
 /**

@@ -314,11 +314,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (e) {}
 
                 // LIVE LISTENER: Update rankings as scores are submitted
+                console.log(`Starting live listener for ${selectedDivision} division...`);
                 puzzleListenerUnsubscribe = db.collection(SCORES_COLLECTION)
                     .where('division', '==', selectedDivision)
                     .onSnapshot((scoresSnapshot) => {
-                        if (activeView !== 'leaderboard') return;
-
+                        console.log(`Leaderboard Snapshot received: ${scoresSnapshot.size} scores found.`);
+                        
                         const solverScores = {};
                         scoresSnapshot.forEach(doc => {
                             const data = doc.data();
@@ -465,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div id="tournament-puzzles-section" class="puzzle-section"></div>
                 `;
 
-                document.getElementById('viewLeaderboardBtn').addEventListener('click', renderLeaderboard);
+                document.getElementById('viewLeaderboardBtn').addEventListener('click', () => renderLeaderboard());
 
                 const warmUpSection = document.getElementById('warmup-puzzle-section');
                 const tournamentSection = document.getElementById('tournament-puzzles-section');

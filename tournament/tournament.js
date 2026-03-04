@@ -280,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
             async function renderLeaderboard(selectedDivision = currentSolver.division) {
                 activeView = 'leaderboard';
                 
-                // Unsubscribe from previous views
                 if (puzzleListenerUnsubscribe) {
                     puzzleListenerUnsubscribe();
                     puzzleListenerUnsubscribe = null;
@@ -294,13 +293,23 @@ document.addEventListener('DOMContentLoaded', () => {
                             <select id="divisionFilter"></select>
                         </div>
                     </div>
-                    <div id="leaderboard-content"><p>Loading standings...</p></div>
+                    <div id="leaderboard-content" style="overflow-x: auto;"><p>Loading standings...</p></div>
                 `;
 
-                document.getElementById('backToPuzzlesFromLeaderboard').addEventListener('click', renderPuzzleList);
+                document.getElementById('backToPuzzlesFromLeaderboard').onclick = () => {
+                    if (puzzleListenerUnsubscribe) puzzleListenerUnsubscribe();
+                    renderPuzzleList();
+                };
                 
-                // Fetch and render division filter
+                // Fetch puzzles first to determine the columns
+                let tournamentPuzzles = [];
                 try {
+                    const puzzlesSnapshot = await db.collection(PUZZLES_COLLECTION)
+                        .where('isWarmup', '==', false)
+                        .orderBy('puzzleNumber', 'asc')
+                        .get();
+                    puzzlesSnapshot.forEach(doc => tournamentPuzzles.push({ id: doc.id, ...doc.data() }));
+
                     const configDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
                     const availableDivisions = (configDoc.exists && configDoc.data().list) ? configDoc.data().list : ['Easier', 'Harder', 'Pairs'];
                     const filter = document.getElementById('divisionFilter');
@@ -310,25 +319,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         opt.selected = (div === selectedDivision);
                         filter.appendChild(opt);
                     });
-                    filter.addEventListener('change', (e) => renderLeaderboard(e.target.value));
-                } catch (e) {}
+                    filter.onchange = (e) => renderLeaderboard(e.target.value);
+                } catch (e) { console.error('Leaderboard init error:', e); }
 
-                // LIVE LISTENER: Update rankings as scores are submitted
-                console.log(`Starting live listener for ${selectedDivision} division...`);
+                // LIVE LISTENER: Aggregate scores into a grid
                 puzzleListenerUnsubscribe = db.collection(SCORES_COLLECTION)
                     .where('division', '==', selectedDivision)
                     .onSnapshot((scoresSnapshot) => {
-                        console.log(`Leaderboard Snapshot received: ${scoresSnapshot.size} scores found.`);
-                        
+                        if (activeView !== 'leaderboard') return;
+
                         const solverScores = {};
                         scoresSnapshot.forEach(doc => {
                             const data = doc.data();
                             if (!solverScores[data.uid]) {
-                                solverScores[data.uid] = { name: data.solverName, totalScore: 0, puzzlesSolved: 0, totalTime: 0 };
+                                solverScores[data.uid] = { 
+                                    name: data.solverName, 
+                                    totalScore: 0, 
+                                    totalTime: 0, 
+                                    puzzles: {} // Map of puzzleId -> { score, time }
+                                };
                             }
                             solverScores[data.uid].totalScore += data.totalScore;
-                            solverScores[data.uid].puzzlesSolved += 1;
                             solverScores[data.uid].totalTime += data.timeTaken;
+                            solverScores[data.uid].puzzles[data.puzzleId] = {
+                                score: data.totalScore,
+                                time: data.timeTaken
+                            };
                         });
 
                         // Sort by total score (DESC) and tie-break with total time (ASC)
@@ -345,13 +361,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             return;
                         }
 
+                        // Generate Table with Dynamic Columns
                         let tableHtml = `
                             <table class="leaderboard-table">
                                 <thead>
                                     <tr>
                                         <th class="rank">Rank</th>
                                         <th>Solver</th>
-                                        <th>Puzzles</th>
+                                        ${tournamentPuzzles.map(p => `<th>P${p.puzzleNumber}</th>`).join('')}
                                         <th>Total Score</th>
                                         <th>Total Time</th>
                                     </tr>
@@ -364,10 +381,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             tableHtml += `
                                 <tr class="${isMe ? 'current-user' : ''}">
                                     <td class="rank">${index + 1}</td>
-                                    <td>${entry.name} ${isMe ? ' (You)' : ''}</td>
-                                    <td>${entry.puzzlesSolved}</td>
+                                    <td style="white-space: nowrap;">${entry.name} ${isMe ? ' (You)' : ''}</td>
+                                    ${tournamentPuzzles.map(p => {
+                                        const pResult = entry.puzzles[p.id];
+                                        if (pResult) {
+                                            return `<td style="font-size: 0.85em; color: #666;">
+                                                        <div style="font-weight: bold; color: #e67e22;">${pResult.score}</div>
+                                                        <div>${Math.floor(pResult.time / 60)}m ${pResult.time % 60}s</div>
+                                                    </td>`;
+                                        } else {
+                                            return `<td style="color: #ccc;">—</td>`;
+                                        }
+                                    }).join('')}
                                     <td class="score-cell">${entry.totalScore}</td>
-                                    <td>${Math.floor(entry.totalTime / 60)}m ${entry.totalTime % 60}s</td>
+                                    <td style="white-space: nowrap;">${Math.floor(entry.totalTime / 60)}m ${entry.totalTime % 60}s</td>
                                 </tr>
                             `;
                         });

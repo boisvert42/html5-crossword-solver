@@ -37,7 +37,16 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 5.  Add a field: **Field Name:** `role`, **Type:** `string`, **Value:** `admin`
 6.  Click **Save**.
 
-### 5. Register Your Web App & Get Config
+### 5. Create Required Firestore Indices
+To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
+1.  Open the Solver (`tournament.html`) or Admin (`admin.html`) in your browser.
+2.  Open the browser console (**F12**).
+3.  If you see a red error message starting with `The query requires an index...`, **click the link provided in the error message**.
+4.  This will take you to the Firebase console with the required index settings (e.g., `isWarmup` + `puzzleNumber`) pre-filled.
+5.  Click **"Create Index"** and wait for the status to become "Enabled" (usually 1-3 minutes).
+6.  You will likely need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
+
+### 6. Register Your Web App & Get Config
 1.  On the project overview, click the **Web icon (</>)** to register a new app.
 2.  Copy the `firebaseConfig` object provided.
 3.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.

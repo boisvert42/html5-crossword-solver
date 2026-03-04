@@ -381,7 +381,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             tableHtml += `
                                 <tr class="${isMe ? 'current-user' : ''}">
                                     <td class="rank">${index + 1}</td>
-                                    <td style="white-space: nowrap;">${entry.name} ${isMe ? ' (You)' : ''}</td>
+                                    <td style="white-space: nowrap;">
+                                        ${isMe ? `<strong>${entry.name} (You)</strong>` : entry.name}
+                                    </td>
                                     ${tournamentPuzzles.map(p => {
                                         const pResult = entry.puzzles[p.id];
                                         if (pResult) {

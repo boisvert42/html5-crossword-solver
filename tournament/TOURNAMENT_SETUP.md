@@ -56,8 +56,9 @@ To enable the live puzzle list and the detailed leaderboard, you must create com
 2.  If an index is missing, a **red error message** will appear directly on the page with a link.
 3.  Click the link in the error message.
 4.  In the Firebase console, click **"Create Index"** (or **"Save"**).
-5.  Wait for the status to become "Enabled" (usually 1-3 minutes).
-6.  You may need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
+5.  Wait for the status to become "Enabled" (usually 3-5 minutes).
+6.  **Note:** The red error message in the dashboard will persist until the index is fully built. It is okay to continue setting up other tasks while the index builds in the background.
+7.  You may need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
 
 ---
 

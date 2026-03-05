@@ -128,7 +128,7 @@ service cloud.firestore {
 
 ### 3. Managing Puzzles
 1.  Place puzzle files in **`tournament/puzzles/`**.
-2.  In the Admin UI, add metadata and use **"Check"** to verify paths.
+2.  In the Admin UI, go to the **Puzzles** tab to add metadata and use the **"Check"** button to verify paths.
 
 ### 4. Tournament Settings
 *   Set your **Tournament Title** and **Scoring Rules** in the **Settings** tab.

@@ -308,23 +308,44 @@ async function renderParticipantsTab() {
 
 async function renderPuzzlesTab() {
     try {
-        const querySnapshot = await db.collection(PUZZLES_COLLECTION).orderBy('puzzleNumber', 'asc').get();
-        const puzzles = [];
-        querySnapshot.forEach(doc => puzzles.push({ id: doc.id, ...doc.data() }));
-
-        let html = `
+        adminContent.innerHTML = `
+            <div id="index-check-status"></div>
             <div class="admin-section-header">
                 <h2>Manage Puzzles</h2>
                 <button id="addPuzzleBtn" class="primary-btn">Add New Puzzle</button>
             </div>
-            <div class="admin-list">
+            <div id="puzzles-list-container"></div>
         `;
 
+        const indexCheckContainer = document.getElementById('index-check-status');
+        const listContainer = document.getElementById('puzzles-list-container');
+
+        // PROACTIVE INDEX CHECK: Run queries that require composite indices to surface any missing links
+        const checkQueries = [
+            db.collection(PUZZLES_COLLECTION).where('status', 'in', ['available', 'locked']).orderBy('puzzleNumber', 'asc').limit(1).get(),
+            db.collection(PUZZLES_COLLECTION).where('isWarmup', '==', false).orderBy('puzzleNumber', 'asc').limit(1).get()
+        ];
+
+        Promise.all(checkQueries).catch(err => {
+            if (err.message && err.message.includes('index')) {
+                indexCheckContainer.innerHTML = `<div class="admin-card" style="border: 2px solid #e74c3c;">
+                    <h3 style="color:#e74c3c; border-bottom-color:#e74c3c;">Database Index Missing</h3>
+                    ${TournamentLeaderboard.formatError(err)}
+                </div>`;
+            }
+        });
+
+        const querySnapshot = await db.collection(PUZZLES_COLLECTION).orderBy('puzzleNumber', 'asc').get();
+        const puzzles = [];
+        querySnapshot.forEach(doc => puzzles.push({ id: doc.id, ...doc.data() }));
+
+        let listHtml = `<div class="admin-list">`;
+
         if (puzzles.length === 0) {
-            html += '<div class="empty-state">No puzzles found.</div>';
+            listHtml += '<div class="empty-state">No puzzles found.</div>';
         } else {
             puzzles.forEach(puzzle => {
-                html += `
+                listHtml += `
                     <div class="list-item">
                         <div class="list-item-info">
                             <h4>#${puzzle.puzzleNumber}: ${puzzle.name} ${puzzle.isWarmup ? '<span class="warmup-tag">(Warm-up)</span>' : ''}</h4>
@@ -338,7 +359,7 @@ async function renderPuzzlesTab() {
                 `;
             });
         }
-        adminContent.innerHTML = html + '</div>';
+        listContainer.innerHTML = listHtml + '</div>';
 
         document.getElementById('addPuzzleBtn').onclick = () => renderPuzzleForm();
         document.querySelectorAll('.edit-puzzle-btn').forEach(btn => {

@@ -95,11 +95,60 @@ async function loadTab(tab) {
     adminContent.innerHTML = '<div class="loading">Loading section...</div>';
     switch (tab) {
         case 'puzzles': renderPuzzlesTab(); break;
+        case 'leaderboard': renderLeaderboardTab(); break;
         case 'participants': renderParticipantsTab(); break;
         case 'divisions': renderDivisionsTab(); break;
         case 'settings': renderSettingsTab(); break;
         case 'results': renderResultsTab(); break;
     }
+}
+
+/* ==========================================
+   LEADERBOARD TAB: Shared Live View
+   ========================================== */
+
+let leaderboardUnsubscribe = null;
+
+async function renderLeaderboardTab(selectedDivision = null) {
+    if (leaderboardUnsubscribe) { leaderboardUnsubscribe(); leaderboardUnsubscribe = null; }
+
+    try {
+        // Fetch Puzzles first for column headers
+        const pSnap = await db.collection(PUZZLES_COLLECTION).where('isWarmup', '==', false).orderBy('puzzleNumber', 'asc').get();
+        const tournamentPuzzles = []; pSnap.forEach(doc => tournamentPuzzles.push({ id: doc.id, ...doc.data() }));
+
+        // Fetch Divisions for filter
+        const divDoc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
+        const divisions = divDoc.exists ? divDoc.data().list : ['Easier', 'Harder', 'Pairs'];
+        if (!selectedDivision) selectedDivision = divisions[0];
+
+        adminContent.innerHTML = `
+            <div class="leaderboard-header">
+                <h2>Live Leaderboard</h2>
+                <select id="adminLeaderboardFilter"></select>
+            </div>
+            <div id="admin-leaderboard-container" style="overflow-x:auto;"></div>
+        `;
+
+        const filter = document.getElementById('adminLeaderboardFilter');
+        divisions.forEach(d => {
+            const opt = document.createElement('option'); opt.value = d; opt.textContent = d + ' Division';
+            opt.selected = (d === selectedDivision); filter.appendChild(opt);
+        });
+        filter.onchange = (e) => renderLeaderboardTab(e.target.value);
+
+        const container = document.getElementById('admin-leaderboard-container');
+        
+        // Use the shared TournamentLeaderboard component
+        leaderboardUnsubscribe = await TournamentLeaderboard.render(
+            container, 
+            db, 
+            selectedDivision, 
+            tournamentPuzzles,
+            null // No "You" highlighting in admin view
+        );
+
+    } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }
 
 /* ==========================================

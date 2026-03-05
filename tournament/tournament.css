@@ -1,6 +1,9 @@
+body, #tournament-app, button, input, select, textarea {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
 #tournament-app {
     padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     max-width: 800px;
     margin: 0 auto;
     color: #333;

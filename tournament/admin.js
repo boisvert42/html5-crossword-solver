@@ -148,7 +148,9 @@ async function renderLeaderboardTab(selectedDivision = null) {
             null // No "You" highlighting in admin view
         );
 
-    } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
+    } catch (e) { 
+        adminContent.innerHTML = `<div class="error-message" style="display:block; text-align:left;">${TournamentLeaderboard.formatError(e)}</div>`; 
+    }
 }
 
 /* ==========================================

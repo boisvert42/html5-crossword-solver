@@ -5,6 +5,20 @@
 
 window.TournamentLeaderboard = {
     /**
+     * Helper to format error messages and linkify Firebase index URLs.
+     */
+    formatError(error) {
+        const msg = typeof error === 'string' ? error : (error.message || 'An unknown error occurred');
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        
+        // Linkify URLs and add explicit instruction
+        return msg.replace(urlRegex, (url) => {
+            return `<br><br><strong>Action Required:</strong> Click the link below and then click <strong>"Create Index"</strong> (or "Save") in the Firebase Console:<br><br>` +
+                   `<a href="${url}" target="_blank" style="color: #3498db; font-weight: bold; text-decoration: underline; word-break: break-all;">${url}</a>`;
+        });
+    },
+
+    /**
      * Renders a live leaderboard into the specified container.
      */
     async render(container, db, division, tournamentPuzzles, isMeCallback) {
@@ -43,6 +57,7 @@ window.TournamentLeaderboard = {
                     return;
                 }
 
+                // Generate Table with Dynamic Columns
                 let tableHtml = `
                     <table class="leaderboard-table">
                         <thead>
@@ -78,9 +93,11 @@ window.TournamentLeaderboard = {
                 });
 
                 container.innerHTML = tableHtml + '</tbody></table>';
+
             }, (error) => {
                 console.error('Leaderboard error:', error);
-                container.innerHTML = `<p class="error">Error loading standings.</p>`;
+                // Use the linkifier for the internal snapshot error
+                container.innerHTML = `<div class="error-message" style="display:block; text-align:left;">${this.formatError(error)}</div>`;
             });
     }
 };

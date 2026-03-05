@@ -43,20 +43,21 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 2.  Click the **"+ Add app"** button.
 3.  Click the **Web icon (</>)** to register a new web app.
 4.  **App nickname:** Enter a name (e.g., "Tournament Solver").
-5.  **Firebase Hosting:** You can leave the "Also set up Firebase Hosting" checkbox **unchecked** if you are hosting on your own server or GitHub Pages.
+5.  **Firebase Hosting:** You can leave the "Also set up Firebase Hosting" checkbox **unchecked**.
 6.  Click **"Register app"**.
 7.  Copy the `firebaseConfig` object provided.
 8.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.
 9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
+10. **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
 
 ### 6. Create Required Firestore Indices
 To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
 1.  Open the Solver (`tournament.html`) or Admin (`admin.html`) in your browser.
-2.  Open the browser console (**F12**).
-3.  If you see a red error message starting with `The query requires an index...`, **click the link provided in the error message**.
-4.  This will take you to the Firebase console with the required index settings pre-filled.
-5.  Click **"Create Index"** and wait for the status to become "Enabled" (usually 1-3 minutes).
-6.  You will likely need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
+2.  If an index is missing, a **red error message** will appear directly on the page with a link.
+3.  Click the link in the error message.
+4.  In the Firebase console, click **"Create Index"** (or **"Save"**).
+5.  Wait for the status to become "Enabled" (usually 1-3 minutes).
+6.  You may need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
 
 ---
 
@@ -68,10 +69,10 @@ Apply these rules in the **Firestore > Rules** tab to protect your data.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     // Checks if the user is in the 'admins' collection
     function isAdmin() {
-      return request.auth != null &&
+      return request.auth != null && 
              exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
 
@@ -80,7 +81,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
-
+    
     match /tournament_config/{config} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -112,28 +113,26 @@ service cloud.firestore {
 }
 ```
 
+---
+
 ## Administrative Tasks
 
 ### 1. Managing Divisions
 1.  Open **`tournament/admin.html`** and sign in.
 2.  Go to the **Divisions** tab.
 3.  Define your tournament tiers (e.g., `Harder`, `Easier`). 
-4.  **Note:** These names must exactly match the divisions you use in your Participants CSV.
 
 ### 2. Authorize Participants (CSV)
 1.  Go to the **Participants** tab.
-2.  Upload a CSV with headers: `email, division`.
-3.  Only users in this list will be allowed to sign in to the solver dashboard.
+2.  Upload a CSV with headers: `email, division`. (Typoes in divisions will be flagged).
 
 ### 3. Managing Puzzles
-1.  Place your puzzle files in **`tournament/puzzles/`**.
-2.  In the Admin UI, use the **Puzzles** tab to add metadata.
-3.  Use the **"Check"** button to verify your local file paths.
+1.  Place puzzle files in **`tournament/puzzles/`**.
+2.  In the Admin UI, add metadata and use **"Check"** to verify paths.
 
 ### 4. Tournament Settings
 *   Set your **Tournament Title** and **Scoring Rules** in the **Settings** tab.
-*   The title updates live on the participant dashboard.
 
 ### 5. Viewing Results
 *   The **Results** tab shows a live feed of all submissions.
-*   The **Leaderboard** on the solver page is also live for administrators.
+*   The **Leaderboard** on the admin page provides a live grid of all standings.

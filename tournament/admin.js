@@ -510,10 +510,14 @@ async function renderPuzzleForm(puzzle = null) {
                     </div>
                 </div>
                 <div class="form-group" style="margin-top:15px">
-                    <label>File Paths</label>
+                    <label>File Paths per Division</label>
+                    <div class="mapping-help">
+                        The <strong>default</strong> path is used for all divisions unless you provide a specific path for one.
+                        To use local files, use the format: <code>./puzzles/filename.ipuz</code>
+                    </div>
                     <div class="division-mapping">
                         ${divisions.map(div => `
-                            <div class="mapping-row">
+                            <div class="mapping-row ${div === 'default' ? 'default-row' : ''}">
                                 <label>${div}:</label>
                                 <input type="text" id="input_${div}" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? (puzzle?.filePath || puzzle?.fileName || '') : '')}" placeholder="./puzzles/file.ipuz">
                                 <button type="button" class="secondary-btn btn-sm check-path-btn" data-input="input_${div}">Check</button>

@@ -132,14 +132,36 @@ body, button, input, select, textarea {
     margin-top: 10px;
 }
 
+.mapping-help {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+    line-height: 1.4;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mapping-help strong { color: #3498db; }
+
 .mapping-row {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
+    padding: 5px;
+    border-radius: 4px;
 }
 
-.mapping-row input { flex: 1; }
+.mapping-row.default-row {
+    background-color: #eaf4fb;
+    border: 1px solid #3498db;
+}
+
+.mapping-row label { width: 100px; font-weight: bold; }
+
 .mapping-row .check-path-btn { 
     white-space: nowrap; 
     min-width: 80px;

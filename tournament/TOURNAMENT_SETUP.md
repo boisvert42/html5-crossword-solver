@@ -25,8 +25,8 @@ The Tournament Solver uses **Firebase** for authentication, database (Firestore)
 1.  Under the **"Build"** menu, select **"Authentication"**.
 2.  Click **"Get started"** and go to the **"Sign-in method"** tab.
 3.  Enable the **Google** provider.
-    *   **Public-facing name:** Enter your tournament name.
-    *   **Support email:** Select your Google email.
+    *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
+    *   **Support email:** Select your Google email from the dropdown.
     *   Click **Save**.
 
 ### 4. Authorize the Super-Admin (Firestore)
@@ -34,7 +34,7 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 1.  In the Firebase console, go to **Firestore Database** (under **Build**).
 2.  Click **"Start collection"**.
 3.  Collection ID: `admins`
-4.  Document ID: (Your Google Email, e.g., `you@gmail.com`)
+4.  Document ID: (Your Google Email, e.g., `admin-name@gmail.com`)
 5.  Add a field: **Field Name:** `role`, **Type:** `string`, **Value:** `admin`
 6.  Click **Save**.
 
@@ -50,10 +50,9 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
 10. **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
 
-6.  Create Required Firestore Indices
+### 6. Create Required Firestore Indices
 To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
 1.  Open the Admin dashboard (`admin.html`) in your browser.
-
 2.  If an index is missing, a **red error message** will appear directly on the page with a link.
 3.  Click the link in the error message.
 4.  In the Firebase console, click **"Create Index"** (or **"Save"**).
@@ -68,14 +67,9 @@ To enable the live puzzle list and the detailed leaderboard, you must create com
 While you can start for free on the **Spark Plan**, we strongly recommend switching to the **Blaze Plan (Pay-as-you-go)** for the actual tournament days.
 
 ### Why switch to Blaze?
-*   **Connection Limit:** The Free (Spark) plan has a hard limit of **100 simultaneous connections**. If more than 100 people view your dashboard or leaderboard at once (common during a Twitch stream), the 101st person will be blocked.
-*   **Daily Quotas:** The Free plan has daily limits on database reads (50k). Our live leaderboard updates use reads for every participant watching; a large crowd can hit this limit, causing the app to shut off for the rest of the day.
+*   **Connection Limit:** The Free (Spark) plan has a hard limit of **100 simultaneous connections**. 
+*   **Daily Quotas:** The Free plan has daily limits on database reads (50k). Large crowds can hit this limit, causing the app to shut off.
 *   **Blaze is cheap:** For a typical tournament of 100–500 solvers, your total bill will likely be **less than $1.00**, as the Blaze plan still includes the free tiers.
-
-### Recommended Steps:
-1.  In the Firebase Console, click **"Upgrade"** in the bottom left.
-2.  Select the **Blaze Plan**.
-3.  **Set a Budget Alert:** Configure an alert for **$5.00 or $10.00**. Firebase will email you if your usage ever exceeds this amount, ensuring zero "bill shock."
 
 ---
 

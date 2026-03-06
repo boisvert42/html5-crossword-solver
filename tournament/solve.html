@@ -69,15 +69,10 @@
         function getTournamentParams() {
             const params = CrosswordShared.getCrosswordParams();
             
-            // Apply strict tournament rules if tournament_mode is detected
+            // Centralized tournament mode - engine handles secondary logic
             if (params.tournament_mode) {
-                params.has_reveal = false;        // No cheating!
-                params.has_check = false;         // No checking individual letters
-                params.timer_autostart = true;    // Start clock immediately
-                params.show_timer_option = false; // Hide "autostart" setting
-                params.allow_timer_toggle = false;// Prevent pausing the clock
+                params.tournament_mode = true; 
 
-                // Warn if the connection to the dashboard is broken
                 if (!window.opener) {
                     console.warn('WARNING: Dashboard connection lost. Score reporting will fail.');
                 }

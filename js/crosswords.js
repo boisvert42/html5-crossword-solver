@@ -68,6 +68,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       allow_timer_toggle: true,
       has_reveal: true,
       has_check: true,
+      tournament_mode: false,
       confetti_enabled: true,
       dark_mode_enabled: false,
       tab_key: 'tab_noskip',
@@ -434,6 +435,16 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               this.config[i] = user_config[i];
             }
           }
+        }
+
+        // Tournament Mode overrides
+        if (this.config.tournament_mode) {
+          this.config.has_reveal = false;
+          this.config.has_check = false;
+          this.config.timer_autostart = true;
+          this.config.show_timer_option = false;
+          this.config.allow_timer_toggle = false;
+          this.config.confetti_enabled = false;
         }
 
 
@@ -3437,19 +3448,19 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             </div>
           </div>
 
+          ${!this.config.tournament_mode ? `
           <!-- Miscellaneous -->
           <div class="settings-setting">
             <div class="settings-description">
               Miscellaneous
             </div>
-            ${this.config.show_timer_option ? `
             <div class="settings-option">
               <label class="settings-label">
                 <input id="timer_autostart" checked="" type="checkbox" name="timer_autostart" class="settings-changer">
                   Start timer on puzzle open
                 </input>
               </label>
-            </div>` : ''}
+            </div>
             <div class="settings-option">
               <label class="settings-label">
                 <input id="confetti_enabled" checked="" type="checkbox" name="confetti_enabled" class="settings-changer">
@@ -3457,17 +3468,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
                 </input>
               </label>
             </div>
-
-            <!--
-            <div class="settings-option">
-              <label class="settings-label">
-                <input id="dark_mode_enabled" checked="" type="checkbox" name="dark_mode_enabled" class="settings-changer">
-                  Dark mode
-                </input>
-              </label>
-            </div>
-            -->
-          </div>
+          </div>` : ''}
         `;
 
         this.createModalBox('Settings', settingsHTML);

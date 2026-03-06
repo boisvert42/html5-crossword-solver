@@ -158,9 +158,10 @@ Every time you have a new puzzle for the tournament:
 2.  Go to the **Divisions** tab.
 3.  Define your tournament tiers (e.g., `Harder`, `Easier`). 
 
-### 2. Authorize Participants (CSV)
+2.  Authorize Participants (CSV)
 1.  Go to the **Participants** tab.
-2.  Upload a CSV with headers: `email, division`. (Typoes in divisions will be flagged).
+2.  Upload a CSV with headers: `email, division`. (Typos in divisions will be flagged).
+
 
 ### 3. Managing Puzzles
 1.  Place puzzle files in **`tournament/puzzles/`**.

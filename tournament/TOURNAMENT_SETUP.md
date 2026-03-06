@@ -62,6 +62,22 @@ To enable the live puzzle list and the detailed leaderboard, you must create com
 
 ---
 
+## Firebase Billing & Plan (Recommended for Launch)
+
+While you can start for free on the **Spark Plan**, we strongly recommend switching to the **Blaze Plan (Pay-as-you-go)** for the actual tournament days.
+
+### Why switch to Blaze?
+*   **Connection Limit:** The Free (Spark) plan has a hard limit of **100 simultaneous connections**. If more than 100 people view your dashboard or leaderboard at once (common during a Twitch stream), the 101st person will be blocked.
+*   **Daily Quotas:** The Free plan has daily limits on database reads (50k). Our live leaderboard updates use reads for every participant watching; a large crowd can hit this limit, causing the app to shut off for the rest of the day.
+*   **Blaze is cheap:** For a typical tournament of 100–500 solvers, your total bill will likely be **less than $1.00**, as the Blaze plan still includes the free tiers.
+
+### Recommended Steps:
+1.  In the Firebase Console, click **"Upgrade"** in the bottom left.
+2.  Select the **Blaze Plan**.
+3.  **Set a Budget Alert:** Configure an alert for **$5.00 or $10.00**. Firebase will email you if your usage ever exceeds this amount, ensuring zero "bill shock."
+
+---
+
 ## Production Security Setup
 
 Apply these rules in the **Firestore > Rules** tab to protect your data.

@@ -1457,6 +1457,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         // SAVE
         this.save_btn.on('click', $.proxy(this.saveAsIpuz, this));
 
+        // Disable specific buttons in tournament mode
+        if (this.config.tournament_mode) {
+          this.print_btn.hide();
+          this.clear_btn.hide();
+          this.save_btn.hide();
+        }
+
         // LOAD
         this.load_btn.on('click', () => {
           // Re-initialize to a clean state

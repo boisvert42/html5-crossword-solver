@@ -3682,6 +3682,11 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       check_reveal(to_solve, reveal_or_check, e) {
+        // Security: Block all checks and reveals in tournament mode
+        if (this.config.tournament_mode && reveal_or_check !== 'clear') {
+          console.warn('Checks and Reveals are disabled in tournament mode.');
+          return;
+        }
         var my_cells = [],
           cell;
 

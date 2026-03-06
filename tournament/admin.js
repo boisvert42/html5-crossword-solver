@@ -145,12 +145,108 @@ async function renderLeaderboardTab(selectedDivision = null) {
             db, 
             selectedDivision, 
             tournamentPuzzles,
-            null // No "You" highlighting in admin view
+            null, // No "You" highlighting in admin view
+            (uid, pid, pData) => openScoreEditModal(uid, pid, pData) // Handle cell clicks
         );
 
     } catch (e) { 
         adminContent.innerHTML = `<div class="error-message" style="display:block; text-align:left;">${TournamentLeaderboard.formatError(e)}</div>`; 
     }
+}
+
+/**
+ * Opens a modal to override or delete a specific score entry.
+ */
+function openScoreEditModal(uid, pid, pData) {
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    
+    const minutes = Math.floor(pData.time / 60);
+    const seconds = pData.time % 60;
+
+    modalOverlay.innerHTML = `
+        <div class="edit-score-modal">
+            <h3>Override Score</h3>
+            <p style="font-size:0.9em; margin-bottom:20px;">
+                <strong>Puzzle:</strong> ${pData.puzzleName}<br>
+                <strong>Original Correct:</strong> ${pData.correctWords} / ${pData.totalWords}
+            </p>
+            
+            <form id="scoreEditForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Total Score</label>
+                        <input type="number" id="editTotalScore" value="${pData.score}" required>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-top:10px">
+                    <div class="form-group">
+                        <label>Time (Minutes)</label>
+                        <input type="number" id="editTimeMin" value="${minutes}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Time (Seconds)</label>
+                        <input type="number" id="editTimeSec" value="${seconds}" min="0" max="59">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; padding:10px; background:#fdf2f2; border-radius:6px; border:1px solid #f8d7da;">
+                    <label style="display:flex; align-items:flex-start; gap:10px; font-size:0.85em; cursor:pointer;">
+                        <input type="checkbox" id="confirmOverride" style="margin-top:3px;">
+                        <span>I confirm that I want to manually override this participant's official score.</span>
+                    </label>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="deleteScoreBtn" class="secondary-btn btn-danger" style="margin-right:auto">Delete Entry</button>
+                    <button type="button" id="cancelEditBtn" class="secondary-btn">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modalOverlay);
+
+    const close = () => document.body.removeChild(modalOverlay);
+    document.getElementById('cancelEditBtn').onclick = close;
+
+    // Handle Deletion
+    document.getElementById('deleteScoreBtn').onclick = async () => {
+        if (confirm('Permanently delete this score entry? This cannot be undone.')) {
+            try {
+                await db.collection(SCORES_COLLECTION).doc(`${uid}_${pid}`).delete();
+                close();
+            } catch (e) { alert('Delete failed: ' + e.message); }
+        }
+    };
+
+    // Handle Save
+    document.getElementById('scoreEditForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!document.getElementById('confirmOverride').checked) {
+            alert('Please check the confirmation box to apply changes.');
+            return;
+        }
+
+        const newScore = parseInt(document.getElementById('editTotalScore').value);
+        const newMin = parseInt(document.getElementById('editTimeMin').value) || 0;
+        const newSec = parseInt(document.getElementById('editTimeSec').value) || 0;
+        const newTotalSeconds = (newMin * 60) + newSec;
+
+        try {
+            await db.collection(SCORES_COLLECTION).doc(`${uid}_${pid}`).update({
+                totalScore: newScore,
+                timeTaken: newTotalSeconds,
+                isManuallyOverridden: true,
+                overriddenAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            close();
+        } catch (err) {
+            alert('Update failed: ' + err.message);
+        }
+    };
 }
 
 /* ==========================================

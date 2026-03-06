@@ -6,17 +6,19 @@ This list tracks potential improvements and features for the Crossword Tournamen
 - [ ] **Firestore Security Rules:** (Partially Done) Implement robust rules. We have the draft, but they need to be applied in the Firebase Console.
 - [ ] **Puzzle Scrambling:** Implement a simple "XOR" or "Base64 + Key" scramble for local puzzle files to prevent tech-savvy users from peeking at the answers.
 - [x] **Admin Authorization:** Verified Google account against a specific `admins` collection in Firestore.
+- [x] **Participant Whitelisting:** Strict Google Auth with pre-authorized email list via CSV.
 
 ## 🏆 Leaderboard & Standings
 - [x] **Detailed Breakdowns:** Grid-based leaderboard now shows individual scores and times for every puzzle per participant.
 - [ ] **Live Ranking Animations:** Use GSAP or similar to animate rows when they swap positions on the live leaderboard.
 - [x] **Division Standings Toggle:** Admin and participants can switch between divisions to view live standings.
+- [x] **Shared Logic:** Unified leaderboard rendering across Admin and Solver dashboards.
 
 ## 🛠️ Admin Features
 - [x] **Authorized Participants (CSV):** Bulk upload authorized emails and pre-assign divisions.
 - [x] **Strict Validation:** Added email and division validation to CSV uploads with detailed error reporting.
-- [x] **Proactive Index Check:** Dashboard now alerts the admin if Firestore indices are missing.
-- [ ] **Manual Override:** Add the ability for an admin to edit or delete a specific score entry.
+- [x] **Proactive Index Check:** Dashboard now alerts the admin if Firestore indices are missing with clickable resolution links.
+- [x] **Manual Override:** Admins can click any cell in the leaderboard grid to override a score/time or delete an entry.
 - [ ] **Tournament Scheduling:** Add "Release Date/Time" to puzzles so they unlock automatically.
 
 ## 🕹️ Solver Experience

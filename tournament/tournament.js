@@ -223,31 +223,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     filter.onchange = (e) => renderLeaderboard(e.target.value);
 
-                    puzzleListenerUnsubscribe = db.collection(SCORES_COLLECTION).where('division', '==', selectedDivision).onSnapshot((snap) => {
-                        if (activeView !== 'leaderboard') return;
-                        const scores = {};
-                        snap.forEach(doc => {
-                            const d = doc.data();
-                            if (!scores[d.uid]) scores[d.uid] = { name: d.solverName, totalScore: 0, totalTime: 0, puzzles: {} };
-                            scores[d.uid].totalScore += d.totalScore; scores[d.uid].totalTime += d.timeTaken;
-                            scores[d.uid].puzzles[d.puzzleId] = { score: d.totalScore, time: d.timeTaken };
-                        });
-                        const data = Object.values(scores).sort((a,b) => (b.totalScore !== a.totalScore) ? b.totalScore - a.totalScore : a.totalTime - b.totalTime);
-                        const content = document.getElementById('leaderboard-content');
-                        if (!content) return;
-                        if (data.length === 0) { content.innerHTML = `<p>No submissions for <strong>${selectedDivision}</strong> yet.</p>`; return; }
-
-                        let html = `<table class="leaderboard-table"><thead><tr><th class="rank">Rank</th><th>Solver</th>${tPuzzles.map(p=>`<th>P${p.puzzleNumber}</th>`).join('')}<th>Total Score</th><th>Total Time</th></tr></thead><tbody>`;
-                        data.forEach((entry, idx) => {
-                            const isMe = (entry.name === currentSolver.displayName);
-                            html += `<tr class="${isMe ? 'current-user' : ''}"><td class="rank">${idx+1}</td><td style="white-space:nowrap">${isMe?`<strong>${entry.name} (You)</strong>`:entry.name}</td>${tPuzzles.map(p=>{
-                                const r = entry.puzzles[p.id];
-                                return r ? `<td><div style="font-weight:bold;color:#e67e22">${r.score}</div><div style="font-size:0.85em;color:#666">${Math.floor(r.time/60)}m ${r.time%60}s</div></td>` : `<td style="color:#ccc">—</td>`;
-                            }).join('')}<td class="score-cell">${entry.totalScore}</td><td style="white-space:nowrap">${Math.floor(entry.totalTime/60)}m ${entry.totalTime%60}s</td></tr>`;
-                        });
-                        content.innerHTML = html + '</tbody></table>';
-                    });
-                } catch (e) {}
+                    // LIVE LISTENER: Aggregate scores into a grid using shared logic
+                    puzzleListenerUnsubscribe = await TournamentLeaderboard.render(
+                        document.getElementById('leaderboard-content'),
+                        db,
+                        selectedDivision,
+                        tPuzzles,
+                        (entry) => (entry.name === currentSolver.displayName) // Highlight current user
+                    );
+                } catch (e) {
+                    document.getElementById('leaderboard-content').innerHTML = 
+                        `<div class="error-message" style="display:block;">${TournamentLeaderboard.formatError(e)}</div>`;
+                }
             }
 
             window.addEventListener('message', async (event) => {

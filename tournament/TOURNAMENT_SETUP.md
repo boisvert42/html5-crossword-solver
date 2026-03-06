@@ -50,9 +50,10 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
 10. **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
 
-### 6. Create Required Firestore Indices
+6.  Create Required Firestore Indices
 To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
-1.  Open the Solver (`tournament.html`) or Admin (`admin.html`) in your browser.
+1.  Open the Admin dashboard (`admin.html`) in your browser.
+
 2.  If an index is missing, a **red error message** will appear directly on the page with a link.
 3.  Click the link in the error message.
 4.  In the Firebase console, click **"Create Index"** (or **"Save"**).

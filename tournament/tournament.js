@@ -248,10 +248,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             async function loadPuzzle(puzzleData) {
-                let path = null;
-                if (puzzleData.filesByDivision && currentSolver.division) path = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
-                if (!path) path = puzzleData.filePath || puzzleData.fileName; 
-                if (!path) return alert('File not found.');
+                let filename = null;
+                if (puzzleData.filesByDivision && currentSolver.division) filename = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
+                if (!filename) filename = puzzleData.filePath || puzzleData.fileName; 
+                if (!filename) return alert('File not found.');
+
+                // Automatically prepend directory if not already present
+                let path = filename;
+                if (!path.startsWith('./') && !path.startsWith('../')) {
+                    path = './puzzles/' + filename;
+                }
+
                 const url = new URL('solve.html', window.location.href);
                 url.searchParams.set('puzzle', path);
                 url.searchParams.set('config', btoa(JSON.stringify({ tournament_mode: true, puzzle_id: puzzleData.id, time_limit: puzzleData.timeLimitSeconds, is_warmup: !!puzzleData.isWarmup })));

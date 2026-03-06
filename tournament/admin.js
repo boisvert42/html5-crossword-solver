@@ -510,16 +510,17 @@ async function renderPuzzleForm(puzzle = null) {
                     </div>
                 </div>
                 <div class="form-group" style="margin-top:15px">
-                    <label>File Paths per Division</label>
+                    <label>Puzzle Filenames</label>
                     <div class="mapping-help">
-                        The <strong>default</strong> path is used for all divisions unless you provide a specific path for one.
-                        To use local files, use the format: <code>./puzzles/filename.ipuz</code>
+                        Enter only the <strong>filename</strong> (e.g., <code>puzzle1.ipuz</code>).
+                        Make sure the file is uploaded to the <code>tournament/puzzles/</code> folder.
+                        The <strong>default</strong> filename is used for all divisions unless overridden.
                     </div>
                     <div class="division-mapping">
                         ${divisions.map(div => `
                             <div class="mapping-row ${div === 'default' ? 'default-row' : ''}">
                                 <label>${div}:</label>
-                                <input type="text" id="input_${div}" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? (puzzle?.filePath || puzzle?.fileName || '') : '')}" placeholder="./puzzles/file.ipuz">
+                                <input type="text" id="input_${div}" name="file_${div}" value="${puzzle?.filesByDivision?.[div] || (div === 'default' ? (puzzle?.filePath || puzzle?.fileName || '') : '')}" placeholder="filename.ipuz">
                                 <button type="button" class="secondary-btn btn-sm check-path-btn" data-input="input_${div}">Check</button>
                             </div>
                         `).join('')}
@@ -533,8 +534,15 @@ async function renderPuzzleForm(puzzle = null) {
 
     document.querySelectorAll('.check-path-btn').forEach(btn => {
         btn.onclick = async () => {
-            const path = document.getElementById(btn.dataset.input).value.trim();
-            if (!path) return;
+            let filename = document.getElementById(btn.dataset.input).value.trim();
+            if (!filename) return;
+            
+            // Automatically prepend directory if not already present
+            let path = filename;
+            if (!path.startsWith('./') && !path.startsWith('../')) {
+                path = './puzzles/' + filename;
+            }
+
             btn.textContent = '...';
             try {
                 const res = await fetch(path, { method: 'HEAD' });

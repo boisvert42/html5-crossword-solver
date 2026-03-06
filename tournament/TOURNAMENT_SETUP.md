@@ -127,6 +127,30 @@ service cloud.firestore {
 
 ---
 
+## Web Server & Puzzle Hosting
+
+Since this is a "static" application, you must upload the files to a web server for participants to access them.
+
+### 1. Preparing Your Files
+You need to upload the **entire project folder** to your web server (via FTP, CPanel, or GitHub Pages). Ensure the following structure remains intact:
+*   `tournament/index.html` (The dashboard)
+*   `tournament/admin.html` (Your control panel)
+*   `tournament/puzzles/` (**Place your .ipuz or .puz files here**)
+*   `js/`, `css/`, `lib/` (Required folders for the solver to work)
+
+### 2. Uploading Puzzles
+Every time you have a new puzzle for the tournament:
+1.  Upload the file (e.g., `round1.ipuz`) into the **`tournament/puzzles/`** folder on your server.
+2.  Go to your **Admin Dashboard > Puzzles** tab.
+3.  Add the puzzle metadata and enter the filename (`round1.ipuz`).
+4.  Click **"Check"** to make sure the dashboard can "see" the file you just uploaded.
+
+### 3. Sharing the Link
+*   **For Participants:** Send them the link to the `tournament/` folder (e.g., `https://your-site.com/tournament/`).
+*   **For Yourself:** Access the admin panel at `tournament/admin.html`.
+
+---
+
 ## Administrative Tasks
 
 ### 1. Managing Divisions

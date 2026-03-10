@@ -2738,52 +2738,60 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
         // Puzzle is solved!
         this.isSolved = true;
-        // stop the timer
-        var timerMessage = '';
-        if (this.timer_running) {
-          // prepare message based on time
-          var display_seconds = xw_timer_seconds % 60;
-          var display_minutes = (xw_timer_seconds - display_seconds) / 60;
-          var minDisplay = display_minutes == 1 ? 'minute' : 'minutes';
-          var secDisplay = display_seconds == 1 ? 'second' : 'seconds';
-          var allMin = display_minutes > 0 ? `${display_minutes} ${minDisplay} ` : '';
-          timerMessage = `<br /><br /><center>You finished in ${allMin} ${display_seconds} ${secDisplay}.</center>`;
+        
+        // In tournament mode, we don't stop the timer or reveal anything automatically
+        if (this.config.tournament_mode) {
+           this.xw_timer_seconds = xw_timer_seconds;
+        } else {
+            // stop the timer
+            var timerMessage = '';
+            if (this.timer_running) {
+              // prepare message based on time
+              var display_seconds = xw_timer_seconds % 60;
+              var display_minutes = (xw_timer_seconds - display_seconds) / 60;
+              var minDisplay = display_minutes == 1 ? 'minute' : 'minutes';
+              var secDisplay = display_seconds == 1 ? 'second' : 'seconds';
+              var allMin = display_minutes > 0 ? `${display_minutes} ${minDisplay} ` : '';
+              timerMessage = `<br /><br /><center>You finished in ${allMin} ${display_seconds} ${secDisplay}.</center>`;
 
-          // stop the timer
-          clearTimeout(xw_timer);
-          this.timer_button.removeClass('running');
-          this.timer_running = false;
-        }
-        this.xw_timer_seconds = xw_timer_seconds;
-        // reveal all (in case there were rebuses)
-        if (do_reveal) {
-          this.check_reveal('puzzle', 'reveal');
-        }
-
-        if (this.config.confetti_enabled) {
-          confetti({
-            particleCount: 280,
-            spread: 190,
-            origin: {
-              y: 0.4
+              // stop the timer
+              clearTimeout(xw_timer);
+              this.timer_button.removeClass('running');
+              this.timer_running = false;
             }
-          });
+            this.xw_timer_seconds = xw_timer_seconds;
+            // reveal all (in case there were rebuses)
+            if (do_reveal) {
+              this.check_reveal('puzzle', 'reveal');
+            }
+
+            if (this.config.confetti_enabled) {
+              confetti({
+                particleCount: 280,
+                spread: 190,
+                origin: {
+                  y: 0.4
+                }
+              });
+            }
         }
 
-        /* const winSound = new Audio('./sounds/hny.mp3');
-           winSound.play();*/
         const here = this
 
         function showSuccessMsg(rawMessage) {
-
-          let solvedMessage = escape(rawMessage).trim().replaceAll('\n', '<br />');
-          solvedMessage += timerMessage;
-          here.createModalBox('🎉🎉🎉', solvedMessage);
+            if (here.config.tournament_mode) return;
+            let solvedMessage = escape(rawMessage).trim().replaceAll('\n', '<br />');
+            if (typeof timerMessage !== 'undefined') {
+                solvedMessage += timerMessage;
+            }
+            here.createModalBox('🎉🎉🎉', solvedMessage);
         }
 
         // show completion message if newly solved
         if (!wasSolved) {
-          showSuccessMsg(this.completion_message);
+          if (!this.config.tournament_mode) {
+            showSuccessMsg(this.completion_message);
+          }
           if (typeof this.config.onSolved === 'function') {
             this.config.onSolved(this);
           }

@@ -80,12 +80,10 @@
             
             /**
              * The onSolved callback is triggered by the core engine when the grid is 100% correct.
-             * For tournament mode, we just show a message but don't auto-submit.
+             * For tournament mode, we don't show a message to keep the solver's focus.
              */
             params.onSolved = (xw) => {
-                setTimeout(() => {
-                    xw.createModalBox('🎉 Puzzle Complete!', 'You have finished the puzzle! Click the <b>I\'m done!</b> button in the toolbar to submit your official time.');
-                }, 100);
+                // No-op to suppress pop-ups
             };
 
             /**
@@ -95,15 +93,6 @@
                 const words = Object.values(xw.words);
                 const totalWords = words.length;
                 const correctWords = words.filter(w => w.isCorrect()).length;
-                const percent = Math.round((correctWords / totalWords) * 100);
-
-                let confirmMsg = `Are you sure you want to submit your puzzle?`;
-                if (percent < 100) {
-                    confirmMsg = `You have completed ${percent}% of the puzzle. Are you sure you want to submit now?`;
-                }
-
-                if (!confirm(confirmMsg)) return;
-
                 const finalTime = xw.xw_timer_seconds || 0;
                 
                 if (!window.opener) {

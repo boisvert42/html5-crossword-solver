@@ -80,8 +80,30 @@
             
             /**
              * The onSolved callback is triggered by the core engine when the grid is 100% correct.
+             * For tournament mode, we just show a message but don't auto-submit.
              */
             params.onSolved = (xw) => {
+                setTimeout(() => {
+                    xw.createModalBox('🎉 Puzzle Complete!', 'You have finished the puzzle! Click the <b>I\'m done!</b> button in the toolbar to submit your official time.');
+                }, 100);
+            };
+
+            /**
+             * The onSubmitted callback is triggered when the user clicks the manual submit button.
+             */
+            params.onSubmitted = (xw) => {
+                const words = Object.values(xw.words);
+                const totalWords = words.length;
+                const correctWords = words.filter(w => w.isCorrect()).length;
+                const percent = Math.round((correctWords / totalWords) * 100);
+
+                let confirmMsg = `Are you sure you want to submit your puzzle?`;
+                if (percent < 100) {
+                    confirmMsg = `You have completed ${percent}% of the puzzle. Are you sure you want to submit now?`;
+                }
+
+                if (!confirm(confirmMsg)) return;
+
                 const finalTime = xw.xw_timer_seconds || 0;
                 
                 if (!window.opener) {
@@ -89,24 +111,24 @@
                     return;
                 }
 
-                // Gather word statistics for final scoring
-                const words = Object.values(xw.words);
-                const correctWords = words.filter(w => w.isCorrect()).length;
-                
                 // Report back to the dashboard (tournament.html)
                 window.opener.postMessage({
                     type: 'CROSSWORD_SOLVED',
                     puzzleId: params.puzzle_id,
                     timeTakenSeconds: finalTime,
                     correctWords: correctWords,
-                    totalWords: words.length
+                    totalWords: totalWords
                 }, '*');
                 
                 // Custom success message for tournament players
                 setTimeout(() => {
-                    const msg = (xw.completion_message || 'Puzzle solved!') + 
+                    const msg = (xw.completion_message || 'Puzzle submitted!') + 
                                 '<br><br><b>Tournament result reported!</b> You can now close this tab and return to the tournament dashboard.';
-                    xw.createModalBox('🎉🎉🎉', msg);
+                    xw.createModalBox('✅ Submitted', msg);
+                    // Hide the button after submission to prevent double-submits
+                    document.querySelector('.cw-tournament-submit').style.display = 'none';
+                    // Stop the timer
+                    xw.stopTimer?.();
                 }, 100);
             };
             

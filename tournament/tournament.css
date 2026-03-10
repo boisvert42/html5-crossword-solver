@@ -397,8 +397,18 @@ button:hover {
     background-color: #bdc3c7;
 }
 
-#crossword-container {
-    margin-top: 20px;
-    border: 1px solid #ccc;
-    background: #fff;
+.cw-tournament-submit {
+    background-color: #27ae60 !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-radius: 20px !important;
+    padding: 0.4em 1em !important;
+    margin-left: 5px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
 }
+
+.cw-tournament-submit:hover {
+    background-color: #219150 !important;
+    transform: translateY(-1px) !important;
+}
+

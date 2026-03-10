@@ -172,7 +172,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           <div    class = "cw-modal"></div>
           <div    class = "cw-grid">
           <div    class = "cw-buttons-holder">
-          <div    class = "cw-menu-container">
+          <div    class = "cw-menu-container cw-file-menu">
           <button type  = "button" class = "cw-button">
             <span class="cw-button-icon">🗄️</span>
                    File
@@ -218,6 +218,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               </button>
               <span   class = "cw-flex-spacer"></span>
               <button type  = "button" class = "cw-button cw-button-timer">00:00</button>
+              <button type = "button" class = "cw-button cw-tournament-submit" style="display:none">
+                 I'm&nbsp;done!
+              </button>
             </div>
             <input type  = "text" class = "cw-hidden-input">
             <div   class = "cw-canvas">
@@ -426,7 +429,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             }
           }
         }
-        
+
         // Copy any other properties from user_config that aren't in default_config
         // This is important for custom callbacks like onSolved
         if (user_config) {
@@ -647,8 +650,12 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.toptext = this.root.find('.cw-top-text-wrapper');
 
         this.settings_btn = this.root.find('.cw-settings-button');
-
-        this.hidden_input = this.root.find('input.cw-hidden-input');
+        this.file_menu = this.root.find('.cw-file-menu');
+        this.tournament_submit_btn = this.root.find('.cw-tournament-submit');
+        if (this.config.tournament_mode) {
+          this.tournament_submit_btn.show();
+          this.file_menu.hide();
+        }        this.hidden_input = this.root.find('input.cw-hidden-input');
         this.reveal_letter = this.root.find('.cw-reveal-letter');
         this.reveal_word = this.root.find('.cw-reveal-word');
         this.reveal_puzzle = this.root.find('.cw-reveal-puzzle');
@@ -898,7 +905,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               this.notes.set(entry.key, entry.value);
             }
           }
-          
+
           // Restore timer
           const savedTimer = localStorage.getItem(this.savegame_name + "_timer");
           if (savedTimer !== null) {
@@ -1337,7 +1344,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.timer_button.off('click');
 
         this.settings_btn.off('click');
-
+        this.tournament_submit_btn.off('click');
         this.info_btn.off('click');
         this.notepad_btn.off('click');
         this.notepad_icon.off('click');
@@ -1479,6 +1486,12 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         // SETTINGS
         this.settings_btn.on('click', $.proxy(this.openSettings, this));
 
+        // TOURNAMENT SUBMIT
+        this.tournament_submit_btn.on('click', () => {
+          if (this.config.tournament_mode && this.config.onSubmitted) {
+            this.config.onSubmitted(this);
+          }
+        });
         // INFO
         this.info_btn.on('click', $.proxy(this.showInfo, this));
 

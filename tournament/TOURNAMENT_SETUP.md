@@ -38,6 +38,7 @@ service cloud.firestore {
     // Checks if the user is in the 'admins' collection
     function isAdmin() {
       return request.auth != null && 
+             request.auth.token != null &&
              request.auth.token.email != null &&
              exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
@@ -58,11 +59,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Participants list: Admins manage, Users can read their own
-    match /participants/{email} {
+    // Participants list: Admins manage, Users can read their own record
+    match /participants/{emailId} {
       allow read: if request.auth != null && 
                      request.auth.token.email != null && 
-                     request.auth.token.email.lower() == email;
+                     request.auth.token.email.lower() == emailId;
       allow read, write: if isAdmin();
     }
 

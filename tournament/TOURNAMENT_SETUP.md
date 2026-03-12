@@ -22,75 +22,22 @@ The Tournament Solver uses **Firebase** for authentication, database (Firestore)
 2.  Select **"Firestore Database"**.
 3.  Click **"Create database"**.
 4.  If prompted for a database edition, choose **"Standard Edition"** (requires Blaze plan).
-5.  Choose **"Start in test mode"** for initial setup.
+5.  **Important:** Select **"Start in production mode"**. (We will apply custom rules in the next step).
 6.  Select a location (e.g., `nam5`) and click **"Enable"**.
 
-### 3. Enable Google Authentication
-1.  In the left-hand sidebar, click on **"Security"** to expand the menu.
-2.  Select **"Authentication"**.
-3.  Click **"Get started"** and go to the **"Sign-in method"** tab.
-4.  Enable the **Google** provider.
-    *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
-    *   **Support email:** Select your Google email from the dropdown.
-    *   Click **Save**.
-
-### 4. Authorize the Super-Admin (Firestore)
-Access to the Admin Dashboard is restricted to emails found in the `admins` collection.
-1.  In the Firebase console, go to **Firestore Database** (under **Databases & Storage**).
-2.  Click **"Start collection"**.
-3.  **Collection ID:** `admins`
-4.  **Document ID:** (Your Google Email, e.g., `admin-name@gmail.com`)
-5.  **Field:** `role`
-6.  **Type:** `string`
-7.  **Value:** `admin`
-8.  Click **Save**.
-
-### 5. Register Your Web App & Get Config
-1.  Navigate back to the **Project Overview** (home icon at the top of the left sidebar).
-2.  Click the **"+ Add app"** button.
-3.  Click the **Web icon (</>)** to register a new web app.
-4.  **App nickname:** Enter a name (e.g., "Tournament Solver").
-5.  **Firebase Hosting:** You can leave the "Also set up Firebase Hosting" checkbox **unchecked**.
-6.  Click **"Register app"**.
-7.  Copy the `firebaseConfig` object provided.
-8.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.
-9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
-
-### 6. Create Required Firestore Indices
-To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
-1.  Open the Admin dashboard (`admin.html`) in your browser.
-2.  If an index is missing, a **red error message** will appear directly on the page with a link.
-3.  Click the link in the error message.
-4.  In the Firebase console, click **"Create Index"** (or **"Save"**).
-5.  Wait for the status to become "Enabled" (usually 3-5 minutes).
-6.  **Note:** The red error message in the dashboard will persist until the index is fully built. It is okay to continue setting up other tasks while the index builds in the background.
-7.  You may need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
-
----
-
-## Firebase Billing & Plan (Required)
-
-As of **February 2026**, the **Blaze Plan (Pay-as-you-go)** is mandatory for all projects using Firestore or Cloud Storage.
-
-### Why is Blaze required?
-*   **API Requirements:** Google now requires a billing account to provision new database instances and manage Cloud Storage buckets.
-*   **Connection Limit:** The old Free (Spark) plan had a hard limit of 100 simultaneous connections, which is insufficient for most tournaments.
-*   **Cost:** For a typical tournament of 100–500 solvers, your total bill will still likely be **$0.00**, as the Blaze plan includes the same generous free tiers as the old Spark plan.
-
----
-
-## Production Security Setup
-
-Apply these rules in the **Firestore > Rules** tab to protect your data.
+### 3. Apply Firestore Security Rules
+To allow the Admin Dashboard to check your credentials, you must apply the security rules immediately.
+1.  In the Firestore Database section, click the **"Rules"** tab.
+2.  Delete the existing rules and paste the following:
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     // Checks if the user is in the 'admins' collection
     function isAdmin() {
-      return request.auth != null &&
+      return request.auth != null && 
              exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
 
@@ -99,7 +46,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
-
+    
     match /tournament_config/{config} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -130,6 +77,67 @@ service cloud.firestore {
   }
 }
 ```
+3.  Click **"Publish"**.
+
+### 4. Enable Google Authentication
+1.  In the left-hand sidebar, click on **"Security"** to expand the menu.
+2.  Select **"Authentication"**.
+3.  Click **"Get started"** and go to the **"Sign-in method"** tab.
+4.  Enable the **Google** provider.
+    *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
+    *   **Support email:** Select your Google email from the dropdown.
+    *   Click **Save**.
+5.  **Authorize Your Domain:** 
+    *   Still in the **Authentication** section, click the **"Settings"** tab (at the top of the page, next to *Users* and *Sign-in method*).
+    *   In the left-side menu of the Settings page, select **"Authorized domains"**.
+    *   Click **"Add domain"**.
+    *   Enter your website domain (e.g., `your-site.com`).
+    *   Click **Add**.
+    *   *Note:* `localhost` is usually added by default, but ensure it is present if you are testing locally.
+
+### 5. Authorize the Super-Admin (Firestore)
+Access to the Admin Dashboard is restricted to emails found in the `admins` collection.
+1.  In the Firebase console, go to **Firestore Database** (under **Databases & Storage**).
+2.  Click **"Start collection"**.
+3.  **Collection ID:** `admins`
+4.  **Document ID:** (Your Google Email, e.g., `admin-name@gmail.com`)
+5.  **Field:** `role`
+6.  **Type:** `string`
+7.  **Value:** `admin`
+8.  Click **Save**.
+
+### 6. Register Your Web App & Get Config
+1.  Navigate back to the **Project Overview** (home icon at the top of the left sidebar).
+2.  Click the **"+ Add app"** button.
+3.  Click the **Web icon (</>)** to register a new web app.
+4.  **App nickname:** Enter a name (e.g., "Tournament Solver").
+5.  **Firebase Hosting:** You can leave the "Also set up Firebase Hosting" checkbox **unchecked**.
+6.  Click **"Register app"**.
+7.  Copy the `firebaseConfig` object provided.
+8.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.
+9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
+10. **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
+
+### 7. Create Required Firestore Indices
+To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
+1.  Open the Admin dashboard (`admin.html`) in your browser.
+2.  If an index is missing, a **red error message** will appear directly on the page with a link.
+3.  Click the link in the error message.
+4.  In the Firebase console, click **"Create Index"** (or **"Save"**).
+5.  Wait for the status to become "Enabled" (usually 3-5 minutes).
+6.  **Note:** The red error message in the dashboard will persist until the index is fully built. It is okay to continue setting up other tasks while the index builds in the background.
+7.  You may need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
+
+---
+
+## Firebase Billing & Plan (Required)
+
+As of **February 2026**, the **Blaze Plan (Pay-as-you-go)** is mandatory for all projects using Firestore or Cloud Storage.
+
+### Why is Blaze required?
+*   **API Requirements:** Google now requires a billing account to provision new database instances and manage Cloud Storage buckets.
+*   **Connection Limit:** The old Free (Spark) plan had a hard limit of 100 simultaneous connections, which is insufficient for most tournaments.
+*   **Cost:** For a typical tournament of 100–500 solvers, your total bill will still likely be **$0.00**, as the Blaze plan includes the same generous free tiers as the old Spark plan.
 
 ---
 
@@ -162,7 +170,7 @@ Every time you have a new puzzle for the tournament:
 ### 1. Managing Divisions
 1.  Open **`tournament/admin.html`** and sign in.
 2.  Go to the **Divisions** tab.
-3.  Define your tournament tiers (e.g., `Harder`, `Easier`).
+3.  Define your tournament tiers (e.g., `Harder`, `Easier`). 
 
 ### 2. Authorize Participants (CSV)
 1.  Go to the **Participants** tab.

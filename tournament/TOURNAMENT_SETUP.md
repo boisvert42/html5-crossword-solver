@@ -99,7 +99,17 @@ service cloud.firestore {
     *   Click **Add**.
     *   *Note:* `localhost` is usually added by default, but ensure it is present if you are testing locally.
 
-### 5. Authorize the Super-Admin (Firestore)
+### 5. Custom Domain Verification (Google Cloud Console)
+If you are hosting the tournament on a custom domain (not `*.web.app` or `*.firebaseapp.com`), you must verify the domain in the Google Cloud backend.
+1.  Go to the [Google Cloud Credentials page](https://console.cloud.google.com/apis/credentials).
+2.  Ensure your tournament project is selected in the top dropdown.
+3.  Under **"OAuth 2.0 Client IDs"**, click the edit (pencil) icon for **"Web client (auto-created by Google Service)"**.
+4.  **Authorized JavaScript origins:** Add `https://your-site.com`.
+5.  **Authorized redirect URIs:** Ensure `https://your-project-id.firebaseapp.com/__/auth/handler` is listed.
+6.  Go to the **"OAuth consent screen"** tab (left-hand menu) and ensure `your-site.com` is listed under **"Authorized domains"**.
+7.  Click **Save**.
+
+### 6. Authorize the Super-Admin (Firestore)
 Access to the Admin Dashboard is restricted to emails found in the `admins` collection.
 1.  In the Firebase console, go to **Firestore Database** (under **Databases & Storage**).
 2.  Click **"Start collection"**.

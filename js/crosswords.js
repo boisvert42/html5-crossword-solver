@@ -1242,8 +1242,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
 
         // and whenever window resizes
-        window.removeEventListener('resize', this.updateClueLayout);
-        window.addEventListener('resize', this.updateClueLayout);
+        this.updateClueLayout();
 
       } // end completeLoad
 
@@ -1279,7 +1278,6 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       removeGlobalListeners() {
         $(window).off('click', this.handleClickWindow);
         $(window).off('resize', this.windowResized);
-        window.removeEventListener('resize', this.updateClueLayout);
       }
 
       removeListeners() {
@@ -2980,6 +2978,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         resizeText(this.root, this.top_text);
         this.renderCells();
         this.syncTopTextWidth();
+        this.updateClueLayout();
       }
 
       syncTopTextWidth() {

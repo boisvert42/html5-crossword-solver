@@ -28,11 +28,19 @@
     </div>
 
     <div id="tournament-app" style="display:none">
-        <header class="tournament-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-            <h1 id="tournamentTitle" style="margin: 0; font-size: 1.5rem;">Tournament Dashboard</h1>
-            <button id="signOutBtn" class="secondary-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Log Out</button>
-        </header>
-        <div class="loading">Loading tournament...</div>
+        <div id="tournament-content">
+            <div class="loading">Loading tournament...</div>
+        </div>
+        
+        <footer class="tournament-footer" style="margin-top: 40px; padding: 20px; border-top: 1px solid #eee; text-align: center; font-size: 0.9rem; color: #666;">
+            <p>Crossword Tournament interface by <a href="https://crosswordnexus.com" target="_blank" style="color: #666;">Crossword Nexus, LLC</a></p>
+            <div style="margin-top: 10px; display: flex; justify-content: center; gap: 20px; align-items: center;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="darkModeToggle"> Dark Mode
+                </label>
+                <a href="#" id="signOutLink" style="color: #e74c3c; text-decoration: none;">Log Out</a>
+            </div>
+        </footer>
     </div>
 
     <!-- Firebase SDKs -->

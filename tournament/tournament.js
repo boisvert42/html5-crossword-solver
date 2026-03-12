@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let activeView = 'setup'; 
             
             const tournamentAppDiv = document.getElementById('tournament-app');
+            const tournamentContentDiv = document.getElementById('tournament-content');
             const loginDiv = document.getElementById('solver-login');
 
             let scoringRules = { pointsPerWord: 10, timeBonusPerSecond: 1, completionBonus: 180, overtimePenaltyPer4Seconds: 1, minCorrectPercentageForTimeBonus: 0.5 };
@@ -30,6 +31,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     const doc = await db.collection(CONFIG_COLLECTION).doc('scoring').get();
                     if (doc.exists) scoringRules = { ...scoringRules, ...doc.data() };
                 } catch (e) {}
+            }
+
+            // --- Dark Mode Logic ---
+            const dmToggle = document.getElementById('darkModeToggle');
+            if (dmToggle) {
+                const savedDM = localStorage.getItem('tournamentDarkMode') === 'true';
+                dmToggle.checked = savedDM;
+                if (savedDM) document.body.classList.add('dark-mode');
+                
+                dmToggle.onchange = (e) => {
+                    const isDark = e.target.checked;
+                    localStorage.setItem('tournamentDarkMode', isDark);
+                    if (isDark) document.body.classList.add('dark-mode');
+                    else document.body.classList.remove('dark-mode');
+                };
+            }
+
+            // --- Logout Link ---
+            const signOutLink = document.getElementById('signOutLink');
+            if (signOutLink) {
+                signOutLink.onclick = async (e) => {
+                    e.preventDefault();
+                    if (confirm('Log out of the tournament?')) await auth.signOut();
+                };
             }
 
             /**
@@ -106,13 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.onclick = async () => {
                     const provider = new firebase.auth.GoogleAuthProvider();
                     try { await auth.signInWithPopup(provider); } catch (e) { showLoginError(e.message); }
-                };
-            }
-
-            const signOutBtn = document.getElementById('signOutBtn');
-            if (signOutBtn) {
-                signOutBtn.onclick = async () => {
-                    if (confirm('Log out of the tournament?')) await auth.signOut();
                 };
             }
 
@@ -202,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             function showSubmissionResult(scoreInfo, isWarmup = false) {
                 activeView = 'result';
-                tournamentAppDiv.innerHTML = `
+                tournamentContentDiv.innerHTML = `
                     <div class="submission-result">
                         <h2>${isWarmup ? 'Warm-up Complete!' : 'Puzzle Submitted!'}</h2>
                         <div class="score-card">
@@ -220,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeView = 'leaderboard';
                 if (puzzleListenerUnsubscribe) { puzzleListenerUnsubscribe(); puzzleListenerUnsubscribe = null; }
 
-                tournamentAppDiv.innerHTML = `<div class="leaderboard-header"><h2>Leaderboard</h2><div class="nav-actions"><button id="backPuz">Back to Puzzles</button><select id="divFilter"></select></div></div><div id="leaderboard-content" style="overflow-x:auto"><p>Loading...</p></div>`;
+                tournamentContentDiv.innerHTML = `<div class="leaderboard-header"><h2>Leaderboard</h2><div class="nav-actions"><button id="backPuz">Back to Puzzles</button><select id="divFilter"></select></div></div><div id="leaderboard-content" style="overflow-x:auto"><p>Loading...</p></div>`;
                 document.getElementById('backPuz').onclick = renderPuzzleList;
                 
                 try {
@@ -288,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (mDoc.exists && mDoc.data().tournamentName) { tName = mDoc.data().tournamentName; document.title = tName; }
                 } catch (e) {}
 
-                tournamentAppDiv.innerHTML = `
+                tournamentContentDiv.innerHTML = `
                     <h1>${tName}</h1>
                     <div class="solver-info">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start"><h2>Welcome, ${currentSolver.displayName}!</h2><div style="font-size:0.8em;color:#27ae60;font-weight:bold"><span class="status-dot"></span>Live</div></div>

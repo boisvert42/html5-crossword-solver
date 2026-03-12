@@ -92,11 +92,14 @@ h1, h2, h3, h4 {
     color: #e67e22;
 }
 
-#divisionFilter {
-    padding: 6px 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-family: inherit;
+body.dark-mode #divisionFilter, body.dark-mode #divFilter {
+    background-color: #3d3d3d;
+    color: #ffffff;
+    border-color: #555;
+}
+
+body.dark-mode .leaderboard-controls label {
+    color: #ffffff;
 }
 
 button {

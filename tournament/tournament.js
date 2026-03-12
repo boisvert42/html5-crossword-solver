@@ -238,7 +238,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeView = 'leaderboard';
                 if (puzzleListenerUnsubscribe) { puzzleListenerUnsubscribe(); puzzleListenerUnsubscribe = null; }
 
-                tournamentContentDiv.innerHTML = `<div class="leaderboard-header"><h2>Leaderboard</h2><div class="nav-actions"><button id="backPuz">Back to Puzzles</button><select id="divFilter"></select></div></div><div id="leaderboard-content" style="overflow-x:auto"><p>Loading...</p></div>`;
+                tournamentContentDiv.innerHTML = `
+                    <div class="leaderboard-header">
+                        <h2>Leaderboard</h2>
+                        <div class="nav-actions">
+                            <button id="backPuz">Back to Puzzles</button>
+                        </div>
+                    </div>
+                    <div class="leaderboard-controls" style="margin-bottom: 20px;">
+                        <label for="divFilter" style="font-weight: bold; margin-right: 10px;">Division:</label>
+                        <select id="divFilter" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #ccc;"></select>
+                    </div>
+                    <div id="leaderboard-content" style="overflow-x:auto">
+                        <p>Loading...</p>
+                    </div>
+                `;
                 document.getElementById('backPuz').onclick = renderPuzzleList;
                 
                 try {

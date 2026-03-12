@@ -16,6 +16,8 @@
     <script src="../js/crossword.shared.js"></script>
     <link rel="stylesheet" href="../css/crossword.shared.css">
     <link rel="stylesheet" href="tournament.css">
+    <link rel="stylesheet" href="toast.css">
+    <script src="toast.js"></script>
 
     <style>
       /* Full-screen layout for the solver */
@@ -97,7 +99,7 @@
                 const finalTime = xw.xw_timer_seconds || 0;
                 
                 if (!window.opener) {
-                    alert('Tournament window not found. Score could not be reported automatically.');
+                    Toast.error('Tournament window not found. Score could not be reported automatically.');
                     return;
                 }
 

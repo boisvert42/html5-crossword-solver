@@ -217,7 +217,7 @@ function openScoreEditModal(uid, pid, pData) {
             try {
                 await db.collection(SCORES_COLLECTION).doc(`${uid}_${pid}`).delete();
                 close();
-            } catch (e) { alert('Delete failed: ' + e.message); }
+            } catch (e) { Toast.error('Delete failed: ' + e.message); }
         }
     };
 
@@ -226,7 +226,7 @@ function openScoreEditModal(uid, pid, pData) {
         e.preventDefault();
         
         if (!document.getElementById('confirmOverride').checked) {
-            alert('Please check the confirmation box to apply changes.');
+            Toast.error('Please check the confirmation box to apply changes.');
             return;
         }
 
@@ -242,9 +242,10 @@ function openScoreEditModal(uid, pid, pData) {
                 isManuallyOverridden: true,
                 overriddenAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            Toast.success('Score updated!');
             close();
         } catch (err) {
-            alert('Update failed: ' + err.message);
+            Toast.error('Update failed: ' + err.message);
         }
     };
 }
@@ -310,7 +311,7 @@ async function renderParticipantsTab() {
         document.getElementById('uploadCsvBtn').onclick = () => {
             const fileInput = document.getElementById('csvFileInput');
             const statusDiv = document.getElementById('uploadStatus');
-            if (!fileInput.files.length) return alert('Select a CSV file.');
+            if (!fileInput.files.length) return Toast.error('Select a CSV file.');
             
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -591,7 +592,7 @@ async function renderDivisionsTab() {
         });
         document.getElementById('saveDivisionsBtn').onclick = async () => {
             await db.collection(CONFIG_COLLECTION).doc('divisions').set({ list });
-            alert('Divisions saved!');
+            Toast.success('Divisions saved!');
         };
     } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }
@@ -619,7 +620,7 @@ async function renderSettingsTab() {
         document.getElementById('metadataForm').onsubmit = async (e) => {
             e.preventDefault();
             await db.collection(CONFIG_COLLECTION).doc('metadata').set({ tournamentName: new FormData(e.target).get('tournamentName') });
-            alert('Title updated!');
+            Toast.success('Title updated!');
         };
         document.getElementById('scoringForm').onsubmit = async (e) => {
             e.preventDefault();
@@ -629,7 +630,7 @@ async function renderSettingsTab() {
                 timeBonusPerSecond: parseInt(fd.get('timeBonusPerSecond')), overtimePenaltyPer4Seconds: parseInt(fd.get('overtimePenaltyPer4Seconds')),
                 minCorrectPercentageForTimeBonus: parseFloat(fd.get('minCorrectPercentageForTimeBonus'))
             });
-            alert('Scoring rules updated!');
+            Toast.success('Scoring rules updated!');
         };
     } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }

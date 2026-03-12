@@ -34,10 +34,11 @@ To allow the Admin Dashboard to check your credentials, you must apply the secur
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     // Checks if the user is in the 'admins' collection
     function isAdmin() {
-      return request.auth != null &&
+      return request.auth != null && 
+             request.auth.token.email != null &&
              exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
 
@@ -46,7 +47,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
-
+    
     match /tournament_config/{config} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -59,7 +60,9 @@ service cloud.firestore {
 
     // Participants list: Admins manage, Users can read their own
     match /participants/{email} {
-      allow read: if request.auth != null && request.auth.token.email.lower() == email.lower();
+      allow read: if request.auth != null && 
+                     request.auth.token.email != null && 
+                     request.auth.token.email.lower() == email;
       allow read, write: if isAdmin();
     }
 
@@ -87,7 +90,7 @@ service cloud.firestore {
     *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
     *   **Support email:** Select your Google email from the dropdown.
     *   Click **Save**.
-5.  **Authorize Your Domain:**
+5.  **Authorize Your Domain:** 
     *   Still in the **Authentication** section, click the **"Settings"** tab (at the top of the page, next to *Users* and *Sign-in method*).
     *   In the left-side menu of the Settings page, select **"Authorized domains"**.
     *   Click **"Add domain"**.
@@ -116,6 +119,7 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 7.  Copy the `firebaseConfig` object provided.
 8.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.
 9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
+10. **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
 
 ### 7. Create Required Firestore Indices
 To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
@@ -169,7 +173,7 @@ Every time you have a new puzzle for the tournament:
 ### 1. Managing Divisions
 1.  Open **`tournament/admin.html`** and sign in.
 2.  Go to the **Divisions** tab.
-3.  Define your tournament tiers (e.g., `Harder`, `Easier`).
+3.  Define your tournament tiers (e.g., `Harder`, `Easier`). 
 
 ### 2. Authorize Participants (CSV)
 1.  Go to the **Participants** tab.

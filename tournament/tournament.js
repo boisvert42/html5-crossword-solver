@@ -82,11 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 showLoginError(`Account ${user.email} is not authorized for this tournament.`);
                                 await auth.signOut();
                             }
-                        } catch (e) {
-                            console.error('Auth check error:', e);
-                            showLoginError("Error checking authorization. Ensure your project is configured.");
-                            await auth.signOut();
-                        }
+                            } catch (e) { 
+                                console.error('Auth check error:', e);
+                                let errorMsg = "Error checking authorization.";
+                                if (e.code === 'permission-denied') {
+                                    errorMsg += " Permission denied. Check your Firestore rules and ensure your email is in the 'participants' collection.";
+                                }
+                                showLoginError(errorMsg);
+                                Toast.error(errorMsg);
+                                await auth.signOut();
+                            }
                     } else {
                         // Show login screen
                         tournamentAppDiv.style.display = 'none';
@@ -148,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         currentSolver = { uid: user.uid, name, displayName, division: authData.division, email: user.email };
                         renderPuzzleList();
-                    } catch (e) { alert('Save failed: ' + e.message); }
+                    } catch (e) { Toast.error('Save failed: ' + e.message); }
                 };
             }
 
@@ -185,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...scoreInfo, submittedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     showSubmissionResult(scoreInfo);
-                } catch (e) { alert('Error: ' + e.message); }
+                } catch (e) { Toast.error('Error: ' + e.message); }
             }
 
             function showSubmissionResult(scoreInfo, isWarmup = false) {
@@ -251,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let filename = null;
                 if (puzzleData.filesByDivision && currentSolver.division) filename = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
                 if (!filename) filename = puzzleData.filePath || puzzleData.fileName; 
-                if (!filename) return alert('File not found.');
+                if (!filename) return Toast.error('File not found.');
 
                 // Automatically prepend directory if not already present
                 let path = filename;

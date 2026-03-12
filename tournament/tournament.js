@@ -109,6 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
 
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.onclick = async () => {
+                    if (confirm('Log out of the tournament?')) await auth.signOut();
+                };
+            }
+
             function showLoginError(msg) {
                 const errorDiv = document.getElementById('loginError');
                 errorDiv.textContent = msg; errorDiv.style.display = 'block';

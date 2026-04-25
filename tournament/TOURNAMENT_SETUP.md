@@ -54,16 +54,25 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Admins list: Only Admins can manage other admins
+    // Admins list: Users can read their own status, only Admins can manage
     match /admins/{email} {
+      allow read: if request.auth != null && 
+                     request.auth.token.email != null &&
+                     request.auth.token.email.lower() == email.lower();
       allow read, write: if isAdmin();
     }
 
-    // Participants list: Admins manage, Users can read their own record
+    // Participants list: Admins manage, Users can read/link their own record
     match /participants/{emailId} {
       allow read: if request.auth != null && 
                      request.auth.token.email != null && 
-                     request.auth.token.email.lower() == emailId;
+                     request.auth.token.email.lower() == emailId.lower();
+      
+      // Allow users to update their own record (to link their UID/Name)
+      allow update: if request.auth != null && 
+                       request.auth.token.email != null && 
+                       request.auth.token.email.lower() == emailId.lower();
+
       allow read, write: if isAdmin();
     }
 

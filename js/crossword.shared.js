@@ -6,8 +6,11 @@ window.CrosswordShared = {
   getCrosswordParams() {
     const url = new URL(window.location.href);
     const puzzle = url.searchParams.get("puzzle") || url.searchParams.get("file");
+    const downsOnly = url.searchParams.has("downsonly") && url.searchParams.get("downsonly") !== "false";
     const b64config = url.searchParams.get("config");
-    const params = {};
+    const params = {
+      downsOnly: downsOnly
+    };
     const lzpuz = window.location.hash.slice(1);
 
     if (puzzle) {
@@ -118,7 +121,7 @@ window.Color = {
     ];
   },
 
-  applyHsvTransform(rgbHex, {dh, ks, kv}) {
+  applyHsvTransform(rgbHex, {dh = 0, ks = 1, kv = 1}) {
     let rgb = this.hexToRgb(rgbHex);
     let [h,s,v] = this.rgbToHsv(rgb);
     h = h + dh;
@@ -145,7 +148,11 @@ window.Color = {
 
   // perceived brightness of a color on a scale of 0-255
   getBrightness(hex) {
+    if (!hex || (typeof hex === 'string' && hex.startsWith('var('))) {
+      return 255; // Default to bright (white) if we can't tell
+    }
     const rgb = this.hexToRgb(hex);
+    if (!rgb) return 255;
     return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
   },
 

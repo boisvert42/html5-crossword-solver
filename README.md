@@ -69,7 +69,6 @@ You can customize the solver's behavior by passing a parameters object. Here are
 |---|---|---|---|
 | `puzzle_file` | `object` | `null` | An object with `{ url: '...' }` to load a puzzle from a URL. |
 | `puzzle_object`| `object`| `null` | A pre-parsed `jsxw` puzzle object to load directly. |
-| `hover_enabled`| `boolean`| `false` | Enables cell highlighting on mouse hover. |
 | `skip_filled_letters` | `boolean` | `true` | If true, the cursor skips over already-filled cells. |
 | `arrow_direction`| `string` | `'arrow_move_filled'` | Controls how arrow keys behave (e.g., `'arrow_move_filled'` skips filled cells, `'arrow_always_move'` does not). |
 | `space_bar` | `string` | `'space_clear'` | Defines the action of the spacebar (e.g., `'space_clear'` clears a cell, `'space_toggles_direction'` switches between Across/Down). |
@@ -77,10 +76,8 @@ You can customize the solver's behavior by passing a parameters object. Here are
 | `gray_completed_clues` | `boolean`| `false` | If true, clues are automatically grayed out when the corresponding word is filled. |
 | `timer_autostart`| `boolean`| `false` | If true, the puzzle timer starts automatically on load. |
 | `confetti_enabled` | `boolean`| `true` | Enables a confetti animation when the puzzle is successfully solved. |
-| `dark_mode_enabled` | `boolean`| `false` | Enables dark mode by default. |
+| `dark_mode_enabled` | `boolean`| `false` | Enables dark mode by default. Can be toggled in the Settings menu. |
 | `notepad_name` | `string` | `'Notes'` | Customizes the title of the notepad feature. |
-| `forced_theme` | `string`| `null` | Forces a specific color theme (e.g., `'classic'`). |
-| `lock_theme` | `boolean`| `false` | If true, prevents the user from changing the color theme. |
 | `min_sidebar_clue_width` | `number`| `220` | Minimum width of the sidebar containing the clues. |
 | `save_game_limit` | `number`| `10` | Maximum number of saved games to keep in local storage. |
 
@@ -102,16 +99,12 @@ The following parameters allow you to change the solver's color scheme.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `color_hover` | `string` | `'#FFFFAA'` | Color of a cell on hover. |
 | `color_selected`| `string` | `'#FF4136'` | Background color of the currently selected cell. |
 | `color_word` | `string` | `'#FEE300'` | Background color for all other cells in the active word. |
-| `color_hilite` | `string` | `'#F8E473'` | Color for related or cross-referenced cells. |
-| `color_word_shade` | `string`| `'#BAAB56'` | Shade color for words. |
 | `color_none` | `string` | `'#FFFFFF'` | Default background color for empty cells. |
-| `background_color_clue` | `string`| `'#666666'` | Background color for clues in the sidebar. |
-| `default_background_color` | `string`| `'#c2ed7e'` | Default background color for the puzzle container. |
-| `color_secondary` | `string`| `'#fff7b7'` | Secondary highlight color. |
-| `font_color_clue` | `string`| `'#FFFFFF'` | Font color for clues. |
+| `background_color_clue` | `string`| `'#666666'` | Background color for block cells containing text. |
 | `font_color_fill`| `string` | `'#000000'` | Font color for filled letters. |
-| `color_block` | `string` | `'#212121'` | Color of the black squares (blocked cells). |
 | `bar_linewidth` | `number`| `3.2` | Line width for cell borders (bars). |
+
+## Deployment Note
+**CRITICAL:** Every time you deploy a new update to the solver, you **must** update the `CACHE_NAME` constant in `sw.js` (e.g., `const CACHE_NAME = "xw-solver-v2026.4.26";`). This ensures that users' browsers invalidate the old cache and download the latest versions of the files.

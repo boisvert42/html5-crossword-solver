@@ -11,10 +11,11 @@
 - **Sign-Out Flow:** Added a stable "Log Out" link to both Admin and Participant views.
 
 ## 🚀 Near-Term Tasks
+- **Fix "Add Division" Button:** Investigate and fix the non-functional "Add" button on the Manage Divisions page.
+- **Edit Divisions:** Allow existing division names to be edited directly from the divisions management page.
+- **Manual Participant Entry:** Add a UI to authorize individual users manually (email + division) without requiring a CSV upload.
+- **Admin Custom Branding:** Allow admins to configure the solver's primary/secondary color scheme from the Settings tab.
 - **Leaderboard Export:** Add a button to export the final leaderboard as a CSV for official archiving.
-- **Puzzle Timers:** Add a "Countdown to Start" feature for live synchronized tournament starts.
-- **Admin Real-time View:** Enhance the "Results" tab to show real-time "Words Filled" progress for each participant.
-- **Email Whitelist Improvements:** Allow bulk upload of admins via the Admin dashboard itself (currently manual in console).
 
 ## 🛠 Maintenance
 - **Dependency Audit:** Check if Firebase SDK v9+ (Modular) should be adopted (currently using v8 compatibility mode).

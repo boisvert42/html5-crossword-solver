@@ -1,9 +1,9 @@
 # Tournament Dashboard TODO
 
 ## ✅ Completed (March 2026)
+- **Admin Custom Branding:** Allow admins to configure the solver's primary/secondary color scheme from the Settings tab.
 - **Persistent Admin Tab:** Ensure the Admin dashboard stays on the same tab when the page is refreshed (e.g., via localStorage or URL hash).
 - **Manual Participant Entry:** Added a UI to authorize individual users manually (email + division) without requiring a CSV upload.
-- **Firebase 2026 Compatibility:** Updated for Blaze plan requirements and new console layout.
 - **Custom Domain Auth:** Documented Google Cloud Console verification for custom domains.
 - **Robust Security Rules:** Implemented verified production-ready Firestore rules.
 - **Modern UI Feedback:** Replaced all browser `alert()` calls with a non-intrusive Toast notification system.

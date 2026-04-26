@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const loginDiv = document.getElementById('solver-login');
 
             let scoringRules = { pointsPerWord: 10, timeBonusPerSecond: 1, completionBonus: 180, overtimePenaltyPer4Seconds: 1, minCorrectPercentageForTimeBonus: 0.5 };
+            let branding = { color_selected: '#FF4136', color_word: '#FEE300' };
 
             async function fetchScoringRules() {
                 try {
@@ -63,11 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
             async function initSolver() {
                 await fetchScoringRules();
                 
-                // Fetch tournament name for the login screen
+                // Fetch tournament name and branding
                 try {
                     const metaDoc = await db.collection(CONFIG_COLLECTION).doc('metadata').get();
-                    if (metaDoc.exists && metaDoc.data().tournamentName) {
-                        document.getElementById('loginTournamentName').textContent = metaDoc.data().tournamentName;
+                    if (metaDoc.exists) {
+                        const data = metaDoc.data();
+                        if (data.tournamentName) document.getElementById('loginTournamentName').textContent = data.tournamentName;
+                        if (data.color_selected) branding.color_selected = data.color_selected;
+                        if (data.color_word) branding.color_word = data.color_word;
                     }
                 } catch (e) {}
 
@@ -294,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             async function loadPuzzle(puzzleData) {
                 let filename = null;
                 if (puzzleData.filesByDivision && currentSolver.division) filename = puzzleData.filesByDivision[currentSolver.division] || puzzleData.filesByDivision.default;
-                if (!filename) filename = puzzleData.filePath || puzzleData.fileName; 
+                if (!filename) filename = puzzleData.filePath || puzzleData.fileName;
                 if (!filename) return Toast.error('File not found.');
 
                 // Automatically prepend directory if not already present
@@ -305,10 +309,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const url = new URL('solve.html', window.location.href);
                 url.searchParams.set('puzzle', path);
-                url.searchParams.set('config', btoa(JSON.stringify({ tournament_mode: true, puzzle_id: puzzleData.id, time_limit: puzzleData.timeLimitSeconds, is_warmup: !!puzzleData.isWarmup })));
+
+                const config = { 
+                    tournament_mode: true, 
+                    puzzle_id: puzzleData.id, 
+                    time_limit: puzzleData.timeLimitSeconds, 
+                    is_warmup: !!puzzleData.isWarmup,
+                    color_selected: branding.color_selected,
+                    color_word: branding.color_word
+                };
+
+                url.searchParams.set('config', btoa(JSON.stringify(config)));
                 window.open(url.toString(), '_blank');
             }
-
             async function renderPuzzleList() {
                 if (!currentSolver) return;
                 activeView = 'puzzles';

@@ -264,31 +264,48 @@ async function renderParticipantsTab() {
         const divisions = divDoc.exists ? divDoc.data().list : ['Easier', 'Harder', 'Pairs'];
 
         let html = `
-            <div class="admin-card">
-                <h3>Authorize Participants (CSV)</h3>
-                <p>Upload a CSV file with columns: <code>email, division</code></p>
-                <div class="form-group">
-                    <input type="file" id="csvFileInput" accept=".csv" style="margin-bottom:10px">
-                    <button id="uploadCsvBtn" class="primary-btn">Process CSV & Authorize</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="admin-card" style="margin-bottom: 0;">
+                    <h3>Authorize Participants (CSV)</h3>
+                    <p>Upload a CSV file with columns: <code>email, division</code></p>
+                    <div class="form-group">
+                        <input type="file" id="csvFileInput" accept=".csv" style="margin-bottom:10px">
+                        <button id="uploadCsvBtn" class="primary-btn">Process CSV & Authorize</button>
+                    </div>
+                    <div id="uploadStatus" style="font-size:0.9em; margin-top:10px"></div>
                 </div>
-                <div id="uploadStatus" style="font-size:0.9em; margin-top:10px"></div>
+
+                <div class="admin-card" style="margin-bottom: 0;">
+                    <h3>Manual Add</h3>
+                    <p>Add a single participant by email.</p>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="manualEmail" placeholder="user@example.com" style="margin-bottom:10px">
+                    </div>
+                    <div class="form-group">
+                        <label>Division</label>
+                        <select id="manualDivision" style="margin-bottom:10px">
+                            ${divisions.map(d => `<option value="${d}">${d}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button id="manualAddBtn" class="primary-btn">Add Participant</button>
+                </div>
             </div>
 
             <div class="admin-section-header">
                 <h2>Authorized Participants (${participants.length})</h2>
             </div>
+        `;
+
+        adminContent.innerHTML = html + `
             <div class="admin-card" style="padding:0">
                 <table class="results-table">
                     <thead><tr><th>Email</th><th>Division</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
-        `;
-
-        if (participants.length === 0) {
-            html += '<tr><td colspan="4" class="empty-state">No participants authorized.</td></tr>';
-        } else {
-            participants.forEach(p => {
+        ` + (participants.length === 0 ? '<tr><td colspan="4" class="empty-state">No participants authorized.</td></tr>' : 
+            participants.map(p => {
                 const isLinked = !!p.uid;
-                html += `
+                return `
                     <tr>
                         <td><strong>${p.email}</strong></td>
                         <td>
@@ -304,9 +321,24 @@ async function renderParticipantsTab() {
                         <td><button class="secondary-btn btn-sm btn-danger delete-participant-btn" data-email="${p.email}">Remove</button></td>
                     </tr>
                 `;
-            });
-        }
-        adminContent.innerHTML = html + '</tbody></table></div>';
+            }).join('')) + `</tbody></table></div>`;
+
+        // Manual Add logic
+        document.getElementById('manualAddBtn').onclick = async () => {
+            const email = document.getElementById('manualEmail').value.trim().toLowerCase();
+            const division = document.getElementById('manualDivision').value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!email || !emailRegex.test(email)) return Toast.error('Please enter a valid email.');
+            
+            try {
+                await db.collection(PARTICIPANTS_COLLECTION).doc(email).set({
+                    email, division, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                Toast.success('Participant added!');
+                renderParticipantsTab();
+            } catch (e) { Toast.error('Error: ' + e.message); }
+        };
 
         document.getElementById('uploadCsvBtn').onclick = () => {
             const fileInput = document.getElementById('csvFileInput');
@@ -578,25 +610,67 @@ async function renderDivisionsTab() {
     try {
         const doc = await db.collection(CONFIG_COLLECTION).doc('divisions').get();
         let list = doc.exists ? doc.data().list : ['Easier', 'Harder', 'Pairs'];
-        let html = `<div class="admin-card"><h3>Manage Divisions</h3><div id="divisionList" class="admin-list" style="box-shadow:none; border:1px solid #eee">
-            ${list.map(div => `<div class="list-item"><span>${div}</span><button class="secondary-btn btn-sm btn-danger remove-div-btn" data-name="${div}">Remove</button></div>`).join('')}
-            </div><div class="form-group" style="margin-top:20px; display:flex; gap:10px;"><input type="text" id="newDivisionName" placeholder="New name"><button id="addDivisionBtn" class="primary-btn">Add</button></div>
-            <div class="action-row"><button id="saveDivisionsBtn" class="primary-btn btn-success">Save Changes</button></div></div>`;
-        adminContent.innerHTML = html;
-        document.getElementById('addDivisionBtn').onclick = () => {
-            const n = document.getElementById('newDivisionName').value.trim();
-            if (n && !list.includes(n)) { list.push(n); renderDivisionsTab(); }
-        };
-        document.querySelectorAll('.remove-div-btn').forEach(btn => {
-            btn.onclick = () => { list = list.filter(d => d !== btn.dataset.name); renderDivisionsTab(); };
-        });
-        document.getElementById('saveDivisionsBtn').onclick = async () => {
-            await db.collection(CONFIG_COLLECTION).doc('divisions').set({ list });
-            Toast.success('Divisions saved!');
-        };
+
+        function updateUI() {
+            let html = `<div class="admin-card">
+                <h3>Manage Divisions</h3>
+                <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">Changes here will only take effect once you click <strong>Save Changes</strong>.</p>
+                <div id="divisionList" class="admin-list" style="box-shadow:none; border:1px solid #eee">
+                ${list.map((div, index) => `
+                    <div class="list-item" style="gap: 10px;">
+                        <input type="text" class="edit-division-input" data-index="${index}" value="${div}" style="flex-grow: 1; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button class="secondary-btn btn-sm btn-danger remove-div-btn" data-index="${index}">Remove</button>
+                    </div>`).join('')}
+                </div>
+                <div class="form-group" style="margin-top:20px; display:flex; gap:10px;">
+                    <input type="text" id="newDivisionName" placeholder="New division name">
+                    <button id="addDivisionBtn" class="primary-btn">Add</button>
+                </div>
+                <div class="action-row">
+                    <button id="saveDivisionsBtn" class="primary-btn btn-success">Save Changes</button>
+                </div>
+            </div>`;
+
+            adminContent.innerHTML = html;
+
+            // Sync input changes back to our local list
+            document.querySelectorAll('.edit-division-input').forEach(input => {
+                input.onchange = (e) => {
+                    list[parseInt(e.target.dataset.index)] = e.target.value.trim();
+                };
+            });
+
+            document.getElementById('addDivisionBtn').onclick = () => {
+                const n = document.getElementById('newDivisionName').value.trim();
+                if (n && !list.includes(n)) { 
+                    list.push(n); 
+                    updateUI(); 
+                } else if (!n) {
+                    Toast.error('Please enter a name.');
+                } else {
+                    Toast.error('Division already exists.');
+                }
+            };
+
+            document.querySelectorAll('.remove-div-btn').forEach(btn => {
+                btn.onclick = () => { 
+                    list.splice(parseInt(btn.dataset.index), 1); 
+                    updateUI(); 
+                };
+            });
+
+            document.getElementById('saveDivisionsBtn').onclick = async () => {
+                // Remove empty strings if any
+                const cleanList = list.map(d => d.trim()).filter(d => d !== '');
+                await db.collection(CONFIG_COLLECTION).doc('divisions').set({ list: cleanList });
+                Toast.success('Divisions saved!');
+                renderDivisionsTab(); // Refresh from DB
+            };
+        }
+
+        updateUI();
     } catch (e) { adminContent.innerHTML = `<p class="error">${e.message}</p>`; }
 }
-
 /* ==========================================
    SETTINGS TAB: Meta-data and Scoring Rules
    ========================================== */

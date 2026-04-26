@@ -13,7 +13,7 @@ const PARTICIPANTS_COLLECTION = 'participants'; // Authorized solvers from CSV
 
 let db;
 let auth;
-let currentTab = 'puzzles';
+let currentTab = localStorage.getItem('adminCurrentTab') || 'puzzles';
 
 const adminContent = document.getElementById('admin-content');
 const loginDiv = document.getElementById('admin-login');
@@ -75,10 +75,14 @@ function initTabs() {
     nav.parentNode.replaceChild(newNav, nav);
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === currentTab) btn.classList.add('active');
+        else btn.classList.remove('active');
+
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentTab = btn.dataset.tab;
+            localStorage.setItem('adminCurrentTab', currentTab);
             loadTab(currentTab);
         });
     });

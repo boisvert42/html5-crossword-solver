@@ -1,6 +1,7 @@
 # Tournament Dashboard TODO
 
 ## ✅ Completed (March 2026)
+- **Persistent Admin Tab:** Ensure the Admin dashboard stays on the same tab when the page is refreshed (e.g., via localStorage or URL hash).
 - **Manual Participant Entry:** Added a UI to authorize individual users manually (email + division) without requiring a CSV upload.
 - **Firebase 2026 Compatibility:** Updated for Blaze plan requirements and new console layout.
 - **Custom Domain Auth:** Documented Google Cloud Console verification for custom domains.
@@ -12,7 +13,6 @@
 - **Sign-Out Flow:** Added a stable "Log Out" link to both Admin and Participant views.
 
 ## 🚀 Near-Term Tasks
-- **Persistent Admin Tab:** Ensure the Admin dashboard stays on the same tab when the page is refreshed (e.g., via localStorage or URL hash).
 - **Admin Custom Branding:** Allow admins to configure the solver's primary/secondary color scheme from the Settings tab.
 - **Leaderboard Export:** Add a button to export the final leaderboard as a CSV for official archiving.
 

@@ -3583,6 +3583,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               </label>
             </div>
           </div>
+          ` : ''}
+        </div>
         `;
 
         this.createModalBox('Settings', settingsHTML);

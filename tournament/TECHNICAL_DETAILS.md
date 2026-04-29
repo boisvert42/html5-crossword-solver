@@ -78,9 +78,14 @@ Puzzles follow a specific state machine controlled by the `status` field in the 
 3.  **Open (2):** Participants can click "Solve". This creates a `scores` document with `status: "started"` and a `startTime`.
 4.  **Closed (3):** Participants can no longer start the puzzle, but those who have already started can finish.
 
+### Timer API (`js/crosswords.js`)
+The core engine provides two methods for external control of the clock:
+- `startTimer()`: Resumes or starts the puzzle timer.
+- `stopTimer(shouldFocus)`: Stops the timer and syncs the final time. If `shouldFocus` is true (default false), it returns focus to the grid (desktop only).
+
 ---
 
-## 4. Scoring Logic
+## 4. Scoring & Migration Logic
 Scoring is calculated client-side in `solve.html` and verified (optionally) by the admin. The default rules are:
 
 - **Base Points:** 10 points per correct word (Across + Down).
@@ -90,6 +95,12 @@ Scoring is calculated client-side in `solve.html` and verified (optionally) by t
 - **Overtime Penalty:** Deductions applied if the solver exceeds the `TargetTime`.
 
 Settings are managed in `tournament_config/scoring`.
+
+### Division Migration
+When an admin reassigns a participant to a new division in the Admin Dashboard, the system performs an atomic batch update:
+1.  Updates the participant's whitelist document.
+2.  Updates the participant's solver profile.
+3.  Migrates all existing score records for that participant to the new division.
 
 ---
 

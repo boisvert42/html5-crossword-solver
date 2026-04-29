@@ -42,7 +42,7 @@ export async function renderDivisionsTab(container, db) {
                 };
             });
 
-            container.getElementById('addDivisionBtn').onclick = () => {
+            container.querySelector('#addDivisionBtn').onclick = () => {
                 const n = container.querySelector('#newDivisionName').value.trim();
                 if (n && !list.includes(n)) { 
                     list.push(n); 

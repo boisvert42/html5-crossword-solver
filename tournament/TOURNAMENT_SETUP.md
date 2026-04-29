@@ -76,16 +76,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Solver Profiles: Users can only create/edit their own profile
+    // Solver Profiles: Users manage their own, Admins can manage all
     match /solvers/{uid} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow write: if isAdmin() || (request.auth != null && request.auth.uid == uid);
     }
 
-    // Scores: Publicly readable, users can only create their own score entries
+    // Scores: Publicly readable, Users create their own, Admins can manage all
     match /scores/{scoreId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow write: if isAdmin() || (request.auth != null && request.auth.uid == request.resource.data.uid);
     }
   }
 }

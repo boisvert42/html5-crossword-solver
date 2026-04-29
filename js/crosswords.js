@@ -2852,9 +2852,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               timerMessage = `<br /><br /><center>You finished in ${allMin} ${display_seconds} ${secDisplay}.</center>`;
 
               // stop the timer
-              clearTimeout(xw_timer);
-              this.timer_button.removeClass('running');
-              this.timer_running = false;
+              this.stopTimer();
             }
             this.xw_timer_seconds = xw_timer_seconds;
             // reveal all (in case there were rebuses)
@@ -3978,55 +3976,61 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         URL.revokeObjectURL(url);
       }
 
+      startTimer() {
+        if (!this.timer_running) {
+          this.timer_running = true;
+          this.timer_button.removeClass('paused');
+          this.timer_button.addClass('running');
+          
+          const timer_btn = this.timer_button;
+          const add = () => {
+            xw_timer_seconds = xw_timer_seconds + 1;
+            const display_seconds = xw_timer_seconds % 60;
+            const display_minutes = (xw_timer_seconds - display_seconds) / 60;
+
+            const display =
+              (display_minutes ?
+                display_minutes > 9 ?
+                display_minutes :
+                '0' + display_minutes :
+                '00') +
+              ':' +
+              (display_seconds > 9 ? display_seconds : '0' + display_seconds);
+
+            timer_btn.html(display);
+            xw_timer = setTimeout(add, 1000);
+          };
+          
+          xw_timer = setTimeout(add, 1000);
+        }
+      }
+
+      stopTimer(shouldFocus = false) {
+        if (this.timer_running) {
+          clearTimeout(xw_timer);
+          this.timer_button.removeClass('running');
+          this.timer_button.addClass('paused');
+          this.timer_running = false;
+          // Final sync of the time
+          this.xw_timer_seconds = xw_timer_seconds;
+          
+          if (shouldFocus && !IS_MOBILE) {
+            this.hidden_input.focus();
+          }
+        }
+      }
+
       toggleTimer() {
         if (!this.config.allow_timer_toggle && this.timer_running) {
           console.log('Timer toggle disabled in tournament mode.');
           this.timer_button.css('cursor', 'default');
           return;
         }
-        var display_seconds, display_minutes;
-        var timer_btn = this.timer_button;
-
-        function add() {
-          xw_timer_seconds = xw_timer_seconds + 1;
-          display_seconds = xw_timer_seconds % 60;
-          display_minutes = (xw_timer_seconds - display_seconds) / 60;
-
-          var display =
-            (display_minutes ?
-              display_minutes > 9 ?
-              display_minutes :
-              '0' + display_minutes :
-              '00') +
-            ':' +
-            (display_seconds > 9 ? display_seconds : '0' + display_seconds);
-
-          timer_btn.html(display);
-          timer();
-        }
-
-        function timer() {
-          xw_timer = setTimeout(add, 1000);
-        }
 
         if (this.timer_running) {
-          // Stop the timer
-          clearTimeout(xw_timer);
-          timer_btn.removeClass('running');
-          timer_btn.addClass('paused');
-          this.timer_running = false;
-          if (!IS_MOBILE) {
-            this.hidden_input.focus();
-          }
+          this.stopTimer(true);
         } else {
-          // Start the timer
-          timer_btn.removeClass('paused');
-          this.timer_running = true;
-          timer_btn.addClass('running');
-          if (!IS_MOBILE) {
-            this.hidden_input.focus();
-          }
-          timer();
+          this.startTimer();
         }
       }
 

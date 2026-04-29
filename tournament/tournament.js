@@ -347,10 +347,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 puzzleListenerUnsubscribe = db.collection(PUZZLES_COLLECTION).where('status', 'in', ['available', 'locked']).orderBy('puzzleNumber', 'asc').onSnapshot(async (snap) => {
                     if (activeView !== 'puzzles') return;
-                    let subs = new Set();
+                    let subs = new Map();
                     try {
                         const sSnap = await db.collection(SCORES_COLLECTION).where('uid', '==', currentSolver.uid).get();
-                        sSnap.forEach(doc => subs.add(doc.data().puzzleId));
+                        sSnap.forEach(doc => {
+                            const data = doc.data();
+                            subs.set(data.puzzleId, data);
+                        });
                     } catch (e) {}
 
                     const ws = [], ts = [];
@@ -372,9 +375,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         tS.innerHTML = `<h3>Tournament Puzzle${ts.length>1?'s':''}</h3><ul class="puzzle-list"></ul>`;
                         const ul = tS.querySelector('ul');
                         ts.forEach(p => {
-                            const isS = subs.has(p.id), isL = p.status === 'locked', li = document.createElement('li');
+                            const scoreData = subs.get(p.id);
+                            const isS = !!scoreData, isL = p.status === 'locked', li = document.createElement('li');
                             li.className = `${isS?'submitted':''} ${isL?'locked':''}`;
-                            li.innerHTML = `<div class="puzzle-info"><span class="puz-num">#${p.puzzleNumber}</span><span class="puz-name">${p.name}</span><span class="puz-author">by ${p.author}</span><span class="puz-time">(${p.timeLimitSeconds/60}m)</span></div><div class="puzzle-status">${isS?'<span class="status-tag">Submitted</span>':isL?'<span class="status-tag locked">Locked</span>':'<button data-id="'+p.id+'" class="start-puzzle-btn">Start Puzzle</button>'}</div>`;
+                            
+                            let statusHtml = '';
+                            if (isS) {
+                                statusHtml = `
+                                    <div class="submission-stats">
+                                        <span class="status-tag">Submitted</span>
+                                        <div class="score-summary">${scoreData.totalScore} pts | ${Math.floor(scoreData.timeTaken/60)}m ${scoreData.timeTaken%60}s</div>
+                                    </div>
+                                `;
+                            } else if (isL) {
+                                statusHtml = '<span class="status-tag locked">Locked</span>';
+                            } else {
+                                statusHtml = '<button data-id="'+p.id+'" class="start-puzzle-btn">Start Puzzle</button>';
+                            }
+
+                            li.innerHTML = `<div class="puzzle-info"><span class="puz-num">#${p.puzzleNumber}</span><span class="puz-name">${p.name}</span><span class="puz-author">by ${p.author}</span><span class="puz-time">(${p.timeLimitSeconds/60}m)</span></div><div class="puzzle-status">${statusHtml}</div>`;
                             ul.appendChild(li);
                         });
                     } else tS.innerHTML = `<h3>Tournament Puzzles</h3><p>No puzzles yet.</p>`;

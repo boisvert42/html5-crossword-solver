@@ -109,6 +109,9 @@
                     if (!confirmSubmit) return;
                 }
 
+                // Stop the timer immediately upon submission
+                xw.stopTimer?.();
+
                 const words = Object.values(xw.words);
                 const totalWords = words.length;
                 const correctWords = words.filter(w => w.isCorrect()).length;
@@ -173,8 +176,6 @@
                     // Hide the button after submission to prevent double-submits
                     const submitBtn = document.querySelector('.cw-tournament-submit');
                     if (submitBtn) submitBtn.style.display = 'none';
-                    // Stop the timer
-                    xw.stopTimer?.();
                 }, 100);
             };
             

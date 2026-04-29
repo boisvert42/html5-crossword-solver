@@ -1,4 +1,4 @@
-import { PARTICIPANTS_COLLECTION, CONFIG_COLLECTION, SOLVERS_COLLECTION } from './Constants.js';
+import { PARTICIPANTS_COLLECTION, CONFIG_COLLECTION, SOLVERS_COLLECTION, SCORES_COLLECTION } from './Constants.js';
 
 /**
  * Renders the Participants management tab.
@@ -173,15 +173,35 @@ export async function renderParticipantsTab(container, db) {
                 const email = e.target.dataset.email;
                 const newDiv = e.target.value;
                 try {
+                    // 1. Update the participant's whitelist record
                     await db.collection(PARTICIPANTS_COLLECTION).doc(email).update({ division: newDiv });
+                    
+                    // 2. Update the solver's profile and scores (if they have logged in)
                     const solverSnap = await db.collection(SOLVERS_COLLECTION).where('email', '==', email).get();
                     if (!solverSnap.empty) {
                         const b = db.batch();
-                        solverSnap.forEach(d => b.update(d.ref, { division: newDiv }));
+                        let uid = null;
+                        
+                        solverSnap.forEach(d => {
+                            uid = d.id;
+                            b.update(d.ref, { division: newDiv });
+                        });
+
+                        // 3. Migrate all existing scores for this solver
+                        if (uid) {
+                            const scoresSnap = await db.collection(SCORES_COLLECTION).where('uid', '==', uid).get();
+                            scoresSnap.forEach(sDoc => {
+                                b.update(sDoc.ref, { division: newDiv });
+                            });
+                        }
+                        
                         await b.commit();
+                        if (window.Toast) window.Toast.success('Division and previous scores updated!');
+                    } else {
+                        if (window.Toast) window.Toast.success('Participant division updated!');
                     }
-                    if (window.Toast) window.Toast.success('Division updated!');
                 } catch (err) {
+                    console.error("Division update failed:", err);
                     if (window.Toast) window.Toast.error('Update failed: ' + err.message);
                 }
             };

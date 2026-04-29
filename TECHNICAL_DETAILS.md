@@ -62,6 +62,10 @@ The solver uses a Service Worker (`sw.js`) to provide offline capabilities and f
 - **Cache-First Strategy:** Most assets are served from the cache if available.
 - **Cache Invalidation:** Because of the cache-first strategy, the `CACHE_NAME` constant in `sw.js` **must be updated manually** with every deployment. This is the only way to ensure clients receive the latest code updates.
 
+## 6. Tournament Extension
+
+For technical details regarding the Firebase-backed tournament system (Admin Dashboard, Leaderboards, and Scoring), see [tournament/TECHNICAL_DETAILS.md](tournament/TECHNICAL_DETAILS.md).
+
 ### Adding New Features
 When extending the solver:
 1.  **Check `js/crossword.shared.js`** for utility functions that should be consistent across platforms.

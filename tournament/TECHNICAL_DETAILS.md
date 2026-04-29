@@ -1,0 +1,95 @@
+# Tournament Technical Details
+
+This document outlines the architecture and implementation details of the Tournament Solver extension.
+
+## 1. Architecture Overview
+The Tournament Solver is a client-side web application that uses **Firebase** for all backend services. 
+- **Authentication:** Google OAuth 2.0.
+- **Database:** Firestore (NoSQL).
+- **Hosting:** Static file hosting (GitHub Pages, S3, etc.).
+
+The system is split into three primary components:
+1.  **Admin Dashboard (`admin.html`/`admin.js`):** Management of puzzles, divisions, participants, and live results.
+2.  **Participant Dashboard (`index.html`/`tournament.js`):** Puzzle list, profile setup, and division-specific standings.
+3.  **Solver Bridge (`solve.html`):** A specialized wrapper for the core solver (`js/crosswords.js`) that handles tournament-specific timing and submission.
+
+---
+
+## 2. Data Model (Firestore)
+
+### `admins/` (Collection)
+- **Document ID:** Email address (lowercase).
+- **Purpose:** Whitelist for access to `admin.html`.
+- **Fields:** `{ role: "admin" }`.
+
+### `participants/` (Collection)
+- **Document ID:** Email address (lowercase).
+- **Purpose:** The master whitelist of authorized solvers.
+- **Fields:** `{ email, division, name, uid }`.
+- *Note:* The `uid` is linked only after the participant first signs in.
+
+### `puzzles/` (Collection)
+- **Document ID:** Auto-generated.
+- **Purpose:** Metadata for tournament puzzles.
+- **Fields:**
+  - `puzzleNumber`: Used for sorting in the UI.
+  - `filename`: The path to the file in `tournament/puzzles/`.
+  - `status`: `0` (Hidden), `1` (Locked), `2` (Open), `3` (Closed).
+  - `isWarmup`: Boolean. Warmup puzzles don't count toward the total score.
+
+### `solvers/` (Collection)
+- **Document ID:** Firebase Auth `uid`.
+- **Purpose:** Public profiles for participants.
+- **Fields:** `{ name, displayName }`.
+
+### `scores/` (Collection)
+- **Document ID:** `${uid}_${puzzleId}`.
+- **Purpose:** Records of puzzle attempts and completions.
+- **Fields:**
+  - `status`: `started` or `submitted`.
+  - `startTime`: Firestore Timestamp.
+  - `finishTime`: Firestore Timestamp.
+  - `seconds`: Total time elapsed.
+  - `isCorrect`: Boolean (all cells match solution).
+  - `score`: Calculated point value.
+  - `bonus`: Calculated time bonus.
+
+---
+
+## 3. The Puzzle Lifecycle
+Puzzles follow a specific state machine controlled by the `status` field in the `puzzles` collection:
+
+1.  **Hidden (0):** Puzzle is not visible to participants.
+2.  **Locked (1):** Puzzle title and metadata are visible, but the "Solve" button is disabled.
+3.  **Open (2):** Participants can click "Solve". This creates a `scores` document with `status: "started"` and a `startTime`.
+4.  **Closed (3):** Participants can no longer start the puzzle, but those who have already started can finish.
+
+---
+
+## 4. Scoring Logic
+Scoring is calculated client-side in `solve.html` and verified (optionally) by the admin. The default rules are:
+
+- **Base Points:** 10 points per correct word (Across + Down).
+- **Completion Bonus:** A flat bonus for finishing the grid perfectly.
+- **Time Bonus:** `(TargetTime - ElapsedSeconds) * BonusMultiplier`. 
+  - *Condition:* Only awarded if the grid is 100% correct.
+- **Overtime Penalty:** Deductions applied if the solver exceeds the `TargetTime`.
+
+Settings are managed in `tournament_config/scoring`.
+
+---
+
+## 5. Security & Authorization
+Security is enforced via **Firestore Security Rules**.
+- **Admins:** Have read/write access to all collections.
+- **Participants:**
+  - Can only read puzzles where `status > 0`.
+  - Can only write to their own `scores` and `solvers` documents.
+  - Authorization is checked by comparing the Google Auth email against the `participants` whitelist collection.
+
+---
+
+## 6. Shared Components
+- **`leaderboard.js`:** A reusable class that renders a real-time grid of scores, listening for updates across all participants in a specific division.
+- **`toast.js`:** A simple notification system used across the tournament UI.
+- **`firebase-config.js`:** (Not tracked) Contains the project's API keys and identifiers.

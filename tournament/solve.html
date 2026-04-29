@@ -128,13 +128,51 @@
                     totalWords: totalWords
                 }, '*');
                 
+                // Calculate score for display (logic matches tournament.js)
+                const scoring = params.scoring || {};
+                const isFull = correctWords === totalWords && totalWords > 0;
+                const limit = params.time_limit || 0;
+                let score = correctWords * (scoring.pointsPerWord || 10);
+                if (isFull) score += (scoring.completionBonus || 180);
+
+                let bonus = 0, penalty = 0;
+                if (finalTime <= limit) {
+                    if ((correctWords/totalWords) >= (scoring.minCorrectPercentageForTimeBonus || 0.5)) 
+                        bonus = (limit - finalTime) * (scoring.timeBonusPerSecond || 1);
+                } else {
+                    penalty = Math.floor((finalTime - limit) / 4) * (scoring.overtimePenaltyPer4Seconds || 1);
+                }
+                const totalScore = Math.max(0, score + bonus - penalty);
+
                 // Custom success message for tournament players
                 setTimeout(() => {
-                    const msg = (xw.completion_message || 'Puzzle submitted!') + 
-                                '<br><br><b>Tournament result reported!</b> You can now close this tab and return to the tournament dashboard.';
-                    xw.createModalBox('✅ Submitted', msg);
+                    const msg = `
+                        <div style="text-align:center; padding: 10px;">
+                            <div style="font-size: 1.5em; font-weight: bold; color: #27ae60; margin-bottom: 10px;">Puzzle Submitted!</div>
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee;">
+                                <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">TOTAL SCORE</div>
+                                <div style="font-size: 2.5em; font-weight: bold; color: #2c3e50;">${totalScore}</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95em;">
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 0.8em;">CORRECT</div>
+                                    <strong>${correctWords}/${totalWords}</strong>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 10px; border-radius: 6px;">
+                                    <div style="color: #666; font-size: 0.8em;">TIME</div>
+                                    <strong>${Math.floor(finalTime/60)}m ${finalTime%60}s</strong>
+                                </div>
+                            </div>
+                            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                                ${params.is_warmup ? '<em>Warm-up results are not saved to the leaderboard.</em><br><br>' : ''}
+                                Tournament result reported! You can now close this tab and return to the tournament dashboard.
+                            </div>
+                        </div>
+                    `;
+                    xw.createModalBox('✅ Success', msg);
                     // Hide the button after submission to prevent double-submits
-                    document.querySelector('.cw-tournament-submit').style.display = 'none';
+                    const submitBtn = document.querySelector('.cw-tournament-submit');
+                    if (submitBtn) submitBtn.style.display = 'none';
                     // Stop the timer
                     xw.stopTimer?.();
                 }, 100);

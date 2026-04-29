@@ -316,7 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     time_limit: puzzleData.timeLimitSeconds, 
                     is_warmup: !!puzzleData.isWarmup,
                     color_selected: branding.color_selected,
-                    color_word: branding.color_word
+                    color_word: branding.color_word,
+                    scoring: scoringRules
                 };
 
                 url.searchParams.set('config', btoa(JSON.stringify(config)));

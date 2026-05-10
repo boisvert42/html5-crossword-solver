@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+    <meta name="HandheldFriendly" content="True">
+    <title>The Three-Boddy Problem | Solver</title>
+
+    <!-- jQuery -->
+    <script src="lib/jquery.js"></script>
+
+    <!-- for loading crosswords -->
+    <script src="lib/jscrossword_combined.js"></script>
+
+    <!-- confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- GG animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha512-16esztaSRplJROstbIIdwX3N97V1+pZvV33ABoG1H2OyTttBxEGkTsoIVsiP1iaTtM8b3+hu2kB6pQ4Clr5yug==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Shared JS -->
+    <script src="js/crossword.shared.js"></script>
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="./css/crossword.shared.css">
+    <link rel="stylesheet" href="./css/crosswordnexus.css">
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+          const script = document.createElement('script');
+          script.src = './js/crosswords.js';
+          script.onload = () => {
+            console.log('[TBP] crosswords.js loaded — initializing Three-Boddy Problem');
+
+            // Force the specific puzzle file
+            const params = {
+              puzzle_file: {
+                url: 'three_boddy_problem_files/MrGreen.ipuz',
+                type: 'ipuz'
+              }
+            };
+
+            window.gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+
+            setTimeout(() => {
+              const svg = document.getElementById('cw-puzzle-grid');
+              const cw = window.gCrossword;
+
+              if (svg && cw?.renderCells && cw.grid_width && cw.grid_height) {
+                cw.renderCells();
+                cw.windowResized?.();
+                cw.syncTopTextWidth?.();
+              }
+            }, 350);
+          };
+          document.body.appendChild(script);
+        });
+      </script>
+
+</head>
+<body>
+    <div class="crossword"></div>
+</body>
+</html>

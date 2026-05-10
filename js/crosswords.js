@@ -4066,6 +4066,105 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           }
         }
       }
+
+      initThreeBoddy() {
+        this.isThreeBoddy = true;
+        this.isThreeBoddyRevealed = false;
+        this.threeBoddyFiles = {
+          'N': 'three_boddy_problem_files/MrGreen.ipuz',
+          'S': 'three_boddy_problem_files/Peacock.ipuz',
+          'L': 'three_boddy_problem_files/Scarlet.ipuz'
+        };
+        this.threeBoddyData = {};
+        
+        // Pre-fetch all files
+        for (const letter in this.threeBoddyFiles) {
+          const url = this.threeBoddyFiles[letter];
+          loadFileFromServer(url).then(data => {
+            this.threeBoddyData[letter] = data;
+          });
+        }
+      }
+
+      isBottomHalfWord(word) {
+        const firstCell = word.getFirstCell();
+        if (!firstCell) return false;
+        
+        // y is 1-indexed. Row 6 is the middle.
+        if (firstCell.y < 6) return false;
+        
+        if (firstCell.y === 6) {
+          // Keep 19-Across visible as the trigger (starts at x=4, y=6)
+          if (firstCell.x === 4 && word.dir.toLowerCase() === 'across') {
+            return false;
+          }
+        }
+        
+        return true;
+      }
+
+      revealThreeBoddy(letter) {
+        const data = this.threeBoddyData[letter];
+        if (!data) return;
+
+        console.log(`Revealing Three Boddy variant for letter: ${letter}`);
+        this.isThreeBoddyRevealed = true;
+        
+        // Store current user letters and selection
+        const currentProgress = {};
+        for (const x in this.cells) {
+          for (const y in this.cells[x]) {
+            const cell = this.cells[x][y];
+            if (cell.letter) {
+              currentProgress[`${x}-${y}`] = cell.letter;
+            }
+          }
+        }
+        
+        const savedX = this.selected_cell ? this.selected_cell.x : 4;
+        const savedY = this.selected_cell ? this.selected_cell.y : 6;
+        const savedDir = this.selected_word ? this.selected_word.dir : 'across';
+        const savedGroupIndex = this.activeClueGroupIndex;
+
+        // Re-parse the puzzle with the new data
+        this.isThreeBoddySwapping = true;
+        this.parsePuzzle(data);
+        this.isThreeBoddySwapping = false;
+        
+        this.activeClueGroupIndex = savedGroupIndex;
+        
+        // Restore user letters
+        for (const coord in currentProgress) {
+          const [x, y] = coord.split('-');
+          const cell = this.getCell(x, y);
+          if (cell && !cell.empty) {
+            cell.letter = currentProgress[coord];
+          }
+        }
+
+        // Restore selection
+        const newCell = this.getCell(savedX, savedY);
+        if (newCell) {
+          this.setActiveCell(newCell);
+          // find the word in the same direction
+          for (const wordId in this.words) {
+            const word = this.words[wordId];
+            if (word.dir === savedDir && word.hasCell(savedX, savedY)) {
+               this.setActiveWord(word);
+               break;
+            }
+          }
+        }
+
+        // Re-render everything
+        this.renderCells();
+        (this.displayClueGroups || this.clueGroups || []).forEach(group => {
+          const container = document.querySelector(`.cw-clues[data-group-id="${group.id}"] .cw-clues-items`);
+          if (container) {
+            this.renderClues(group, container);
+          }
+        });
+      }
     }
 
     // CluesGroup stores clues and map of words
@@ -4179,6 +4278,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           const clue_el = this.clues_container.find(
             'div.cw-clue.word-' + word.id
           );
+          if (clue_el.length === 0) return; // Clue is hidden
+
           clue_el.addClass(classname);
           const clueRect = clue_el.get(0).getBoundingClientRect();
 
@@ -4402,106 +4503,6 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             });
           }
         }
-      }
-
-      initThreeBoddy() {
-        this.isThreeBoddy = true;
-        this.isThreeBoddyRevealed = false;
-        this.threeBoddyFiles = {
-          'N': 'three_boddy_problem_files/MrGreen.ipuz',
-          'S': 'three_boddy_problem_files/Peacock.ipuz',
-          'L': 'three_boddy_problem_files/Scarlet.ipuz'
-        };
-        this.threeBoddyData = {};
-        
-        // Pre-fetch all files
-        for (const letter in this.threeBoddyFiles) {
-          const url = this.threeBoddyFiles[letter];
-          loadFileFromServer(url).then(data => {
-            this.threeBoddyData[letter] = data;
-          });
-        }
-      }
-
-      isBottomHalfWord(word) {
-        const firstCell = word.getFirstCell();
-        if (!firstCell) return false;
-        
-        // y is 1-indexed. Row 6 is the middle.
-        if (firstCell.y < 6) return false;
-        
-        if (firstCell.y === 6) {
-          // Keep 19-Across visible as the trigger
-          if (firstCell.number === 19 && word.dir.toLowerCase() === 'across') {
-            return false;
-          }
-          return true;
-        }
-        
-        return true;
-      }
-
-      revealThreeBoddy(letter) {
-        const data = this.threeBoddyData[letter];
-        if (!data) return;
-
-        console.log(`Revealing Three Boddy variant for letter: ${letter}`);
-        this.isThreeBoddyRevealed = true;
-        
-        // Store current user letters and selection
-        const currentProgress = {};
-        for (const x in this.cells) {
-          for (const y in this.cells[x]) {
-            const cell = this.cells[x][y];
-            if (cell.letter) {
-              currentProgress[`${x}-${y}`] = cell.letter;
-            }
-          }
-        }
-        
-        const savedX = this.selected_cell ? this.selected_cell.x : 4;
-        const savedY = this.selected_cell ? this.selected_cell.y : 6;
-        const savedDir = this.selected_word ? this.selected_word.dir : 'across';
-        const savedGroupIndex = this.activeClueGroupIndex;
-
-        // Re-parse the puzzle with the new data
-        this.isThreeBoddySwapping = true;
-        this.parsePuzzle(data);
-        this.isThreeBoddySwapping = false;
-        
-        this.activeClueGroupIndex = savedGroupIndex;
-        
-        // Restore user letters
-        for (const coord in currentProgress) {
-          const [x, y] = coord.split('-');
-          const cell = this.getCell(x, y);
-          if (cell && !cell.empty) {
-            cell.letter = currentProgress[coord];
-          }
-        }
-
-        // Restore selection
-        const newCell = this.getCell(savedX, savedY);
-        if (newCell) {
-          this.setActiveCell(newCell);
-          // find the word in the same direction
-          for (const wordId in this.words) {
-            const word = this.words[wordId];
-            if (word.dir === savedDir && word.hasCell(savedX, savedY)) {
-               this.setActiveWord(word);
-               break;
-            }
-          }
-        }
-
-        // Re-render everything
-        this.renderCells();
-        (this.displayClueGroups || this.clueGroups || []).forEach(group => {
-          const container = document.querySelector(`.cw-clues[data-group-id="${group.id}"] .cw-clues-items`);
-          if (container) {
-            this.renderClues(group, container);
-          }
-        });
       }
     }
 

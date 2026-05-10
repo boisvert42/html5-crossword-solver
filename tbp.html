@@ -28,7 +28,7 @@
     <script>
         window.addEventListener('DOMContentLoaded', () => {
           const script = document.createElement('script');
-          script.src = './js/crosswords.js';
+          script.src = './js/crosswords.js?v=' + Date.now();
           script.onload = () => {
             console.log('[TBP] crosswords.js loaded — initializing Three-Boddy Problem');
 

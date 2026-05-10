@@ -1,0 +1,791 @@
+{
+  "version": "http://ipuz.org/v1",
+  "kind": [
+    "http://ipuz.org/crossword#1"
+  ],
+  "title": "Peacock",
+  "copyright": "© 2026",
+  "author": "",
+  "notes": "",
+  "dimensions": {
+    "height": 11,
+    "width": 11
+  },
+  "block": "#",
+  "empty": 0,
+  "puzzle": [
+    [
+      {
+        "cell": 1
+      },
+      {
+        "cell": 2
+      },
+      {
+        "cell": 3
+      },
+      {
+        "cell": 4
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 5
+      },
+      {
+        "cell": 6
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 7
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 8
+      }
+    ],
+    [
+      {
+        "cell": 9
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 10,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 11
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 12
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      {
+        "cell": 13
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 14
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      {
+        "cell": 15
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 16
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "RB"
+        }
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      {
+        "cell": 17
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 18
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      "#",
+      "#",
+      "#",
+      {
+        "cell": 19
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 20
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      "#",
+      "#",
+      "#"
+    ],
+    [
+      {
+        "cell": 21
+      },
+      {
+        "cell": 22
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 23
+      },
+      {
+        "cell": 24,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 25
+      },
+      {
+        "cell": 26
+      },
+      {
+        "cell": 27
+      },
+      {
+        "cell": 28
+      },
+      {
+        "cell": 29
+      }
+    ],
+    [
+      {
+        "cell": 30
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 31
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 32,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      {
+        "cell": 33
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "RB"
+        }
+      },
+      {
+        "cell": 34
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "B"
+        }
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      }
+    ],
+    [
+      {
+        "cell": 35
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 36
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0
+      },
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      {
+        "cell": 0
+      }
+    ]
+  ],
+  "solution": [
+    [
+      "B",
+      "L",
+      "A",
+      "C",
+      "K",
+      "M",
+      "A",
+      "I",
+      "L",
+      "E",
+      "D"
+    ],
+    [
+      "L",
+      "O",
+      "L",
+      "L",
+      "S",
+      "A",
+      "N",
+      "G",
+      "E",
+      "L",
+      "A"
+    ],
+    [
+      "E",
+      "C",
+      "L",
+      "A",
+      "I",
+      "R",
+      "G",
+      "A",
+      "V",
+      "E",
+      "L"
+    ],
+    [
+      "S",
+      "K",
+      "I",
+      "M",
+      "N",
+      "O",
+      "S",
+      "I",
+      "E",
+      "R",
+      "E"
+    ],
+    [
+      "S",
+      "A",
+      "N",
+      "S",
+      "A",
+      "O",
+      "T",
+      "T",
+      "E",
+      "R",
+      "S"
+    ],
+    [
+      "#",
+      "#",
+      "#",
+      "S",
+      "I",
+      "N",
+      "E",
+      "S",
+      "#",
+      "#",
+      "#"
+    ],
+    [
+      "G",
+      "N",
+      "E",
+      "I",
+      "S",
+      "S",
+      "T",
+      "R",
+      "I",
+      "L",
+      "L"
+    ],
+    [
+      "R",
+      "O",
+      "A",
+      "N",
+      "C",
+      "O",
+      "H",
+      "E",
+      "R",
+      "E",
+      "I"
+    ],
+    [
+      "E",
+      "T",
+      "P",
+      "E",
+      "A",
+      "C",
+      "O",
+      "C",
+      "K",
+      "C",
+      "N"
+    ],
+    [
+      "A",
+      "S",
+      "F",
+      "A",
+      "R",
+      "A",
+      "S",
+      "A",
+      "S",
+      "H",
+      "E"
+    ],
+    [
+      "T",
+      "O",
+      "D",
+      "D",
+      "Y",
+      "L",
+      "A",
+      "P",
+      "S",
+      "E",
+      "S"
+    ]
+  ],
+    "clues": {
+    "Across": [
+      [
+        1,
+        "Like the suspects in <i>Clue</i> left standing around … don’t have motive at first (11)"
+      ],
+      [
+        9,
+        "Lies about the Spanish getting bored by Mr. Bean (5)"
+      ],
+      [
+        11,
+        "As Jessica, she would solve crimes and change laws from the inside (6)"
+      ],
+      [
+        13,
+        "Doing away with zero-calorie experimental French pastry (6)"
+      ],
+      [
+        14,
+        "Provided end of trial for court reporter? (5)"
+      ],
+      [
+        15,
+        "Inadequately fund (only 80%) and take a little off the top (4)"
+      ],
+      [
+        16,
+        "More curious how excuse terminates partway through private denial? (6)"
+      ],
+      [
+        17,
+        "Ry’s sister in <i>Gme of Thrones</i>? (5)"
+      ],
+      [
+        18,
+        "Swimmers to rest on the rocks (6)"
+      ],
+      [
+        19,
+        "Financial penalties being newly faced for notable figures in the world of mathematics? (5)"
+      ],
+      [
+        21,
+        "Rock on the radio? Awesome (6)"
+      ],
+      [
+        25,
+        "Eastern dinar gets placed in cash drawer with flourish (5)"
+      ],
+      [
+        30,
+        "Pop star’s unoriginally pained sound (4)"
+      ],
+      [
+        31,
+        "Work chore? Everyone stick together (6)"
+      ],
+      [
+        32,
+        "<I>Whodunnit?</I>"
+      ],
+      [
+        33,
+        "Up to fancifully sculpted sassafras after clipping leaves (2,3,2)"
+      ],
+      [
+        34,
+        "Tennis star ran out of bounds (4)"
+      ],
+      [
+        35,
+        "Expression of gratitude about rum drink (5)"
+      ],
+      [
+        36,
+        "Run out of sample crackers, having given one thousand away (5)"
+      ]
+    ],
+    "Down": [
+      [
+        1,
+        "Condone Gershwin headliner taking essential solos (5)"
+      ],
+      [
+        2,
+        "Don’t open gun safety device (4)"
+      ],
+      [
+        3,
+        "Completely committing resources within borders of capital of Estonia (3,2)"
+      ],
+      [
+        4,
+        "Cash from liens I covered (5)"
+      ],
+      [
+        5,
+        "Reddish desert (6)"
+      ],
+      [
+        6,
+        "Fear of some gangster (5)"
+      ],
+      [
+        7,
+        "Barricade large Pokemon after upfront loss (5)"
+      ],
+      [
+        8,
+        "Some low points form Slade: “… All Crazee Now” (5)"
+      ],
+      [
+        10,
+        "Middle East territory created by error with ChatGPT, for one (5)"
+      ],
+      [
+        12,
+        "Ways of walking from doors in the auditorium (5)"
+      ],
+      [
+        19,
+        "John Paul II critic from Siena converted by leader of Dominicans (6)"
+      ],
+      [
+        20,
+        "Creed and the rest over there on the turntable (5)"
+      ],
+      [
+        21,
+        "Big scratch from big mouth? (5)"
+      ],
+      [
+        22,
+        "“Loony Toons?” Nope (3,2)"
+      ],
+      [
+        23,
+        "Mel B.: Robin from <i>Men in Tights</i> ranks beneath lead in <i>Spaceballs</i> (5)"
+      ],
+      [
+        24,
+        "Hollywood’s overall milieu is said to water down Pacino (5)"
+      ],
+      [
+        26,
+        "Someone going back and forth, going back to go back over (5)"
+      ],
+      [
+        27,
+        "Revised Risk is so annoying (4)"
+      ],
+      [
+        28,
+        "It’s expressed in Cuba when nonprofessional guerrilla leader is broadcast (5)"
+      ],
+      [
+        29,
+        "<i>Or it could have happened like this! … </i>"
+      ]
+    ]
+  }
+}

@@ -4019,10 +4019,10 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       updateCell(cell, properties) {
         Object.assign(cell, properties);
 
-        if (this.isThreeBoddy && !this.isThreeBoddyRevealed) {
+        if (this.isThreeBoddy) {
           if (cell.x === 4 && cell.y === 6 && properties.hasOwnProperty('letter') && properties.letter) {
             const letter = properties.letter.toUpperCase();
-            if (this.threeBoddyData[letter]) {
+            if (this.threeBoddyData[letter] && letter !== this.currentThreeBoddyLetter) {
               this.revealThreeBoddy(letter);
             }
           }
@@ -4070,6 +4070,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       initThreeBoddy() {
         this.isThreeBoddy = true;
         this.isThreeBoddyRevealed = false;
+        this.currentThreeBoddyLetter = null;
+        this.threeBoddyProgress = {};
         this.threeBoddyFiles = {
           'N': 'three_boddy_problem_files/MrGreen.ipuz',
           'S': 'three_boddy_problem_files/Peacock.ipuz',
@@ -4103,42 +4105,90 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         return true;
       }
 
+      isBottomHalfCell(x, y) {
+        // y is 1-indexed. Row 6 contains 19-Across.
+        // We only want to clear cells strictly BELOW row 6.
+        return Number(y) > 6;
+      }
+
       revealThreeBoddy(letter) {
         const data = this.threeBoddyData[letter];
         if (!data) return;
 
-        console.log(`Revealing Three Boddy variant for letter: ${letter}`);
-        this.isThreeBoddyRevealed = true;
+        const oldLetter = this.currentThreeBoddyLetter;
         
-        // Store current user letters and selection
-        const currentProgress = {};
+        // Save current progress for the ENTIRE grid before swapping
+        const fullGridProgress = {};
         for (const x in this.cells) {
           for (const y in this.cells[x]) {
             const cell = this.cells[x][y];
             if (cell.letter) {
-              currentProgress[`${x}-${y}`] = cell.letter;
+              fullGridProgress[`${x}-${y}`] = cell.letter;
             }
           }
         }
+
+        // (a) Save old variant progress (strictly bottom half)
+        if (oldLetter && this.threeBoddyFiles[oldLetter]) {
+           this.threeBoddyProgress[oldLetter] = {};
+           for (const coord in fullGridProgress) {
+             const [x, y] = coord.split('-');
+             if (this.isBottomHalfCell(x, y)) {
+               this.threeBoddyProgress[oldLetter][coord] = fullGridProgress[coord];
+             }
+           }
+        }
+
+        console.log(`Revealing Three Boddy variant for letter: ${letter}`);
+        const wasRevealed = this.isThreeBoddyRevealed;
         
+        // Store current user selection
         const savedX = this.selected_cell ? this.selected_cell.x : 4;
         const savedY = this.selected_cell ? this.selected_cell.y : 6;
         const savedDir = this.selected_word ? this.selected_word.dir : 'across';
         const savedGroupIndex = this.activeClueGroupIndex;
 
-        // Re-parse the puzzle with the new data
+        // (c) load relevant clues and entries (Re-parse the puzzle)
         this.isThreeBoddySwapping = true;
         this.parsePuzzle(data);
         this.isThreeBoddySwapping = false;
         
+        // Restore essential flags that parsePuzzle might have reset
+        this.isThreeBoddy = true;
+        this.isThreeBoddyRevealed = true;
+        this.currentThreeBoddyLetter = letter;
         this.activeClueGroupIndex = savedGroupIndex;
         
-        // Restore user letters
-        for (const coord in currentProgress) {
+        // (b) Clear only the lower half for the new variant load
+        // First, restore the TOP HALF progress (including row 6)
+        for (const coord in fullGridProgress) {
           const [x, y] = coord.split('-');
-          const cell = this.getCell(x, y);
-          if (cell && !cell.empty) {
-            cell.letter = currentProgress[coord];
+          if (!this.isBottomHalfCell(x, y)) {
+            const cell = this.getCell(x, y);
+            if (cell && !cell.empty) {
+              cell.letter = fullGridProgress[coord];
+            }
+          }
+        }
+
+        // Restore saved progress for the NEW variant (bottom half) if it exists
+        const saved = this.threeBoddyProgress[letter];
+        if (saved) {
+          for (const coord in saved) {
+            const [x, y] = coord.split('-');
+            const cell = this.getCell(x, y);
+            if (cell && !cell.empty) {
+              cell.letter = saved[coord];
+            }
+          }
+        } else {
+          // If no saved progress, ensure bottom half is clear
+          for (const x in this.cells) {
+            for (const y in this.cells[x]) {
+              if (this.isBottomHalfCell(x, y)) {
+                this.cells[x][y].letter = '';
+              }
+            }
           }
         }
 

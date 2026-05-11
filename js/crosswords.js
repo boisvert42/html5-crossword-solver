@@ -1559,7 +1559,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         $(document).off('keydown').on('keydown', $.proxy(this.keyPressed, this));
 
-        this.svgContainer.addEventListener('click', (e) => {
+        this.svg.on('click', (e) => {
           if (e.target.tagName === 'rect') {
             const x = parseInt(e.target.getAttribute('data-x'));
             const y = parseInt(e.target.getAttribute('data-y'));

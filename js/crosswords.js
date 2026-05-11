@@ -913,7 +913,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.completion_message = puzzle.metadata.completion_message || "Puzzle solved!";
 
         if (this.title === 'The Three-Boddy Problem') {
-          if (!this.threeBoddyInitialized) {
+          if (!this.threeBoddyInitialized && !this.isThreeBoddySwapping) {
             this.initThreeBoddy();
             this.threeBoddyInitialized = true;
           }
@@ -1386,9 +1386,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       removeListeners() {
-        this.removeGlobalListeners();
         this.root.undelegate();
-        this.clues_holder.undelegate('div.cw-clues-items span');
+        this.clues_holder.undelegate('div.cw-clues-items div.cw-clue', 'click');
+        this.clues_holder.undelegate('div.cw-clues-items span', 'click');
         this.svg.off('mousemove click');
 
         this.reveal_letter.off('click');
@@ -1430,6 +1430,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       addListeners() {
+        this.removeListeners();
         $(window).off('click', this.handleClickWindow);
         $(window).on('click', this.handleClickWindow);
         $(window).off('resize', this.windowResized);

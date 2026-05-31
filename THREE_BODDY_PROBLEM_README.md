@@ -20,16 +20,26 @@ The implementation resides primarily in `js/crosswords.js` and is activated when
 
 - `isThreeBoddy`: Boolean flag that enables the TBP logic.
 - `isThreeBoddyRevealed`: Tracks if a variant has been loaded.
-- `initThreeBoddy()`: Initializes the TBP state and pre-fetches all variant files.
+- `threeBoddySolvedStatus`: Object tracking the completion state (`true`/`false`) of the 'N', 'S', and 'L' variants.
+- `initThreeBoddy()`: Initializes the TBP state, loads saved progress/status from `localStorage`, and pre-fetches all variant files.
 - `isBottomHalfWord(word)`: Helper to determine if a word belongs to the bottom half (Row > 6).
 - `isBottomHalfCell(x, y)`: Helper to determine if a cell is in the bottom half.
 - `revealThreeBoddy(letter)`: The main logic for swapping variants:
     1. Saves current progress for the entire grid.
-    2. Specifically saves bottom-half progress for the *current* variant.
+    2. Specifically saves bottom-half progress for the *current* variant to `threeBoddyProgress`.
     3. Re-parses the crossword using the new IPUZ data.
     4. Restores the top-half progress.
     5. Restores the bottom-half progress if switching back to a previously visited variant.
-    6. Re-renders the grid and clues.
+    6. Re-renders the grid and clues and triggers a save.
+
+## Completion & Rewards
+
+The puzzle tracks the completion of each of the three variants individually.
+
+- **Persistence**: Progress and completion status are saved to `localStorage` under the keys `[savegame_name]_threeBoddyProgress` and `[savegame_name]_threeBoddySolvedStatus`.
+- **Conditional Messaging**: When the puzzle is solved, the completion message depends on the number of variants completed:
+    - **1 or 2 Variants**: Shows the message: *"That's how it could have happened ..."*
+    - **All 3 Variants**: Shows the full **"explanation"** from the metadata, revealing the final secret of the puzzle.
 
 ### Files
 

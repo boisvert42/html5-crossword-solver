@@ -2851,7 +2851,24 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         // show completion message if newly solved
         if (!wasSolved) {
-          showSuccessMsg(this.completion_message);
+          if (this.isThreeBoddy) {
+            const letter = this.currentThreeBoddyLetter;
+            if (letter && this.threeBoddySolvedStatus.hasOwnProperty(letter)) {
+              this.threeBoddySolvedStatus[letter] = true;
+              this.saveGame(); // Ensure status is saved
+            }
+
+            const solvedCount = Object.values(this.threeBoddySolvedStatus).filter(v => v).length;
+            if (solvedCount < 3) {
+              showSuccessMsg("That's how it could have happened ...");
+            } else {
+              // All 3 solved! Show full explanation.
+              const explanation = this.jsxw.metadata.explanation || this.completion_message;
+              showSuccessMsg(explanation);
+            }
+          } else {
+            showSuccessMsg(this.completion_message);
+          }
         }
       }
 
@@ -3640,6 +3657,10 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         const jsxw_str = JSON.stringify(this.jsxw.cells);
         try {
           localStorage.setItem(this.savegame_name, jsxw_str);
+          if (this.isThreeBoddy) {
+            localStorage.setItem(this.savegame_name + "_threeBoddyProgress", JSON.stringify(this.threeBoddyProgress));
+            localStorage.setItem(this.savegame_name + "_threeBoddySolvedStatus", JSON.stringify(this.threeBoddySolvedStatus));
+          }
           localStorage.setItem(this.savegame_name + "_notes", JSON.stringify(Array.from(this.notes.entries()).map(n => {
             return {
               key: n[0],
@@ -4073,13 +4094,38 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.isThreeBoddyRevealed = false;
         this.currentThreeBoddyLetter = null;
         this.threeBoddyProgress = {};
+        this.threeBoddySolvedStatus = {
+          'N': false,
+          'S': false,
+          'L': false
+        };
+
+        // Load saved state from localStorage
+        const savedProgress = localStorage.getItem(this.savegame_name + "_threeBoddyProgress");
+        if (savedProgress) {
+          try {
+            this.threeBoddyProgress = JSON.parse(savedProgress);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        const savedStatus = localStorage.getItem(this.savegame_name + "_threeBoddySolvedStatus");
+        if (savedStatus) {
+          try {
+            this.threeBoddySolvedStatus = JSON.parse(savedStatus);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
         this.threeBoddyFiles = {
           'N': 'three_boddy_problem_files/MrGreen.ipuz',
           'S': 'three_boddy_problem_files/Peacock.ipuz',
           'L': 'three_boddy_problem_files/Scarlet.ipuz'
         };
         this.threeBoddyData = {};
-        
+
         // Pre-fetch all files
         for (const letter in this.threeBoddyFiles) {
           const url = this.threeBoddyFiles[letter];
@@ -4215,6 +4261,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             this.renderClues(group, container);
           }
         });
+
+        this.saveGame();
       }
     }
 

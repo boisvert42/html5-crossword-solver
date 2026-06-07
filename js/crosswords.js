@@ -1244,6 +1244,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
           extraCluesBtn.onclick = () => {
             let cluesHtml = '<div class="unmatched-clues-modal-wrapper">';
+            const correctLetters = this.getCorrectLetters();
             // Use displayClueGroups if available, otherwise fallback to clueGroups
             const groupsToShow = (this.displayClueGroups || this.clueGroups).filter(g => g.isFake);
             groupsToShow.forEach(group => {
@@ -1252,7 +1253,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
                 const isCompleted = clue.fakeClueCompleted ? 'completed' : '';
                 cluesHtml += `<div class="unmatched-clue-item ${isCompleted}" data-word="${clue.wordId}" data-clues="${group.id}">
                   <span class="unmatched-clue-number">${clue.number}</span>
-                  <span class="unmatched-clue-text">${clue.text}</span>
+                  <span class="unmatched-clue-text">${this.obscureClue(escape(clue.text), correctLetters)}</span>
                 </div>`;
               });
               cluesHtml += '</div>';
@@ -1754,12 +1755,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             this.top_text.html('');
             return;
           }
+          const correctLetters = this.getCorrectLetters();
           this.top_text.html(`
             <span class="cw-clue-number">
               ${escape(word.clue.number)}
             </span>
             <span class="cw-clue-text">
-              ${escape(word.clue.text)}
+              ${this.obscureClue(escape(word.clue.text), correctLetters)}
             </span>
           `);
           resizeText(this.root, this.top_text);
@@ -1810,6 +1812,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           $container;
 
         const notes = this.notes;
+        const correctLetters = this.getCorrectLetters();
         $items.find('div.cw-clue').remove();
 
         // --- render each clue ---
@@ -1817,13 +1820,11 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           const clue_el = $(`
             <div style="position: relative">
               <span class="cw-clue-number">${escape(clue.number)}</span>
-              <span class="cw-clue-text">
-                ${escape(clue.text)}
-                <div class="cw-edit-container" style="display: none;">
-                  <input class="cw-input note-style" type="text">
-                </div>
-                <span class="cw-cluenote-button" style="display: none;"></span>
-              </span>
+              <span class="cw-clue-text">${this.obscureClue(escape(clue.text), correctLetters)}</span>
+              <div class="cw-edit-container" style="display: none;">
+                <input class="cw-input note-style" type="text">
+              </div>
+              <span class="cw-cluenote-button" style="display: none;"></span>
             </div>
           `);
 
@@ -3949,16 +3950,57 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
       }
 
+      getCorrectLetters() {
+        const correctLetters = new Set();
+        for (let x in this.cells) {
+          for (let y in this.cells[x]) {
+            const cell = this.cells[x][y];
+            if (cell.letter && isCorrect(cell.letter, cell.solution)) {
+              // For hangman, we only reveal the letter if it's correct
+              // If it's a rebus, we only reveal if the whole rebus is correct
+              // and we'll add all its letters to the set.
+              for (let i = 0; i < cell.letter.length; i++) {
+                correctLetters.add(cell.letter[i].toUpperCase());
+              }
+            }
+          }
+        }
+        return correctLetters;
+      }
+
+      obscureClue(text, correctLetters) {
+        if (!text) return '';
+        const parts = text.split(/(<[^>]+>)/g);
+        return parts.map(part => {
+          if (part.startsWith('<') && part.endsWith('>')) {
+            return part;
+          }
+          return part.replace(/[a-zA-Z]/g, (char) => {
+            return correctLetters.has(char.toUpperCase()) ? char : '?';
+          });
+        }).join('');
+      }
+
       styleClues() {
+        const correctLetters = this.getCorrectLetters();
        // Update all clues in the sidebar
         this.clues_holder.find('.cw-clue').each((i, el) => {
           const $el = $(el);
           const clue = $el.data('clue');
-          this.updateClueAppearance(clue, $el);
+          this.updateClueAppearance(clue, $el, correctLetters);
         });
+
+        // Also update the top clue text if there is one
+        if (this.selected_word && this.top_text?.length) {
+          const topClueText = this.top_text.find('.cw-clue-text');
+          if (topClueText.length) {
+            topClueText.html(this.obscureClue(escape(this.selected_word.clue.text), correctLetters));
+            resizeText(this.root, this.top_text);
+          }
+        }
       }
 
-      updateClueAppearance(clue, $el) {
+      updateClueAppearance(clue, $el, correctLetters) {
         if (!clue) return;
 
         // Use provided $el or look it up in the DOM using unique identifying info
@@ -3966,6 +4008,10 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         // We specifically target the clue-text span to avoid graying out the clue number
         const textEl = clueEl.hasClass('cw-clue-text') ? clueEl : clueEl.find('.cw-clue-text');
+
+        if (correctLetters) {
+          textEl.html(this.obscureClue(escape(clue.text), correctLetters));
+        }
 
         const groupId = clueEl.data('clues');
         const group = this.clueGroups.find(g => g.id === groupId);

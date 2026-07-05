@@ -1416,7 +1416,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       removeListeners() {
         this.removeGlobalListeners();
         this.root.undelegate();
-        this.clues_holder.undelegate('div.cw-clues-items span');
+        this.clues_holder.undelegate('div.cw-clues-items div.cw-clue', 'click');
+        this.clues_holder.undelegate('div.cw-clues-items span', 'click');
         this.svg.off('mousemove click');
 
         this.reveal_letter.off('click');
@@ -1458,9 +1459,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       }
 
       addListeners() {
-        $(window).off('click', this.handleClickWindow);
+        this.removeListeners();
+
         $(window).on('click', this.handleClickWindow);
-        $(window).off('resize', this.windowResized);
         $(window).on('resize', this.windowResized);
 
         this.root.delegate(
@@ -1599,7 +1600,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         $(document).off('keydown').on('keydown', $.proxy(this.keyPressed, this));
 
-        this.svgContainer.addEventListener('click', (e) => {
+        this.svg.on('click', (e) => {
           if (e.target.tagName === 'rect') {
             const x = parseInt(e.target.getAttribute('data-x'));
             const y = parseInt(e.target.getAttribute('data-y'));

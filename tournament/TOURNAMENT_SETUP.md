@@ -19,11 +19,12 @@ The Tournament Solver uses **Firebase** for authentication, database (Firestore)
 
 ### 2. Enable Firestore Database
 1.  In the left-hand sidebar, click on **"Databases & Storage"** to expand the menu.
-2.  Select **"Firestore Database"**.
+2.  Select **"Firestore"**.
 3.  Click **"Create database"**.
 4.  If prompted for a database edition, choose **"Standard Edition"** (requires Blaze plan).
-5.  **Important:** Select **"Start in production mode"**. (We will apply custom rules in the next step).
-6.  Select a location (e.g., `nam5`) and click **"Enable"**.
+5. On the next screen, leave the defaults for Database ID and location.
+6.  **Important:** Select **"Start in production mode"**. (We will apply custom rules in the next step).
+7. Click **Create**.
 
 ### 3. Apply Firestore Security Rules
 To allow the Admin Dashboard to check your credentials, you must apply the security rules immediately.
@@ -34,10 +35,10 @@ To allow the Admin Dashboard to check your credentials, you must apply the secur
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Checks if the user is in the 'admins' collection
     function isAdmin() {
-      return request.auth != null && 
+      return request.auth != null &&
              request.auth.token != null &&
              request.auth.token.email != null &&
              exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
@@ -48,7 +49,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
-    
+
     match /tournament_config/{config} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -56,7 +57,7 @@ service cloud.firestore {
 
     // Admins list: Users can read their own status, only Admins can manage
     match /admins/{email} {
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
                      request.auth.token.email != null &&
                      request.auth.token.email.lower() == email.lower();
       allow read, write: if isAdmin();
@@ -64,13 +65,13 @@ service cloud.firestore {
 
     // Participants list: Admins manage, Users can read/link their own record
     match /participants/{emailId} {
-      allow read: if request.auth != null && 
-                     request.auth.token.email != null && 
+      allow read: if request.auth != null &&
+                     request.auth.token.email != null &&
                      request.auth.token.email.lower() == emailId.lower();
-      
+
       // Allow users to update their own record (to link their UID/Name)
-      allow update: if request.auth != null && 
-                       request.auth.token.email != null && 
+      allow update: if request.auth != null &&
+                       request.auth.token.email != null &&
                        request.auth.token.email.lower() == emailId.lower();
 
       allow read, write: if isAdmin();
@@ -100,7 +101,7 @@ service cloud.firestore {
     *   **Public-facing name:** Enter your tournament name (e.g., "My Crossword Tournament").
     *   **Support email:** Select your Google email from the dropdown.
     *   Click **Save**.
-5.  **Authorize Your Domain:** 
+5.  **Authorize Your Domain:**
     *   Still in the **Authentication** section, click the **"Settings"** tab (at the top of the page, next to *Users* and *Sign-in method*).
     *   In the left-side menu of the Settings page, select **"Authorized domains"**.
     *   Click **"Add domain"**.
@@ -114,9 +115,8 @@ If you are hosting the tournament on a custom domain (not `*.web.app` or `*.fire
 2.  Ensure your tournament project is selected in the top dropdown.
 3.  Under **"OAuth 2.0 Client IDs"**, click the edit (pencil) icon for **"Web client (auto-created by Google Service)"**.
 4.  **Authorized JavaScript origins:** Add `https://your-site.com`.
-5.  **Authorized redirect URIs:** Ensure `https://your-project-id.firebaseapp.com/__/auth/handler` is listed.
-6.  Go to the **"OAuth consent screen"** tab (left-hand menu) and ensure `your-site.com` is listed under **"Authorized domains"**.
-7.  Click **Save**.
+5.  **Authorized redirect URIs:** Ensure `https://your-project-id.firebaseapp.com/__/auth/handler` is listed (it should be there by default).
+6. Click "Save".
 
 ### 6. Authorize the Super-Admin (Firestore)
 Access to the Admin Dashboard is restricted to emails found in the `admins` collection.
@@ -126,7 +126,7 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 4.  **Document ID:** (Your Google Email, e.g., `admin-name@gmail.com`)
 5.  **Field:** `role`
 6.  **Type:** `string`
-7.  **Value:** `admin`
+7.  **Value (String):** `admin`
 8.  Click **Save**.
 
 ### 6. Register Your Web App & Get Config
@@ -136,10 +136,12 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 4.  **App nickname:** Enter a name (e.g., "Tournament Solver").
 5.  **Firebase Hosting:** You can leave the "Also set up Firebase Hosting" checkbox **unchecked**.
 6.  Click **"Register app"**.
-7.  Copy the `firebaseConfig` object provided.
+7.  Copy the `firebaseConfig` object provided (it will be a block of code starting with `// Import the functions`).
 8.  In the `tournament/` folder, rename `firebase-config.example.js` to `firebase-config.js`.
-9.  Paste your config and uncomment `firebase.initializeApp(firebaseConfig);`.
-10. **Important:** Add `tournament/firebase-config.js` to your `.gitignore`.
+9.  Paste your config in this file.
+10. Delete the line that reads `import { initializeApp } from "firebase/app";`
+11. Delete the last line (`const app = initializeApp(firebaseConfig);`)
+12. Add this as the last line: ``
 
 ### 7. Create Required Firestore Indices
 To enable the live puzzle list and the detailed leaderboard, you must create composite indices in Firestore.
@@ -149,7 +151,7 @@ To enable the live puzzle list and the detailed leaderboard, you must create com
 4.  In the Firebase console, click **"Create Index"** (or **"Save"**).
 5.  Wait for the status to become "Enabled" (usually 3-5 minutes).
 6.  **Note:** The red error message in the dashboard will persist until the index is fully built. It is okay to continue setting up other tasks while the index builds in the background.
-7.  You may need to do this twice: once for the **Puzzle List** and once for the **Grid Leaderboard**.
+7.  You may need to do this twice: once for the **Puzzles** tab and once for the **Leaderboard** tab.
 
 ---
 
@@ -193,7 +195,7 @@ Every time you have a new puzzle for the tournament:
 ### 1. Managing Divisions
 1.  Open **`tournament/admin.html`** and sign in.
 2.  Go to the **Divisions** tab.
-3.  Define your tournament tiers (e.g., `Harder`, `Easier`). 
+3.  Define your tournament tiers (e.g., `Harder`, `Easier`).
 
 ### 2. Authorize Participants (CSV)
 1.  Go to the **Participants** tab.

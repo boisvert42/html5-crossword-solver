@@ -211,3 +211,13 @@ Every time you have a new puzzle for the tournament:
 ### 5. Viewing Results
 1.  The **Results** tab shows a live feed of all submissions.
 2.  The **Leaderboard** on the admin page provides a live grid of all standings.
+
+---
+
+### Hosting at Domain Root (Apache / .htaccess)
+If you want to host the tournament directly at your domain root (e.g., `https://tournament.crosswordnexus.com/` instead of `/tournament/`), you can use Apache's `mod_rewrite` to internally map your URLs while keeping the required parent assets (`js/`, `css/`, `lib/`) active.
+
+A pre-configured template for this is provided in `_htaccess.txt`. To use it:
+1. Ensure the entire project directory (including `tournament/`, `js/`, `css/`, and `lib/`) is uploaded to your web server.
+2. Rename `_htaccess.txt` (located inside the `tournament` directory) to `.htaccess`, and place it in the **root directory** of your domain (the folder containing both `tournament/` and the sibling `js/` directory).
+3. This will internally map root requests (like `https://tournament.crosswordnexus.com/` and `/admin.html`) directly into the `tournament` folder while safely serving the root dependencies.

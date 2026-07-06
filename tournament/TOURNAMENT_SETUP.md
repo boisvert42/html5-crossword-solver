@@ -128,6 +128,7 @@ Access to the Admin Dashboard is restricted to emails found in the `admins` coll
 6.  **Type:** `string`
 7.  **Value (String):** `admin`
 8.  Click **Save**.
+9. **NOTE:** If you want to add other admins, you'll need to repeat this process with their email addresses.
 
 ### 6. Register Your Web App & Get Config
 1.  Navigate back to the **Project Overview** (home icon at the top of the left sidebar).

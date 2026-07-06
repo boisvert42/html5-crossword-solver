@@ -21,8 +21,10 @@
 - **Improved Solver Dashboard:** Solvers can now see their score and time for each submitted puzzle on the main list.
 - **Timer Engine Refactor:** Centralized timer logic into formal `startTimer()` and `stopTimer()` methods in the core engine.
 
+## ✅ Completed (July 2026)
+- **Leaderboard Export:** Added button to export the final leaderboard as a CSV for official archiving.
+
 ## 🚀 Near-Term Tasks
-- **Leaderboard Export:** Add a button to export the final leaderboard as a CSV for official archiving.
 - **Timer Bug Investigation:** Investigate reports of the timer continuing to tick after submission on some browsers (potential caching or sync issue).
 
 ## 🛠 Maintenance

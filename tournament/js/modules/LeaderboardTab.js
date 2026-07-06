@@ -32,7 +32,10 @@ export async function renderLeaderboardTab(container, db, selectedDivision = nul
         container.innerHTML = `
             <div class="leaderboard-header">
                 <h2>Live Leaderboard</h2>
-                <select id="adminLeaderboardFilter"></select>
+                <div style="display: flex; gap: 10px;">
+                    <select id="adminLeaderboardFilter"></select>
+                    <button id="exportCsvBtn" class="primary-btn btn-sm">Export CSV</button>
+                </div>
             </div>
             <div id="admin-leaderboard-container" style="overflow-x:auto;"></div>
         `;
@@ -47,6 +50,17 @@ export async function renderLeaderboardTab(container, db, selectedDivision = nul
         });
         
         filter.onchange = (e) => renderLeaderboardTab(container, db, e.target.value);
+
+        // CSV Export functionality
+        container.querySelector('#exportCsvBtn').onclick = () => {
+            if (!window.TournamentLeaderboard || !window.TournamentLeaderboard.getCurrentData) {
+                // Since Leaderboard.js doesn't expose data, we'll need to refactor it or re-fetch here.
+                // For simplicity now, let's just trigger a re-fetch of the data for export.
+                exportLeaderboardData(db, selectedDivision, tournamentPuzzles);
+                return;
+            }
+            exportLeaderboardData(db, selectedDivision, tournamentPuzzles);
+        };
 
         const leaderboardContainer = container.querySelector('#admin-leaderboard-container');
         
@@ -69,6 +83,54 @@ export async function renderLeaderboardTab(container, db, selectedDivision = nul
         } else {
             container.innerHTML = `<p class="error">${e.message}</p>`;
         }
+    }
+}
+
+async function exportLeaderboardData(db, division, tournamentPuzzles) {
+    try {
+        const scoresSnap = await db.collection(SCORES_COLLECTION)
+            .where('division', '==', division)
+            .get();
+
+        const solverScores = {};
+        scoresSnap.forEach(doc => {
+            const data = doc.data();
+            if (!solverScores[data.uid]) {
+                solverScores[data.uid] = { 
+                    name: data.solverName, 
+                    totalScore: 0, 
+                    totalTime: 0, 
+                    puzzles: {} 
+                };
+            }
+            solverScores[data.uid].totalScore += data.totalScore;
+            solverScores[data.uid].totalTime += data.timeTaken;
+            solverScores[data.uid].puzzles[data.puzzleId] = data.totalScore;
+        });
+
+        const leaderboardData = Object.values(solverScores).sort((a, b) => b.totalScore - a.totalScore);
+
+        let csvContent = "data:text/csv;charset=utf-8,Solver Name,Total Score,Total Time (sec)";
+        tournamentPuzzles.forEach(p => csvContent += `,Puzzle ${p.puzzleNumber} Score`);
+        csvContent += "\n";
+
+        leaderboardData.forEach(entry => {
+            csvContent += `"${entry.name}",${entry.totalScore},${entry.totalTime}`;
+            tournamentPuzzles.forEach(p => {
+                csvContent += `,${entry.puzzles[p.id] || 0}`;
+            });
+            csvContent += "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `leaderboard_${division}_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (e) {
+        if (window.Toast) window.Toast.error('Export failed: ' + e.message);
     }
 }
 

@@ -163,6 +163,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
                 <div    class = "cw-menu">
                 <button class = "cw-menu-item cw-file-info">Info</button>
                 <button class = "cw-menu-item cw-file-notepad">Notepad</button>
+                <button class = "cw-menu-item cw-file-help">How to Solve</button>
                 <button class = "cw-menu-item cw-file-load">Open ...</button>
                 <button class = "cw-menu-item cw-file-print">Print</button>
                 <button class = "cw-menu-item cw-file-save">Save as iPuz</button>
@@ -643,6 +644,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.check_puzzle = this.root.find('.cw-check-puzzle');
 
         this.info_btn = this.root.find('.cw-file-info');
+        this.help_btn = this.root.find('.cw-file-help');
         this.load_btn = this.root.find('.cw-file-load');
         // hide the load button by default
         this.load_btn.hide();
@@ -1398,6 +1400,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.settings_btn.off('click');
 
         this.info_btn.off('click');
+        this.help_btn.off('click');
         this.notepad_btn.off('click');
         this.notepad_icon.off('click');
 
@@ -1519,6 +1522,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         // INFO
         this.info_btn.on('click', $.proxy(this.showInfo, this));
+
+        // HELP
+        this.help_btn.on('click', $.proxy(this.showHelp, this));
 
         // PREV/NEXT BUTTONS FOR MOBILE
         this.root.find('.cw-button-prev-clue').on('click', () => {
@@ -3169,6 +3175,34 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             <p><b>${escape(this.title)}</b></p>
             <p>${escape(this.author)}</p>
             <p><i>${escape(this.copyright)}</i></p>
+          `
+        );
+      }
+
+      showHelp() {
+        this.createModalBox(
+          'How to Solve',
+          `
+            <div class="cw-help-content" style="text-align: left;">
+              <h3 style="margin-top: 0;">Mouse Controls</h3>
+              <ul style="padding-left: 1.2rem; margin-bottom: 1rem;">
+                <li><b>Select a Cell:</b> Click any square on the grid to highlight it.</li>
+                <li><b>Toggle Direction:</b> Click the currently selected square again to toggle between Across and Down.</li>
+                <li><b>Jump to Clue:</b> Click any clue in the sidebar list to jump directly to its starting square.</li>
+              </ul>
+              <h3>Keyboard Navigation</h3>
+              <ul style="padding-left: 1.2rem; margin-bottom: 1rem;">
+                <li><b>Move Around:</b> Use the <b>Arrow Keys</b> to move the cursor cell-by-cell. Use <b>Shift + Arrow Keys</b> to jump to the start of the next/previous word.</li>
+                <li><b>Next/Previous Clue:</b> Press <b>Tab</b> to advance to the next clue, or <b>Shift + Tab</b> to go back.</li>
+                <li><b>Erase Letters:</b> Press <b>Backspace</b> or <b>Delete</b> to clear the letter in the current cell.</li>
+              </ul>
+              <h3>Rebus Entry</h3>
+              <ul style="padding-left: 1.2rem; margin-bottom: 1rem;">
+                <li><b>Enter Multiple Letters:</b> Press the <b>Escape (Esc)</b> or <b>Insert</b> key to pull up the rebus prompt, type your letters, and press <b>Enter</b>.</li>
+              </ul>
+              <h3>Settings</h3>
+              <p style="padding-left: 1.2rem; margin-bottom: 0;">Customize your experience (including keyboard behavior) by clicking the <b>Settings</b> button.</p>
+            </div>
           `
         );
       }

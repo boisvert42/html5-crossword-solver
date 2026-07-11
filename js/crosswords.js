@@ -44,7 +44,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       color_none: '#FFFFFF',
       background_color_clue: '#666666',
       font_color_fill: '#000000',
-      puzzle_file: null,
+      puzzle_file: {"url": "shenan.ipuz", "type": "ipuz"},
 
       puzzle_object: null, // jsxw to load, if available
       puzzles: null,
@@ -4002,7 +4002,36 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         return correctLetters;
       }
 
+      getAllUniqueSolutionLetters() {
+        if (this.solutionLetters) {
+          return this.solutionLetters;
+        }
+
+        const uniqueLetters = new Set();
+        for (let x in this.cells) {
+          for (let y in this.cells[x]) {
+            const cell = this.cells[x][y];
+            if (cell.solution && cell.solution !== '#') {
+              for (let i = 0; i < cell.solution.length; i++) {
+                const char = cell.solution[i].toUpperCase();
+                if (/[A-Z]/.test(char)) {
+                  uniqueLetters.add(char);
+                }
+              }
+            }
+          }
+        }
+        this.solutionLetters = uniqueLetters;
+        return this.solutionLetters;
+      }
+
       obscureClue(text, correctLetters) {
+        // If all unique letters are entered, show full text
+        const allSolutionLetters = this.getAllUniqueSolutionLetters();
+        if (allSolutionLetters.size > 0 && Array.from(allSolutionLetters).every(char => correctLetters.has(char))) {
+          return text;
+        }
+
         if (!text) return '';
         const parts = text.split(/(<[^>]+>)/g);
         return parts.map(part => {
@@ -4010,7 +4039,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             return part;
           }
           return part.replace(/[a-zA-Z]/g, (char) => {
-            return correctLetters.has(char.toUpperCase()) ? char : '?';
+            return correctLetters.has(char.toUpperCase()) ? char : '○';
           });
         }).join('');
       }

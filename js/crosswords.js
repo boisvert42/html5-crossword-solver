@@ -165,8 +165,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
                 <button class = "cw-menu-item cw-file-notepad">Notepad</button>
                 <button class = "cw-menu-item cw-file-help">How to Solve</button>
                 <button class = "cw-menu-item cw-file-load">Open ...</button>
-                <button class = "cw-menu-item cw-file-print">Print</button>
-                <button class = "cw-menu-item cw-file-save">Save as iPuz</button>
+                <!--<button class = "cw-menu-item cw-file-print">Print</button>-->
+                <!--<button class = "cw-menu-item cw-file-save">Save as iPuz</button>-->
                 <button class = "cw-menu-item cw-file-clear">Clear</button>
                 </div>
               </div>

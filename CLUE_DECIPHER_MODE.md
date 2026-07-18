@@ -142,3 +142,44 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
     ```
 *   Update active/crossing highlights in the same manner. This avoids re-rendering the surrounding text, labels, or unrelated clues.
 
+---
+
+## 6. Implementation TODO List
+
+- [x] **Step 1: Detection & Flag Initialization**
+  - Detect `clue_letter_mappings` or `kind` containing `http://ipuz.org/ext/clue-decipher` when loading the iPuz in `js/crosswords.js`.
+  - Set a boolean flag `this.isClueDecipherMode` on the solver instance.
+- [x] **Step 2: Grid Pre-Population & Locking**
+  - If `this.isClueDecipherMode` is true, automatically fill the grid cells with the solution values on startup.
+  - Disable normal grid character typing (clicking on cells/moving cursor should still work for navigation, but keystrokes should not overwrite the grid solution).
+- [ ] **Step 3: Index Mappings on Load**
+  - Parse the `clue_letter_mappings` array.
+  - Construct `this.clueLetterLinkMap` for $O(1)$ lookups.
+  - Construct an inverse mapping or direct structure to keep track of the current user-entered value for each coordinate.
+- [ ] **Step 4: Custom Clue Rendering**
+  - Modify the clue rendering function.
+  - Instead of rendering the clue as a single text block, render it character-by-character.
+  - Wrap each letter in a `<span class="clue-char" data-clue-key="DIR-NUM-IDX">▮</span>` (or the decrypted letter, if solved).
+  - Leave spaces, numbers, and punctuation as plain text (unwrapped or non-interactive spans).
+- [ ] **Step 5: Define CSS for Highlights**
+  - Add classes to `css/crosswordnexus.css` or direct inline style updates:
+    - Selected character slot: Green background/text (`.clue-char-selected`).
+    - Mapped sibling slots: Orange background/text (`.clue-char-mapped`).
+- [ ] **Step 6: Handle Character Navigation & Arrow Keys**
+  - Add active character tracking: `this.activeClueCharIndex`.
+  - Implement left/right arrow navigation to increment/decrement `this.activeClueCharIndex` within the bounds of the active clue, skipping non-alphabetical characters.
+  - Highlight the currently selected character in green, and all its links in orange.
+- [ ] **Step 7: Keystroke Handling & Input Propagation**
+  - Listen for alphabetical key presses and backspace.
+  - When typing a letter:
+    - Update state at the active coordinate and all coordinates in `this.clueLetterLinkMap[active_key]`.
+    - Update the text content of the corresponding elements in the DOM.
+    - Advance `this.activeClueCharIndex` to the next fillable character.
+  - When pressing backspace:
+    - Clear state at active coordinate and links (revert to `▮`).
+    - Move `this.activeClueCharIndex` back one fillable character.
+- [ ] **Step 8: End-to-End Testing & Verification**
+  - Load `sample_puzzles/clue_decipher_test.ipuz`.
+  - Verify that the grid is full, clues are hidden/obscured, navigation works, highlights are colored correctly, and typing correctly decrypts the linked clue letters.
+
+

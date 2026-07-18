@@ -795,10 +795,36 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
        * - Enables autofill for acrostic/coded puzzles.
        */
       parsePuzzle(data) {
+        this.isClueDecipherMode = false;
+        this.clueLetterMappings = null;
+
+        if (!(data instanceof JSCrossword)) {
+          try {
+            const jsonText = new TextDecoder("utf-8").decode(new Uint8Array(data));
+            const rawJson = JSON.parse(jsonText);
+            if (rawJson && (rawJson.clue_letter_mappings || (rawJson.kind && rawJson.kind.indexOf("http://ipuz.org/ext/clue-decipher") !== -1))) {
+
+              console.log("Enabling 'clue decipher mode'");
+
+              this.isClueDecipherMode = true;
+              this.clueLetterMappings = rawJson.clue_letter_mappings;
+            }
+          } catch (e) {
+            // Ignore if not valid JSON/UTF-8
+          }
+        }
+
         // if it's already a JSCrossword, return it as-is
         var puzzle;
         if (data instanceof JSCrossword) {
           puzzle = data;
+          if (puzzle.metadata && puzzle.metadata.clue_letter_mappings) {
+
+            console.log("Enabling 'clue decipher mode' (load from JSCrossword)");
+
+            this.isClueDecipherMode = true;
+            this.clueLetterMappings = puzzle.metadata.clue_letter_mappings;
+          }
         } else {
           // otherwise, parse it directly -- JSCrossword handles the format detection
           puzzle = JSCrossword.fromData(new Uint8Array(data), {
@@ -814,6 +840,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         // Expose ipuz string
         window.ipuz = this.jsxw.toIpuzString();
+
 
         this.diagramless_mode = false;
 
@@ -1018,6 +1045,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
           } else {
             c.empty = (c.type === 'block' || c.type === 'void' || c.type === 'clue');
             c.clue = (c.type === 'clue');
+          }
+
+          if (this.isClueDecipherMode) {
+            if (c.solution && c.solution !== '#' && c.solution !== '.' && c.solution !== '-') {
+              c.letter = c.solution;
+              c.fixed = true;
+            }
           }
 
           if (!this.cells[c.x]) {

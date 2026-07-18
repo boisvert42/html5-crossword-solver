@@ -838,6 +838,24 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         this.jsxw = puzzle;
 
+        this.clueLetterLinkMap = {};
+        this.clueLetterState = {};
+
+        if (this.isClueDecipherMode && this.clueLetterMappings) {
+          console.log("Indexing clue letter mappings...");
+          this.clueLetterMappings.forEach(group => {
+            const keys = group.map(coord => `${coord.dir}-${coord.num}-${coord.idx}`);
+            group.forEach(coord => {
+              const key = `${coord.dir}-${coord.num}-${coord.idx}`;
+              this.clueLetterLinkMap[key] = keys;
+              this.clueLetterState[key] = '▮';
+            });
+          });
+          console.log("clueLetterLinkMap:", this.clueLetterLinkMap);
+          console.log("clueLetterState:", this.clueLetterState);
+        }
+
+
         // Expose ipuz string
         window.ipuz = this.jsxw.toIpuzString();
 

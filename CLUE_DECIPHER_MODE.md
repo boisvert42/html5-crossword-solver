@@ -152,7 +152,7 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
 - [x] **Step 2: Grid Pre-Population & Locking**
   - If `this.isClueDecipherMode` is true, automatically fill the grid cells with the solution values on startup.
   - Disable normal grid character typing (clicking on cells/moving cursor should still work for navigation, but keystrokes should not overwrite the grid solution).
-- [ ] **Step 3: Index Mappings on Load**
+- [x] **Step 3: Index Mappings on Load**
   - Parse the `clue_letter_mappings` array.
   - Construct `this.clueLetterLinkMap` for $O(1)$ lookups.
   - Construct an inverse mapping or direct structure to keep track of the current user-entered value for each coordinate.

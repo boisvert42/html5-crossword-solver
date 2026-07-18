@@ -37,43 +37,64 @@ def analyze_and_map_clues(ipuz_path, output_path=None):
                     "idx": idx
                 })
 
-    # 3. Check for even numbers of each letter
+    # 3. Check for odd numbers of each letter (warn but allow)
     odd_letters = {}
     for letter, coords in letter_coords.items():
         if len(coords) % 2 != 0:
             odd_letters[letter] = len(coords)
 
     if odd_letters:
-        print("❌ Error: Some letters do not have an even count across all clues.")
-        print("Please edit the clue wording to balance the counts.")
-        print("\nOdd letter counts:")
+        print("⚠️ Warning: Some letters have an odd count across all clues.")
+        print("The script will create a triplet group (3-way link) for the odd remainder.")
         for letter, count in sorted(odd_letters.items()):
             print(f"  '{letter.upper()}': {count} occurrences")
-        
-        print("\nOccurrences of odd letters in clues:")
-        for direction, num, text in clues_list:
-            found = [c.upper() for c in text if c.lower() in odd_letters]
-            if found:
-                print(f"  {direction} {num}: \"{text}\" -> contains {found}")
-        return False
+    else:
+        print("✅ All letters have even counts. Generating pairwise mappings...")
 
-    print("✅ All letters have even counts. Generating pairwise mappings...")
-
-    # 4. Generate pairwise mappings (simulating crossword intersections)
+    # 4. Generate mappings
     clue_letter_mappings = []
     
     for letter, coords in sorted(letter_coords.items()):
-        # Shuffle coordinates to randomize the pairing
-        # We want to pair coords such that they belong to different clues
+        n = len(coords)
+        if n == 0:
+            continue
+        
+        # Shuffle to randomize
         random.shuffle(coords)
         
-        # Try to pair up coordinates
+        # If n is odd, try to extract a triplet first
+        triplet = []
+        if n % 2 != 0:
+            if n == 1:
+                # Standalone letter, error out
+                print(f"❌ Error: Letter '{letter.upper()}' has only 1 occurrence across all clues. It must cross with at least one other clue (minimum 2 occurrences).")
+                return False
+            
+            # Find 3 coordinates from different clues
+            found_triplet = False
+            for _ in range(50):
+                random.shuffle(coords)
+                # Try to pick first 3 from different clues
+                if (coords[0]["dir"], coords[0]["num"]) != (coords[1]["dir"], coords[1]["num"]) and \
+                   (coords[0]["dir"], coords[0]["num"]) != (coords[2]["dir"], coords[2]["num"]) and \
+                   (coords[1]["dir"], coords[1]["num"]) != (coords[2]["dir"], coords[2]["num"]):
+                    triplet = [coords.pop(0), coords.pop(0), coords.pop(0)]
+                    clue_letter_mappings.append(triplet)
+                    found_triplet = True
+                    break
+            
+            if not found_triplet:
+                # Just pop any 3
+                triplet = [coords.pop(), coords.pop(), coords.pop()]
+                clue_letter_mappings.append(triplet)
+                print(f"⚠️ Warning: For letter '{letter.upper()}', could not find 3 occurrences in completely different clues. Linked within same clue.")
+
+        # Now coords has an even number of elements. Pair them up!
         # Simple greedy pairing with backtracking if we hit a self-clue match at the end
-        pairs = []
         unpaired = coords.copy()
-        
         attempts = 0
-        while unpaired and attempts < 100:
+        
+        while attempts < 100 and unpaired:
             attempts += 1
             pairs = []
             temp_unpaired = unpaired.copy()
@@ -81,12 +102,8 @@ def analyze_and_map_clues(ipuz_path, output_path=None):
             
             success = True
             while temp_unpaired:
-                if len(temp_unpaired) < 2:
-                    success = False
-                    break
-                
                 c1 = temp_unpaired.pop()
-                # Find a c2 that is in a different clue
+                # Find a c2 in a different clue
                 c2_idx = -1
                 for i, c in enumerate(temp_unpaired):
                     if (c["dir"], c["num"]) != (c1["dir"], c1["num"]):
@@ -97,7 +114,6 @@ def analyze_and_map_clues(ipuz_path, output_path=None):
                     c2 = temp_unpaired.pop(c2_idx)
                     pairs.append([c1, c2])
                 else:
-                    # Could not find a different clue partner
                     success = False
                     break
             
@@ -105,12 +121,13 @@ def analyze_and_map_clues(ipuz_path, output_path=None):
                 clue_letter_mappings.extend(pairs)
                 break
         else:
-            # If greedy random pairing fails to find different-clue match, just pair them as is
-            # (Warning the user)
-            print(f"⚠️ Warning: Had to pair some '{letter.upper()}' letters within the same clue due to matching constraints.")
-            temp_unpaired = coords.copy()
-            while len(temp_unpaired) >= 2:
-                clue_letter_mappings.append([temp_unpaired.pop(), temp_unpaired.pop()])
+            if unpaired:
+                # Fallback: just pair remaining coordinates without different-clue constraint
+                print(f"⚠️ Warning: Had to pair some '{letter.upper()}' letters within the same clue due to matching constraints.")
+                temp_unpaired = coords.copy()
+                while len(temp_unpaired) >= 2:
+                    clue_letter_mappings.append([temp_unpaired.pop(), temp_unpaired.pop()])
+
 
     data['clue_letter_mappings'] = clue_letter_mappings
     

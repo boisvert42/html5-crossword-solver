@@ -54,7 +54,7 @@
       ],
       [
         5,
-        "Get hitched dgrst"
+        "Get hitched"
       ]
     ],
     "Down": [
@@ -75,9 +75,9 @@
   "clue_letter_mappings": [
     [
       {
-        "dir": "Down",
+        "dir": "Across",
         "num": 1,
-        "idx": 4
+        "idx": 0
       },
       {
         "dir": "Down",
@@ -88,25 +88,37 @@
     [
       {
         "dir": "Down",
-        "num": 3,
-        "idx": 6
+        "num": 1,
+        "idx": 13
       },
       {
         "dir": "Across",
         "num": 1,
-        "idx": 4
+        "idx": 13
       }
     ],
     [
       {
+        "dir": "Down",
+        "num": 1,
+        "idx": 4
+      },
+      {
         "dir": "Across",
         "num": 1,
         "idx": 9
-      },
+      }
+    ],
+    [
       {
         "dir": "Down",
         "num": 3,
         "idx": 23
+      },
+      {
+        "dir": "Across",
+        "num": 4,
+        "idx": 7
       }
     ],
     [
@@ -116,64 +128,45 @@
         "idx": 9
       },
       {
-        "dir": "Across",
-        "num": 1,
-        "idx": 13
+        "dir": "Down",
+        "num": 3,
+        "idx": 6
       }
     ],
     [
+      {
+        "dir": "Across",
+        "num": 1,
+        "idx": 4
+      },
       {
         "dir": "Down",
         "num": 1,
         "idx": 0
-      },
-      {
-        "dir": "Across",
-        "num": 4,
-        "idx": 7
       }
     ],
     [
-      {
-        "dir": "Down",
-        "num": 1,
-        "idx": 13
-      },
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 0
-      }
-    ],
-    [
-      {
-        "dir": "Across",
-        "num": 4,
-        "idx": 5
-      },
       {
         "dir": "Across",
         "num": 5,
         "idx": 7
+      },
+      {
+        "dir": "Across",
+        "num": 4,
+        "idx": 5
       }
     ],
     [
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 5
-      },
       {
         "dir": "Across",
         "num": 5,
         "idx": 10
-      }
-    ],
-    [
+      },
       {
-        "dir": "Across",
-        "num": 5,
-        "idx": 12
+        "dir": "Down",
+        "num": 3,
+        "idx": 5
       },
       {
         "dir": "Across",
@@ -184,37 +177,13 @@
     [
       {
         "dir": "Across",
-        "num": 1,
-        "idx": 19
-      },
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 3
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 1
-      },
-      {
-        "dir": "Across",
         "num": 5,
         "idx": 9
-      }
-    ],
-    [
-      {
-        "dir": "Across",
-        "num": 5,
-        "idx": 1
       },
       {
         "dir": "Down",
         "num": 3,
-        "idx": 15
+        "idx": 1
       }
     ],
     [
@@ -222,6 +191,30 @@
         "dir": "Across",
         "num": 4,
         "idx": 4
+      },
+      {
+        "dir": "Across",
+        "num": 5,
+        "idx": 1
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 3
+      },
+      {
+        "dir": "Across",
+        "num": 1,
+        "idx": 19
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 15
       },
       {
         "dir": "Down",
@@ -245,24 +238,17 @@
       {
         "dir": "Down",
         "num": 3,
-        "idx": 13
-      },
-      {
-        "dir": "Down",
-        "num": 2,
-        "idx": 13
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 3,
         "idx": 2
       },
       {
         "dir": "Across",
         "num": 5,
         "idx": 0
+      },
+      {
+        "dir": "Down",
+        "num": 2,
+        "idx": 13
       }
     ],
     [
@@ -272,9 +258,21 @@
         "idx": 14
       },
       {
+        "dir": "Down",
+        "num": 3,
+        "idx": 13
+      }
+    ],
+    [
+      {
         "dir": "Across",
         "num": 5,
-        "idx": 13
+        "idx": 8
+      },
+      {
+        "dir": "Across",
+        "num": 1,
+        "idx": 8
       }
     ],
     [
@@ -284,33 +282,57 @@
         "idx": 4
       },
       {
-        "dir": "Across",
-        "num": 1,
-        "idx": 8
-      }
-    ],
-    [
-      {
         "dir": "Down",
         "num": 2,
         "idx": 10
-      },
+      }
+    ],
+    [
       {
         "dir": "Down",
         "num": 1,
         "idx": 8
-      }
-    ],
-    [
+      },
       {
         "dir": "Down",
         "num": 2,
         "idx": 6
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 2,
+        "idx": 11
       },
       {
         "dir": "Across",
-        "num": 5,
-        "idx": 8
+        "num": 1,
+        "idx": 2
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 1,
+        "idx": 2
+      },
+      {
+        "dir": "Across",
+        "num": 4,
+        "idx": 13
+      }
+    ],
+    [
+      {
+        "dir": "Across",
+        "num": 4,
+        "idx": 2
+      },
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 22
       }
     ],
     [
@@ -321,44 +343,8 @@
       },
       {
         "dir": "Across",
-        "num": 4,
-        "idx": 2
-      }
-    ],
-    [
-      {
-        "dir": "Across",
-        "num": 4,
-        "idx": 13
-      },
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 2
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 22
-      },
-      {
-        "dir": "Down",
-        "num": 2,
-        "idx": 11
-      }
-    ],
-    [
-      {
-        "dir": "Across",
         "num": 5,
         "idx": 5
-      },
-      {
-        "dir": "Down",
-        "num": 1,
-        "idx": 2
       }
     ],
     [
@@ -366,30 +352,6 @@
         "dir": "Down",
         "num": 3,
         "idx": 11
-      },
-      {
-        "dir": "Down",
-        "num": 2,
-        "idx": 2
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 1,
-        "idx": 5
-      },
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 0
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 20
       },
       {
         "dir": "Down",
@@ -399,6 +361,30 @@
     ],
     [
       {
+        "dir": "Down",
+        "num": 3,
+        "idx": 21
+      },
+      {
+        "dir": "Down",
+        "num": 1,
+        "idx": 5
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 0
+      },
+      {
+        "dir": "Down",
+        "num": 2,
+        "idx": 2
+      }
+    ],
+    [
+      {
         "dir": "Across",
         "num": 1,
         "idx": 5
@@ -406,12 +392,36 @@
       {
         "dir": "Down",
         "num": 3,
-        "idx": 21
+        "idx": 20
       }
     ],
     [
       {
         "dir": "Down",
+        "num": 1,
+        "idx": 18
+      },
+      {
+        "dir": "Across",
+        "num": 4,
+        "idx": 1
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 1,
+        "idx": 3
+      },
+      {
+        "dir": "Across",
+        "num": 1,
+        "idx": 18
+      }
+    ],
+    [
+      {
+        "dir": "Across",
         "num": 1,
         "idx": 3
       },
@@ -424,12 +434,12 @@
     [
       {
         "dir": "Across",
-        "num": 1,
-        "idx": 3
+        "num": 4,
+        "idx": 14
       },
       {
         "dir": "Across",
-        "num": 4,
+        "num": 1,
         "idx": 1
       }
     ],
@@ -437,43 +447,19 @@
       {
         "dir": "Down",
         "num": 1,
-        "idx": 18
+        "idx": 1
       },
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 18
-      }
-    ],
-    [
       {
         "dir": "Across",
         "num": 4,
         "idx": 3
-      },
+      }
+    ],
+    [
       {
         "dir": "Down",
         "num": 3,
         "idx": 4
-      }
-    ],
-    [
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 1
-      },
-      {
-        "dir": "Across",
-        "num": 4,
-        "idx": 14
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 1,
-        "idx": 1
       },
       {
         "dir": "Down",
@@ -488,9 +474,9 @@
         "idx": 19
       },
       {
-        "dir": "Across",
-        "num": 1,
-        "idx": 20
+        "dir": "Down",
+        "num": 2,
+        "idx": 17
       }
     ],
     [
@@ -500,9 +486,9 @@
         "idx": 20
       },
       {
-        "dir": "Down",
-        "num": 2,
-        "idx": 17
+        "dir": "Across",
+        "num": 1,
+        "idx": 20
       }
     ],
     [
@@ -510,6 +496,11 @@
         "dir": "Down",
         "num": 3,
         "idx": 16
+      },
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 7
       },
       {
         "dir": "Across",
@@ -520,13 +511,18 @@
     [
       {
         "dir": "Across",
-        "num": 5,
-        "idx": 14
+        "num": 1,
+        "idx": 15
+      },
+      {
+        "dir": "Down",
+        "num": 1,
+        "idx": 15
       },
       {
         "dir": "Down",
         "num": 3,
-        "idx": 7
+        "idx": 10
       }
     ],
     [
@@ -537,20 +533,8 @@
       },
       {
         "dir": "Across",
-        "num": 5,
-        "idx": 15
-      }
-    ],
-    [
-      {
-        "dir": "Down",
         "num": 1,
         "idx": 12
-      },
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 15
       }
     ],
     [
@@ -562,43 +546,7 @@
       {
         "dir": "Down",
         "num": 1,
-        "idx": 15
-      }
-    ],
-    [
-      {
-        "dir": "Down",
-        "num": 3,
-        "idx": 10
-      },
-      {
-        "dir": "Across",
-        "num": 1,
         "idx": 12
-      }
-    ],
-    [
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 7
-      },
-      {
-        "dir": "Across",
-        "num": 5,
-        "idx": 2
-      }
-    ],
-    [
-      {
-        "dir": "Across",
-        "num": 5,
-        "idx": 6
-      },
-      {
-        "dir": "Across",
-        "num": 1,
-        "idx": 10
       }
     ],
     [
@@ -609,20 +557,13 @@
       },
       {
         "dir": "Across",
-        "num": 5,
-        "idx": 16
-      }
-    ],
-    [
-      {
-        "dir": "Down",
         "num": 1,
-        "idx": 7
+        "idx": 10
       },
       {
-        "dir": "Down",
-        "num": 2,
-        "idx": 9
+        "dir": "Across",
+        "num": 5,
+        "idx": 6
       }
     ],
     [
@@ -632,33 +573,57 @@
         "idx": 9
       },
       {
-        "dir": "Down",
+        "dir": "Across",
         "num": 1,
-        "idx": 10
+        "idx": 7
       }
     ],
     [
       {
         "dir": "Down",
-        "num": 3,
-        "idx": 12
+        "num": 2,
+        "idx": 9
       },
+      {
+        "dir": "Down",
+        "num": 1,
+        "idx": 7
+      }
+    ],
+    [
+      {
+        "dir": "Down",
+        "num": 1,
+        "idx": 10
+      },
+      {
+        "dir": "Across",
+        "num": 5,
+        "idx": 2
+      }
+    ],
+    [
       {
         "dir": "Down",
         "num": 2,
         "idx": 18
+      },
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 12
       }
     ],
     [
       {
-        "dir": "Down",
-        "num": 3,
-        "idx": 18
-      },
-      {
         "dir": "Across",
         "num": 1,
         "idx": 21
+      },
+      {
+        "dir": "Down",
+        "num": 3,
+        "idx": 18
       }
     ],
     [
@@ -668,21 +633,21 @@
         "idx": 8
       },
       {
-        "dir": "Across",
+        "dir": "Down",
         "num": 1,
         "idx": 14
       }
     ],
     [
       {
-        "dir": "Down",
-        "num": 2,
-        "idx": 16
+        "dir": "Across",
+        "num": 1,
+        "idx": 14
       },
       {
         "dir": "Down",
-        "num": 1,
-        "idx": 14
+        "num": 2,
+        "idx": 16
       }
     ]
   ]

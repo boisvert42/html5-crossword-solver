@@ -161,7 +161,7 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
   - Instead of rendering the clue as a single text block, render it character-by-character.
   - Wrap each letter in a `<span class="clue-char" data-clue-key="DIR-NUM-IDX">▮</span>` (or the decrypted letter, if solved).
   - Leave spaces, numbers, and punctuation as plain text (unwrapped or non-interactive spans).
-- [ ] **Step 5: Define CSS for Highlights**
+- [x] **Step 5: Define CSS for Highlights**
   - Add classes to `css/crosswordnexus.css` or direct inline style updates:
     - Selected character slot: Green background/text (`.clue-char-selected`).
     - Mapped sibling slots: Orange background/text (`.clue-char-mapped`).

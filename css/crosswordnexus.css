@@ -579,3 +579,26 @@ html.mobile-mode {
   cursor: move;
   user-select: none;
 }
+
+/* --- Clue Decipher Mode highlighting --- */
+.clue-char {
+  display: inline-block;
+  min-width: 0.6em;
+  text-align: center;
+  padding: 0 2px;
+  margin: 0 0.5px;
+  border-radius: 2px;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.clue-char-selected {
+  background-color: #2ECC40 !important; /* Green */
+  color: #FFFFFF !important;
+  font-weight: bold;
+}
+
+.clue-char-mapped {
+  background-color: #FF851B !important; /* Orange */
+  color: #FFFFFF !important;
+}
+

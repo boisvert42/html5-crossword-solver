@@ -60,7 +60,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       min_sidebar_clue_width: 220,
       save_game_limit: 10,
       notepad_name: 'Notes',
-      downsOnly: false,
+      char_obscure: '▮',
     };
 
     // constants
@@ -848,11 +848,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             group.forEach(coord => {
               const key = `${coord.dir}-${coord.num}-${coord.idx}`;
               this.clueLetterLinkMap[key] = keys;
-              this.clueLetterState[key] = '▮';
+              this.clueLetterState[key] = null;
             });
           });
-          console.log("clueLetterLinkMap:", this.clueLetterLinkMap);
-          console.log("clueLetterState:", this.clueLetterState);
         }
 
 
@@ -1800,6 +1798,29 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.refreshSidebarHighlighting?.();
       }
 
+      getClueTextHtml(clueText, dir, number) {
+        if (!this.isClueDecipherMode) {
+          return escape(clueText);
+        }
+        let html = '';
+        const originalText = clueText || '';
+        const normalizedDir = (dir && dir.toLowerCase() === 'down') ? 'Down' : 'Across';
+        for (let idx = 0; idx < originalText.length; idx++) {
+          const char = originalText[idx];
+          if (/[a-zA-Z]/.test(char)) {
+            const key = `${normalizedDir}-${number}-${idx}`;
+            let userVal = this.clueLetterState[key];
+            if (userVal === null || userVal === undefined) {
+              userVal = this.config.char_obscure || '▮';
+            }
+            html += `<span class="clue-char" data-clue-key="${key}">${escape(userVal)}</span>`;
+          } else {
+            html += escape(char);
+          }
+        }
+        return html;
+      }
+
       getCell(x, y) {
         return this.cells[x] ? this.cells[x][y] : null;
       }
@@ -1812,12 +1833,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             this.top_text.html('');
             return;
           }
+          const clueTextHtml = this.getClueTextHtml(word.clue.text, word.dir, word.clue.number);
           this.top_text.html(`
             <span class="cw-clue-number">
               ${escape(word.clue.number)}
             </span>
             <span class="cw-clue-text">
-              ${escape(word.clue.text)}
+              ${clueTextHtml}
             </span>
           `);
           resizeText(this.root, this.top_text);
@@ -1872,11 +1894,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         // --- render each clue ---
         for (const clue of clues_group.clues) {
+          const clueTextHtml = this.getClueTextHtml(clue.text, clues_group.id, clue.number);
+
           const clue_el = $(`
             <div style="position: relative">
               <span class="cw-clue-number">${escape(clue.number)}</span>
               <span class="cw-clue-text">
-                ${escape(clue.text)}
+                ${clueTextHtml}
                 <div class="cw-edit-container" style="display: none;">
                   <input class="cw-input note-style" type="text">
                 </div>

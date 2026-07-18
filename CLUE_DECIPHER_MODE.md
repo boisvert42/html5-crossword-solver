@@ -156,7 +156,7 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
   - Parse the `clue_letter_mappings` array.
   - Construct `this.clueLetterLinkMap` for $O(1)$ lookups.
   - Construct an inverse mapping or direct structure to keep track of the current user-entered value for each coordinate.
-- [ ] **Step 4: Custom Clue Rendering**
+- [x] **Step 4: Custom Clue Rendering**
   - Modify the clue rendering function.
   - Instead of rendering the clue as a single text block, render it character-by-character.
   - Wrap each letter in a `<span class="clue-char" data-clue-key="DIR-NUM-IDX">▮</span>` (or the decrypted letter, if solved).
@@ -181,5 +181,12 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
 - [ ] **Step 8: End-to-End Testing & Verification**
   - Load `sample_puzzles/clue_decipher_test.ipuz`.
   - Verify that the grid is full, clues are hidden/obscured, navigation works, highlights are colored correctly, and typing correctly decrypts the linked clue letters.
+
+---
+
+## 7. Nice-to-Have Features (Future Backlog)
+
+*   **Case-Sensitive Obscuring Blocks:** Use different size rectangles for uppercase (`█` U+2588) vs lowercase (`▄` U+2584) to mimic font x-height and aid readability, provided spacing/margins can be styled to separate adjacent blocks (e.g. adding CSS letter-spacing or margins around `.clue-char`).
+
 
 

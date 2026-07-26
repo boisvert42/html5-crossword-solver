@@ -1946,6 +1946,59 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
       }
 
+      typeClueChar(char) {
+        if (!this.isClueDecipherMode || !this.selected_word || !this.selected_word.clue) return;
+        if (this.activeClueCharIndex === undefined) return;
+        const dir = this.normalizeDirection(this.selected_word.dir);
+        const num = this.selected_word.clue.number;
+        const activeKey = `${dir}-${num}-${this.activeClueCharIndex}`;
+
+        const origChar = this.selected_word.clue.text[this.activeClueCharIndex];
+        const isUpper = (origChar === origChar.toUpperCase());
+        const finalChar = isUpper ? char.toUpperCase() : char.toLowerCase();
+
+        const mappedKeys = this.clueLetterLinkMap[activeKey] || [activeKey];
+        mappedKeys.forEach(key => {
+          this.clueLetterState[key] = finalChar;
+          this.root.find(`[data-clue-key="${key}"]`).text(finalChar);
+        });
+
+        this.moveClueCharSelection(1);
+        this.saveGame();
+        this.checkIfSolved();
+      }
+
+      backspaceClueChar() {
+        if (!this.isClueDecipherMode || !this.selected_word || !this.selected_word.clue) return;
+        if (this.activeClueCharIndex === undefined) return;
+        const dir = this.normalizeDirection(this.selected_word.dir);
+        const num = this.selected_word.clue.number;
+        const activeKey = `${dir}-${num}-${this.activeClueCharIndex}`;
+
+        const currentVal = this.clueLetterState[activeKey];
+        if (currentVal !== null && currentVal !== undefined) {
+          const mappedKeys = this.clueLetterLinkMap[activeKey] || [activeKey];
+          mappedKeys.forEach(key => {
+            this.clueLetterState[key] = null;
+            const blockChar = this.config.char_obscure || '▮';
+            this.root.find(`[data-clue-key="${key}"]`).text(blockChar);
+          });
+          this.updateClueHighlights();
+        } else {
+          this.moveClueCharSelection(-1);
+          const newActiveKey = `${dir}-${num}-${this.activeClueCharIndex}`;
+          const mappedKeys = this.clueLetterLinkMap[newActiveKey] || [newActiveKey];
+          mappedKeys.forEach(key => {
+            this.clueLetterState[key] = null;
+            const blockChar = this.config.char_obscure || '▮';
+            this.root.find(`[data-clue-key="${key}"]`).text(blockChar);
+          });
+          this.updateClueHighlights();
+        }
+        this.saveGame();
+        this.checkIfSolved();
+      }
+
       setActiveCell(cell) {
         if (!cell || cell.empty) return;
 
@@ -2753,7 +2806,11 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             this.checkIfSolved();
             break;
           case 8: // backspace
-            this.backspace();
+            if (this.isClueDecipherMode) {
+              this.backspaceClueChar();
+            } else {
+              this.backspace();
+            }
             break;
           case 9: // tab
           case 13: // enter key -- same as tab
@@ -2813,6 +2870,13 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               e.key.length === 1 &&
               e.key !== ' ' &&
               !e.ctrlKey && !e.metaKey && !e.altKey;
+
+            if (this.isClueDecipherMode && isPrintableChar) {
+              if (/[a-zA-Z]/.test(e.key)) {
+                this.typeClueChar(e.key);
+              }
+              break;
+            }
 
             if (this.selected_cell && isPrintableChar && !this.selected_cell.fixed) {
               // Uppercase only letters, leave numbers/punctuation unchanged
@@ -2957,17 +3021,46 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
       checkIfSolved(do_reveal = true) {
         var wasSolved = this.isSolved;
-        var i, j, cell;
-        for (i in this.cells) {
-          for (j in this.cells[i]) {
-            cell = this.cells[i][j];
-            // if found cell without letter or with incorrect letter - return
-            if (
-              (!cell.empty && (!cell.letter || !isCorrect(cell.letter, cell.solution))) ||
-              (this.diagramless_mode && ((cell.type === 'block') !== (cell.solution === '#')))
-            ) {
+        
+        if (this.isClueDecipherMode) {
+          for (const key in this.clueLetterState) {
+            const userVal = this.clueLetterState[key];
+            if (!userVal) {
               this.isSolved = false;
               return;
+            }
+            
+            const parts = key.split('-');
+            const dir = parts[0];
+            const num = parts[1];
+            const idx = parseInt(parts[2], 10);
+            
+            const word = Object.values(this.words).find(w => {
+              const wDir = this.normalizeDirection(w.dir);
+              return wDir === dir && w.clue && w.clue.number == num;
+            });
+            
+            if (!word) continue;
+            
+            const origChar = word.clue.text[idx];
+            if (userVal.toLowerCase() !== origChar.toLowerCase()) {
+              this.isSolved = false;
+              return;
+            }
+          }
+        } else {
+          var i, j, cell;
+          for (i in this.cells) {
+            for (j in this.cells[i]) {
+              cell = this.cells[i][j];
+              // if found cell without letter or with incorrect letter - return
+              if (
+                (!cell.empty && (!cell.letter || !isCorrect(cell.letter, cell.solution))) ||
+                (this.diagramless_mode && ((cell.type === 'block') !== (cell.solution === '#')))
+              ) {
+                this.isSolved = false;
+                return;
+              }
             }
           }
         }

@@ -169,7 +169,7 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
   - Add active character tracking: `this.activeClueCharIndex`.
   - Implement left/right arrow navigation to increment/decrement `this.activeClueCharIndex` within the bounds of the active clue, skipping non-alphabetical characters.
   - Highlight the currently selected character in green, and all its links in orange.
-- [ ] **Step 7: Keystroke Handling & Input Propagation**
+- [x] **Step 7: Keystroke Handling & Input Propagation**
   - Listen for alphabetical key presses and backspace.
   - When typing a letter:
     - Update state at the active coordinate and all coordinates in `this.clueLetterLinkMap[active_key]`.

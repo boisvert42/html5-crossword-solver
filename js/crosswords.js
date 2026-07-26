@@ -1528,7 +1528,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
             const word = Object.values(this.words).find(w => {
               const wDir = this.normalizeDirection(w.dir);
-              return wDir === dir && w.clue && w.clue.number === num;
+              return wDir === dir && w.clue && w.clue.number == num;
             });
 
             if (word) {

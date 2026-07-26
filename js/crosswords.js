@@ -1515,6 +1515,34 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
         this.svg.on('click', $.proxy(this.mouseClicked, this));
 
+        if (this.isClueDecipherMode) {
+          this.root.on('click', '.clue-char', (e) => {
+            e.stopPropagation();
+            const target = $(e.currentTarget);
+            const key = target.attr('data-clue-key');
+            if (!key) return;
+            const parts = key.split('-');
+            const dir = parts[0];
+            const num = parseInt(parts[1], 10);
+            const idx = parseInt(parts[2], 10);
+
+            const word = Object.values(this.words).find(w => {
+              const wDir = this.normalizeDirection(w.dir);
+              return wDir === dir && w.clue && w.clue.number === num;
+            });
+
+            if (word) {
+              this.setActiveWord(word);
+              const cell = word.getFirstEmptyCell() || word.getFirstCell();
+              if (cell) {
+                this.setActiveCell(cell);
+              }
+              this.activeClueCharIndex = idx;
+              this.updateClueHighlights();
+            }
+          });
+        }
+
         // REVEAL
         this.reveal_letter.on(
           'click',
@@ -1798,13 +1826,22 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         this.refreshSidebarHighlighting?.();
       }
 
+      normalizeDirection(dir) {
+        if (dir === undefined || dir === null) return 'Across';
+        const s = String(dir).toLowerCase();
+        if (s === '1' || s === 'down' || s === 'clues_1') {
+          return 'Down';
+        }
+        return 'Across';
+      }
+
       getClueTextHtml(clueText, dir, number) {
         if (!this.isClueDecipherMode) {
           return escape(clueText);
         }
         let html = '';
         const originalText = clueText || '';
-        const normalizedDir = (dir && dir.toLowerCase() === 'down') ? 'Down' : 'Across';
+        const normalizedDir = this.normalizeDirection(dir);
         for (let idx = 0; idx < originalText.length; idx++) {
           const char = originalText[idx];
           if (/[a-zA-Z]/.test(char)) {
@@ -1827,6 +1864,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
       setActiveWord(word) {
         if (word) {
+          const wordChanged = this.selected_word !== word;
           this.setSelectedWord(word);
           const group = this.clueGroups[this.activeClueGroupIndex];
           if (this.fakeclues || (group && group.isFake)) {
@@ -1843,6 +1881,68 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             </span>
           `);
           resizeText(this.root, this.top_text);
+
+          if (this.isClueDecipherMode) {
+            if (this.activeClueCharIndex === undefined || wordChanged) {
+              this.initActiveClueCharIndex(word);
+            }
+            this.updateClueHighlights();
+          }
+        }
+      }
+
+      initActiveClueCharIndex(word) {
+        if (!this.isClueDecipherMode || !word || !word.clue) return;
+        const text = word.clue.text || '';
+        for (let i = 0; i < text.length; i++) {
+          if (/[a-zA-Z]/.test(text[i])) {
+            this.activeClueCharIndex = i;
+            return;
+          }
+        }
+        this.activeClueCharIndex = 0;
+      }
+
+      updateClueHighlights() {
+        if (!this.isClueDecipherMode) return;
+        this.root.find('.clue-char-selected').removeClass('clue-char-selected');
+        this.root.find('.clue-char-mapped').removeClass('clue-char-mapped');
+
+        if (this.selected_word && this.activeClueCharIndex !== undefined) {
+          const dir = this.normalizeDirection(this.selected_word.dir);
+          const num = this.selected_word.clue.number;
+          const key = `${dir}-${num}-${this.activeClueCharIndex}`;
+
+          this.root.find(`[data-clue-key="${key}"]`).addClass('clue-char-selected');
+
+          const mappedKeys = this.clueLetterLinkMap[key] || [];
+          mappedKeys.forEach(siblingKey => {
+            if (siblingKey !== key) {
+              this.root.find(`[data-clue-key="${siblingKey}"]`).addClass('clue-char-mapped');
+            }
+          });
+        }
+      }
+
+      moveClueCharSelection(step) {
+        if (!this.isClueDecipherMode || !this.selected_word || !this.selected_word.clue) return;
+        const text = this.selected_word.clue.text || '';
+        let idx = this.activeClueCharIndex;
+        if (idx === undefined) {
+          this.initActiveClueCharIndex(this.selected_word);
+          idx = this.activeClueCharIndex;
+        }
+
+        while (true) {
+          idx += step;
+          if (idx < 0 || idx >= text.length) {
+            return;
+          }
+          if (/[a-zA-Z]/.test(text[idx])) {
+            this.activeClueCharIndex = idx;
+            this.updateClueHighlights();
+            return;
+          }
         }
       }
 
@@ -2541,11 +2641,15 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             this.moveToFirstCell(false);
             break;
           case 37: // left
-            if (this.diagramless_mode) this.setDiagramlessDir('across'); // set BEFORE moving
-            if (e.shiftKey) {
-              this.skipToWord(SKIP_LEFT);
+            if (this.isClueDecipherMode) {
+              this.moveClueCharSelection(-1);
             } else {
-              this.moveSelectionBy(-1, 0);
+              if (this.diagramless_mode) this.setDiagramlessDir('across'); // set BEFORE moving
+              if (e.shiftKey) {
+                this.skipToWord(SKIP_LEFT);
+              } else {
+                this.moveSelectionBy(-1, 0);
+              }
             }
             break;
           case 38: // up
@@ -2557,11 +2661,15 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             }
             break;
           case 39: // right
-            if (this.diagramless_mode) this.setDiagramlessDir('across'); // set BEFORE moving
-            if (e.shiftKey) {
-              this.skipToWord(SKIP_RIGHT);
+            if (this.isClueDecipherMode) {
+              this.moveClueCharSelection(1);
             } else {
-              this.moveSelectionBy(1, 0);
+              if (this.diagramless_mode) this.setDiagramlessDir('across'); // set BEFORE moving
+              if (e.shiftKey) {
+                this.skipToWord(SKIP_RIGHT);
+              } else {
+                this.moveSelectionBy(1, 0);
+              }
             }
             break;
           case 40: // down

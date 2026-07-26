@@ -165,7 +165,7 @@ To keep typing extremely snappy and avoid full DOM re-renders of the clue list:
   - Add classes to `css/crosswordnexus.css` or direct inline style updates:
     - Selected character slot: Green background/text (`.clue-char-selected`).
     - Mapped sibling slots: Orange background/text (`.clue-char-mapped`).
-- [ ] **Step 6: Handle Character Navigation & Arrow Keys**
+- [x] **Step 6: Handle Character Navigation & Arrow Keys**
   - Add active character tracking: `this.activeClueCharIndex`.
   - Implement left/right arrow navigation to increment/decrement `this.activeClueCharIndex` within the bounds of the active clue, skipping non-alphabetical characters.
   - Highlight the currently selected character in green, and all its links in orange.

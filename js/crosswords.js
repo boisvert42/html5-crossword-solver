@@ -840,6 +840,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
         this.clueLetterLinkMap = {};
         this.clueLetterState = {};
+        this.clueLetterOriginal = {};
 
         if (this.isClueDecipherMode && this.clueLetterMappings) {
           console.log("Indexing clue letter mappings...");
@@ -1198,6 +1199,23 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               };
             }),
             clue: clueMapping[word.id]
+          });
+        }
+
+        if (this.isClueDecipherMode && this.clueLetterMappings) {
+          this.clueLetterMappings.forEach(group => {
+            group.forEach(coord => {
+              const key = `${coord.dir}-${coord.num}-${coord.idx}`;
+              const word = Object.values(this.words).find(w => {
+                const wDir = this.normalizeDirection(w.dir);
+                return wDir === coord.dir && w.clue && w.clue.number == coord.num;
+              });
+              if (word && word.clue && word.clue.text) {
+                this.clueLetterOriginal[key] = word.clue.text[coord.idx];
+              } else {
+                this.clueLetterOriginal[key] = '';
+              }
+            });
           });
         }
 
@@ -1953,12 +1971,15 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         const num = this.selected_word.clue.number;
         const activeKey = `${dir}-${num}-${this.activeClueCharIndex}`;
 
-        const origChar = this.selected_word.clue.text[this.activeClueCharIndex];
-        const isUpper = (origChar === origChar.toUpperCase());
-        const finalChar = isUpper ? char.toUpperCase() : char.toLowerCase();
-
         const mappedKeys = this.clueLetterLinkMap[activeKey] || [activeKey];
         mappedKeys.forEach(key => {
+          const origChar = this.clueLetterOriginal[key];
+          let finalChar = char;
+          if (origChar) {
+            const isUpper = (origChar === origChar.toUpperCase());
+            finalChar = isUpper ? char.toUpperCase() : char.toLowerCase();
+          }
+
           this.clueLetterState[key] = finalChar;
           this.root.find(`[data-clue-key="${key}"]`).text(finalChar);
         });
@@ -3030,20 +3051,8 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               return;
             }
             
-            const parts = key.split('-');
-            const dir = parts[0];
-            const num = parts[1];
-            const idx = parseInt(parts[2], 10);
-            
-            const word = Object.values(this.words).find(w => {
-              const wDir = this.normalizeDirection(w.dir);
-              return wDir === dir && w.clue && w.clue.number == num;
-            });
-            
-            if (!word) continue;
-            
-            const origChar = word.clue.text[idx];
-            if (userVal.toLowerCase() !== origChar.toLowerCase()) {
+            const origChar = this.clueLetterOriginal[key];
+            if (origChar && userVal.toLowerCase() !== origChar.toLowerCase()) {
               this.isSolved = false;
               return;
             }

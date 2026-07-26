@@ -2756,6 +2756,9 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
             break;
 
           case 32: // space
+            if (this.isClueDecipherMode) {
+              break;
+            }
 
             if (this.diagramless_mode) {
               // Toggle direction in diagramless on Space

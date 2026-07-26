@@ -44,7 +44,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
       color_none: '#FFFFFF',
       background_color_clue: '#666666',
       font_color_fill: '#000000',
-      puzzle_file: null,
+      puzzle_file: {"url": "clue_decipher_test.ipuz", "type": "ipuz"},
 
       puzzle_object: null, // jsxw to load, if available
       puzzles: null,
@@ -3045,7 +3045,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
 
       checkIfSolved(do_reveal = true) {
         var wasSolved = this.isSolved;
-        
+
         if (this.isClueDecipherMode) {
           for (const key in this.clueLetterState) {
             const userVal = this.clueLetterState[key];
@@ -3053,7 +3053,7 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
               this.isSolved = false;
               return;
             }
-            
+
             const origChar = this.clueLetterOriginal[key];
             if (origChar && userVal.toLowerCase() !== origChar.toLowerCase()) {
               this.isSolved = false;

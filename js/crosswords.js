@@ -1372,7 +1372,65 @@ const IS_MOBILE = CrosswordShared.isMobileDevice();
         }
 
         // Start the timer if necessary
-        if (this.config.timer_autostart) {
+        let showStartOverlay = false;
+        if (this.config.tournament_mode) {
+          let isSolvedWarmup = false;
+          if (this.config.is_warmup && this.config.puzzle_id) {
+            try {
+              const completed = JSON.parse(localStorage.getItem('completed_warmups') || '[]');
+              if (completed.includes(this.config.puzzle_id)) {
+                isSolvedWarmup = true;
+              }
+            } catch (e) {}
+          }
+          if (!isSolvedWarmup) {
+            showStartOverlay = true;
+          }
+        }
+
+        if (showStartOverlay) {
+          // Disable autostart so the timer doesn't run in the background
+          this.config.timer_autostart = false;
+
+
+
+          // Check if there is saved progress to decide button label
+          const isResume = (xw_timer_seconds > 0);
+          const btnLabel = isResume ? "Resume Puzzle" : "Start Puzzle";
+
+          // Create overlay elements and append to root
+          const overlayHtml = `
+            <div class="cw-start-overlay">
+              <div class="cw-start-card">
+                <h2>${escape(this.title)}</h2>
+                <div class="cw-start-author">by ${escape(this.author)}</div>
+                <div class="cw-start-details">
+                  ${this.config.time_limit ? `<div class="cw-start-limit">Time Limit: <strong>${Math.floor(this.config.time_limit / 60)} minutes</strong></div>` : ''}
+                  ${this.config.is_warmup ? '<div class="cw-start-warmup-badge">Warm-up Puzzle</div>' : '<div class="cw-start-warmup-badge tournament">Tournament Puzzle</div>'}
+                </div>
+                <button type="button" class="cw-button cw-start-btn">${btnLabel}</button>
+              </div>
+            </div>
+          `;
+
+          const $overlay = $(overlayHtml);
+          this.root.append($overlay);
+
+          // Add blur to content
+          const $content = this.root.find('.cw-content');
+          $content.addClass('cw-blurred');
+          const $header = this.root.find('.cw-header');
+          $header.addClass('cw-blurred');
+
+          $overlay.find('.cw-start-btn').on('click', () => {
+            $overlay.fadeOut(300, () => {
+              $overlay.remove();
+              $content.removeClass('cw-blurred');
+              $header.removeClass('cw-blurred');
+              this.startTimer();
+            });
+          });
+        } else if (this.config.timer_autostart) {
           this.toggleTimer();
         }
 

@@ -321,7 +321,6 @@ export function parsePuzzle(data) {
       c.type = null;
       c.empty = false;
       c.clue = false;
-      c.color = null;
       c.letter = '';
       c.number = null;
     } else {

@@ -67,12 +67,18 @@ The UI relies heavily on a generic modal system for displaying info, settings, a
 - **`createModalBox(title, content, button_text)`:** This method in `src/modal.js` is the standard way to display pop-ups. It injects HTML into the `.cw-modal` container and handles the display toggling.
 - **Adding new Modals:** If you need a new pop-up, follow the pattern of `showInfo()` or `showHelp()`: define the content as an HTML string, escape any dynamic user content (like `this.title`), and call `createModalBox`.
 
+### Build Process
+- The source code resides in the `src/` directory as ES modules (`src/crosswords.js`, `src/rendering.js`, `src/navigation.js`, etc.).
+- Running `npm run build` compiles `src/crosswords.js` and all imported modules into the bundled IIFE script at `js/crosswords.js` using Vite.
+- **Do not edit `js/crosswords.js` directly**—all development and core engine modifications should be made in `src/` and compiled with `npm run build`.
+
 ### Adding New Features
 When extending the solver:
 1.  **Check `js/crossword.shared.js`** for utility functions that should be consistent across platforms.
-2.  **Verify `src/` modules** (e.g. `src/crosswords.js`, `src/navigation.js`, etc.) for core logic changes.
+2.  **Verify `src/` modules** (e.g. `src/crosswords.js`, `src/rendering.js`, `src/navigation.js`, etc.) for core logic changes and recompile with `npm run build`.
 3.  **Test on mobile** to ensure the custom keyboard and drawer system correctly handle any new UI elements.
 
 ## 6. Tournament Extension
 
 For technical details regarding the Firebase-backed tournament system (Admin Dashboard, Leaderboards, and Scoring), see [tournament/TECHNICAL_DETAILS.md](tournament/TECHNICAL_DETAILS.md).
+

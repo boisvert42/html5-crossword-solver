@@ -617,7 +617,8 @@ div.is-dragover {
 /** Top text **/
 .cw-top-text-wrapper {
   position: absolute;
-  width: 100%;
+  width: calc(100% - 16px);
+  left: 8px;
   top: 0;
   text-align: center;
   align-items: center;
@@ -628,6 +629,7 @@ div.is-dragover {
   flex-shrink: 0;
   border-radius: 4px;
   box-shadow: var(--main-shadow);
+  box-sizing: border-box;
 }
 
 .cw-clue-number {

@@ -78,7 +78,46 @@ When extending the solver:
 2.  **Verify `src/` modules** (e.g. `src/crosswords.js`, `src/rendering.js`, `src/navigation.js`, etc.) for core logic changes and recompile with `npm run build`.
 3.  **Test on mobile** to ensure the custom keyboard and drawer system correctly handle any new UI elements.
 
-## 6. Tournament Extension
+## 6. Architecture Map & Key Modules
+
+| File | Purpose |
+|---|---|
+| `src/crosswords.js` | Main orchestrator & entry point; binds lifecycle methods and handles viewport resizing. |
+| `src/rendering.js` | SVG grid layout math (`positionGrid`), cell rendering, bars, circles, letters, and chevrons. |
+| `src/navigation.js` | Keyboard/cell selection handling, word advancement, spacebar/tab navigation, `setActiveWord`. |
+| `src/loader.js` | Puzzle parsing, cell initialization, clue mapping, and `CluesGroup` creation. |
+| `src/cluesUI.js` | Sidebar clue list rendering, styling, and clue-note editing. |
+| `src/modal.js` | Generic modal box system (Info, Settings, Rebus input, Unmatched Clues). |
+| `src/colors.js` | HSV color transforms, theme calculation, and dynamic CSS variable injection. |
+| `src/storage.js` | `localStorage` state serialization and save cleanup routines. |
+| `src/utils.js` | Pure helpers: string escaping, correctness checks, and dynamic clue font binary search (`resizeText`). |
+| `src/constants.js` | Base HTML template strings and default configuration constants. |
+
+### DOM & Layout Hierarchy
+
+```text
+.cw-content (flex container)
+├── .cw-grid (left column)
+│   ├── .cw-buttons-holder (toolbar: File, Check, Reveal, Settings, Timer)
+│   └── .cw-canvas (puzzle area container)
+│       └── .cw-puzzle-container (flex column, width: 100%)
+│           ├── .cw-top-text-wrapper (current clue bar, spans canvas width)
+│           └── <svg id="cw-puzzle-grid"> (SVG crossword grid)
+└── .cw-clues-holder (right column: Across & Down clue lists on desktop)
+```
+
+## 7. Developer & LLM Quick Reference (Gotchas)
+
+1. **Source vs. Standalone Scripts**:
+   - `src/` compiles to `js/crosswords.js` via `npm run build`. Never edit `js/crosswords.js` directly.
+   - `js/crossword.mobile.js` and `js/crossword.shared.js` are **standalone scripts** in `js/` that are loaded directly by `index.html` (not bundled by Vite).
+2. **Container-Based Breakpoints**:
+   - Breakpoints are NOT CSS `@media` queries; they are container classes (`.cw-max-width-1200`, `.cw-max-width-1080`, `.cw-max-width-650`, etc.) added dynamically by `setBreakpointClasses(this.root)` in JS based on the root element's width.
+3. **1-Indexed Grid Coordinates**:
+   - `this.cells[x][y]` uses **1-indexed** coordinates (`1..grid_width`, `1..grid_height`), while raw `JSCrossword` and cell ranges from puzzle formats are 0-indexed.
+
+## 8. Tournament Extension
 
 For technical details regarding the Firebase-backed tournament system (Admin Dashboard, Leaderboards, and Scoring), see [tournament/TECHNICAL_DETAILS.md](tournament/TECHNICAL_DETAILS.md).
+
 

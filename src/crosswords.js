@@ -797,35 +797,23 @@ import {
        */
       windowResized() {
         setBreakpointClasses(this.root);
-        resizeText(this.root, this.top_text);
         this.positionGrid();
         this.syncTopTextWidth();
+        resizeText(this.root, this.top_text);
       }
 
       /**
-       * Dynamically aligns the width and horizontal position of the top clue text wrapper
-       * with the rendered bounding box of the SVG grid container.
+       * Ensures the top clue text wrapper spans the full available width of cw-canvas
+       * (with 8px margin on both sides).
        */
       syncTopTextWidth() {
-        const svgEl = this.svgContainer;
         const wrapper = this.toptext?.get(0);
 
-        if (!svgEl || !wrapper) return;
-
-        const bbox = svgEl.getBoundingClientRect();
-        const containerBox = svgEl.parentNode.getBoundingClientRect();
-
-        const leftOffset = bbox.left - containerBox.left;
-        const width = Math.round(bbox.width);
+        if (!wrapper) return;
 
         wrapper.style.position = 'absolute';
-        wrapper.style.left = `${leftOffset}px`;
-        wrapper.style.width = `${width}px`;
-
-        // Optional debug log
-        requestAnimationFrame(() => {
-          const actual = wrapper.getBoundingClientRect();
-        });
+        wrapper.style.left = '8px';
+        wrapper.style.width = 'calc(100% - 16px)';
       }
 
       /**

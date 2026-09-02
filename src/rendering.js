@@ -56,10 +56,6 @@ export function positionGrid() {
   this.svgContainer.setAttribute('width', svgWidth);
   this.svgContainer.setAttribute('height', svgHeight);
 
-  if (this.toptext && this.toptext[0]) {
-    this.toptext[0].style.width = svgWidth + 'px';
-  }
-
   const SIZE = this.cell_size;
   const padding = 1;
   this.svgContainer.setAttribute(

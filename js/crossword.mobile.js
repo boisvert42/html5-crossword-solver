@@ -354,14 +354,10 @@ $(document).ready(function() {
         gCrossword.setActiveWord(firstWord);
         gCrossword.setActiveCell(firstWord.getFirstCell());
         gCrossword.renderCells();
-        // Match the width of the top clue bar to the grid
-        setTimeout(() => {
-          const gridEl = document.getElementById('cw-puzzle-grid');
           const clueBar = document.querySelector('.cw-top-text-wrapper');
-          if (gridEl && clueBar) {
-            clueBar.style.width = gridEl.getBoundingClientRect().width + 'px';
+          if (clueBar) {
+            clueBar.style.width = '100%';
           }
-        }, 100);
       }, 50);
     };
 

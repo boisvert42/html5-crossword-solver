@@ -86,8 +86,8 @@ export function getCell(x, y) {
 export function setActiveWord(word) {
   if (word) {
     this.setSelectedWord(word);
-    const group = this.clueGroups[this.activeClueGroupIndex];
-    if (this.fakeclues || (group && group.isFake)) {
+    // If the entry has no associated clue (e.g. unclued words or variety puzzles), keep top bar blank
+    if (!word.clue || (!word.clue.number && !word.clue.text)) {
       this.top_text.html('');
       return;
     }
@@ -195,45 +195,42 @@ export function skipToWord(direction) {
 }
 
 export function moveToNextWord(to_previous, skip_filled_words = false) {
-  if (!this.selected_word || !this.clueGroups?.length) return;
+  if (!this.words_list?.length) return;
 
-  let next_word = null;
-  let this_word = this.selected_word;
-  let groupIndex = this.activeClueGroupIndex ?? 0;
-  const totalGroups = this.clueGroups.length;
-  let safetyCounter = 0; // counts how many times we've wrapped between groups
-  const shouldSkipFilledWords =
-    skip_filled_words && this.hasUnfilledWords();
+  const wordsList = this.words_list;
+  const total = wordsList.length;
+  const shouldSkipFilledWords = skip_filled_words && this.hasUnfilledWords();
+  const step = to_previous ? -1 : 1;
 
-  while (safetyCounter < totalGroups * 2) {
-    const currentGroup = this.clueGroups[groupIndex];
-
-    // Try to get next/prev word within the current group
-    next_word = to_previous ?
-      currentGroup.getPreviousWord(this_word) :
-      currentGroup.getNextWord(this_word);
-
-    if (!next_word) {
-      // Reached end/start of group — wrap to next/previous group
-      groupIndex = (groupIndex + 1) % totalGroups;
-      this.activeClueGroupIndex = groupIndex;
-      safetyCounter++; // only increment when we move between groups
-
-      const nextGroup = this.clueGroups[groupIndex];
-      next_word = to_previous ?
-        nextGroup.getLastWord() :
-        nextGroup.getFirstWord();
-    }
-
-    // Stop if this word is acceptable (either not filled or skipping disabled)
-    if (!shouldSkipFilledWords || !next_word.isFilled()) break;
-
-    // Otherwise, continue searching
-    this_word = next_word;
+  // Find the index of the currently selected word in canonical words_list order
+  let curIdx = -1;
+  if (this.selected_word) {
+    curIdx = wordsList.findIndex(w => w.id === this.selected_word.id);
+  }
+  if (curIdx === -1) {
+    curIdx = to_previous ? 0 : total - 1;
   }
 
-  // Activate new word if found
+  // Iterate forward or backward through words_list in order
+  let next_word = null;
+  for (let i = 1; i <= total; i++) {
+    // Add + total to handle negative indices when traversing backward (Shift+Tab)
+    const idx = (curIdx + i * step + total) % total;
+    const candidate = wordsList[idx];
+    if (!shouldSkipFilledWords || !candidate.isFilled()) {
+      next_word = candidate;
+      break;
+    }
+  }
+
   if (next_word) {
+    // Keep activeClueGroupIndex in sync with whichever clue group contains this word (if any)
+    if (this.clueGroups?.length) {
+      const groupIdx = this.clueGroups.findIndex(g => g.words_ids?.includes(next_word.id));
+      if (groupIdx !== -1 && groupIdx !== this.activeClueGroupIndex) {
+        this.activeClueGroupIndex = groupIdx;
+      }
+    }
     const cell = next_word.getFirstEmptyCell() || next_word.getFirstCell();
     this.setActiveWord(next_word);
     this.setActiveCell(cell);

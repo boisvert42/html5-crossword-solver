@@ -64,13 +64,14 @@ export function renderClues(clues_group, clues_container) {
     // attach metadata
     clue_el.data({
       clue: clue,
+      clueId: clue.id,
       word: clue.word,
       number: clue.number,
       clues: clues_group.id,
-    }).addClass(`cw-clue word-${clue.word} group-${clues_group.id}`);
+    }).addClass(`cw-clue ${clue.id ? `clue-${clue.id}` : ''} ${clue.word ? `word-${clue.word}` : ''} group-${clues_group.id}`);
 
     // restore any saved note
-    const clueNote = notes.get(clue.word);
+    const clueNote = clue.id ? notes.get(clue.id) : undefined;
     if (clueNote !== undefined) {
       clue_el.find('.cw-input').val(clueNote);
       clue_el.find('.cw-edit-container').show();
@@ -111,18 +112,20 @@ export function renderClues(clues_group, clues_container) {
     .on('blur', '.cw-input', function() {
       const $input = $(this);
       const $clue = $input.closest('.cw-clue');
-      const wordId = $clue.data('word');
+      const clueId = $clue.data('clueId');
       const newText = $input.val().trim();
 
       setTimeout(() => {
         const newlyFocused = document.activeElement;
         if (newlyFocused?.classList.contains('cw-hidden-input')) return;
 
+        if (!clueId) return;
+
         if (newText.length > 0) {
-          notes.set(wordId, newText);
+          notes.set(clueId, newText);
         } else {
           $clue.find('.cw-edit-container').hide();
-          notes.delete(wordId);
+          notes.delete(clueId);
         }
         save();
       }, 10);

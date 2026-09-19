@@ -132,22 +132,33 @@ export function parsePuzzle(data) {
 
   const jsxw2_cells = this.loadGame();
   if (jsxw2_cells) {
-    console.log('Loading puzzle from localStorage');
-    const noteObj = JSON.parse(localStorage.getItem(this.savegame_name + "_notes"));
-    if (noteObj && noteObj.length > 0) {
-      for (const entry of noteObj) {
-        this.notes.set(entry.key, entry.value);
+    console.log('Loading puzzle cells from localStorage');
+    puzzle.cells = jsxw2_cells;
+  }
+
+  // Restore notes independently
+  try {
+    const notesStr = localStorage.getItem(this.savegame_name + "_notes");
+    if (notesStr) {
+      const noteObj = JSON.parse(notesStr);
+      if (noteObj && noteObj.length > 0) {
+        for (const entry of noteObj) {
+          if (entry.key != null && entry.key !== 'null') {
+            this.notes.set(entry.key.toString(), entry.value);
+          }
+        }
+        console.log('Restored notes from localStorage:', Array.from(this.notes.entries()));
       }
     }
+  } catch (e) {
+    console.error('Error restoring notes from localStorage:', e);
+  }
 
-    // Restore timer
-    const savedTimer = localStorage.getItem(this.savegame_name + "_timer");
-    if (savedTimer !== null) {
-      this.xw_timer_seconds = parseInt(savedTimer, 10) || 0;
-      console.log('Restored timer from localStorage:', this.xw_timer_seconds);
-    }
-
-    puzzle.cells = jsxw2_cells;
+  // Restore timer independently
+  const savedTimer = localStorage.getItem(this.savegame_name + "_timer");
+  if (savedTimer !== null) {
+    this.xw_timer_seconds = parseInt(savedTimer, 10) || 0;
+    console.log('Restored timer from localStorage:', this.xw_timer_seconds);
   }
 
   const loadedFromStorage = Boolean(jsxw2_cells);
@@ -335,6 +346,8 @@ export function parsePuzzle(data) {
     // Defensive: if no clues array exists
     const clueSets = puzzle.clues || [];
 
+    let clueIdCounter = 1;
+
     // Create one CluesGroup per clue set
     clueSets.forEach((clueSet, index) => {
       // Normalize title and word IDs
@@ -343,6 +356,7 @@ export function parsePuzzle(data) {
 
       // Populate global mapping for quick lookup
       clues.forEach(clue => {
+        clue.id = (clueIdCounter++).toString();
         if (clue.word) {
           clue.groupTitle = title;
           clueMapping[clue.word] = clue;

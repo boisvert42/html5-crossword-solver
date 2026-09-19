@@ -144,7 +144,7 @@ export function setActiveCell(cell) {
 }
 
 export function skipToWord(direction) {
-  if (this.selected_cell && this.selected_word) {
+  if (!this.diagramless_mode && this.selected_cell && this.selected_word) {
     let i,
       cell,
       word,
@@ -205,7 +205,7 @@ export function skipToWord(direction) {
 }
 
 export function moveToNextWord(to_previous, skip_filled_words = false) {
-  if (!this.words_list?.length) return;
+  if (this.diagramless_mode || !this.words_list?.length) return;
 
   const wordsList = this.words_list;
   const total = wordsList.length;

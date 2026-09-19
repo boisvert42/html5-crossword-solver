@@ -41,7 +41,6 @@ import {
 import {
   loadFileFromServer,
   loadFromFile,
-  make_fake_clues,
   normalizeClueTitle,
   parsePuzzle
 } from './loader.js';
@@ -388,15 +387,6 @@ import {
       // PUZZLE DATA PARSING & LOADER DELEGATES
       // =========================================================================
 
-      /**
-       * Generates alternative clue lists when clues are stored in non-standard mappings.
-       * @param {Object} puzzle - The raw puzzle JSON structure.
-       * @param {Object} [clue_mapping] - Configured clue mapping properties.
-       * @returns {Array} List of processed clue groups.
-       */
-      make_fake_clues(puzzle, clue_mapping = {}) {
-        return make_fake_clues.call(this, puzzle, clue_mapping);
-      }
 
       /**
        * Initializes or resets the solver variables, visual grids, and structures.

@@ -52,59 +52,6 @@ export function loadFromFile(file, type, deferred) {
   return deferred;
 }
 
-export function make_fake_clues(puzzle, clue_mapping = {}) {
-  const across_group = new CluesGroup(this, {
-    id: "clues_0",
-    title: 'Across',
-    clues: [],
-    words_ids: [],
-    fake: true,
-  });
-
-  const down_group = new CluesGroup(this, {
-    id: "clues_1",
-    title: 'Down',
-    clues: [],
-    words_ids: [],
-    fake: true,
-  });
-
-  const clueMapping = {};
-  let clueGroups;
-
-  if (!this.realwords) {
-    const entry_mapping = puzzle.get_entry_mapping();
-    const thisGrid = JSCrossword.xwGrid(puzzle.cells);
-    const acrossSet = new Set(
-      Object.values(thisGrid.acrossEntries()).map(entry => entry.word)
-    );
-
-    Object.keys(entry_mapping).forEach((id) => {
-      const entry = entry_mapping[id];
-      const clue = {
-        word: id,
-        number: id,
-        text: '--'
-      };
-      clueMapping[id] = clue;
-      if (acrossSet.has(entry)) {
-        across_group.clues.push(clue);
-        across_group.words_ids.push(id);
-      } else {
-        down_group.clues.push(clue);
-        down_group.words_ids.push(id);
-      }
-    });
-    clueGroups = [across_group, down_group];
-  } else {
-    clueGroups = this.clueGroups;
-  }
-
-  return {
-    clueGroups: clueGroups,
-    clue_mapping: clueMapping
-  };
-}
 
 export function normalizeClueTitle(rawTitle) {
   if (!rawTitle) return '';
@@ -371,9 +318,7 @@ export function parsePuzzle(data) {
   let clueMapping = {};
 
   if (this.crossword_type === 'coded') {
-    var fake_clue_obj = this.make_fake_clues(puzzle);
-    this.clueGroups = fake_clue_obj.clueGroups;
-    clueMapping = fake_clue_obj.clue_mapping;
+    this.clueGroups = [];
 
     $('div.cw-clues-holder').css({
       display: 'none'
@@ -403,7 +348,7 @@ export function parsePuzzle(data) {
         if (clue.word) clueMapping[clue.word] = clue;
       });
 
-      const words_ids = clues.map(c => c.word);
+      const words_ids = clues.map(c => c.word).filter(Boolean);
 
       // Create and store CluesGroup instance
       const group = new CluesGroup(this, {
@@ -425,44 +370,34 @@ export function parsePuzzle(data) {
     });
   }
 
-  // Handle fake clues override
-  const num_words = puzzle.words.length;
-  const num_clues = puzzle.clues.map(x => x.clue).flat().length;
-  if (this.fakeclues && num_words != num_clues) {
-    // make a copy of the clue groups for display
-    this.displayClueGroups = [...this.clueGroups];
-    var fake_clue_obj = this.make_fake_clues(puzzle);
-    this.clueGroups = fake_clue_obj.clueGroups;
-    clueMapping = fake_clue_obj.clue_mapping;
-  }
-
   // Update DOM with clue info
   const holder = document.querySelector('.cw-clues-holder');
-  if (!holder) return;
+  if (holder) {
+    holder.innerHTML = ''; // clear old ones
 
-  holder.innerHTML = ''; // clear old ones
+    this.clueGroups.forEach((group, index) => {
+      const div = document.createElement('div');
+      div.classList.add('cw-clues');
+      if (this.config.downsOnly && index === 0) {
+        div.style.display = 'none';
+      }
+      div.dataset.groupId = group.id;
 
-  (this.displayClueGroups || this.clueGroups).forEach((group, index) => {
-    const div = document.createElement('div');
-    div.classList.add('cw-clues');
-    if (this.config.downsOnly && index === 0) {
-      div.style.display = 'none';
-    }
-    div.dataset.groupId = group.id;
+      div.innerHTML = `
+        <div class="cw-clues-title">${group.title}</div>
+        <div class="cw-clues-items"></div>
+      `;
 
-    div.innerHTML = `
-      <div class="cw-clues-title">${group.title}</div>
-      <div class="cw-clues-items"></div>
-    `;
-
-    holder.appendChild(div);
-  });
+      holder.appendChild(div);
+    });
+  }
 
   // === Build words ===
   this.words = {};
+  this.words_list = [];
   for (var i = 0; i < puzzle.words.length; i++) {
     const word = puzzle.words[i];
-    this.words[word.id] = new Word(this, {
+    const wordObj = new Word(this, {
       id: word.id,
       dir: word.dir,
       refs_raw: null,
@@ -474,6 +409,8 @@ export function parsePuzzle(data) {
       }),
       clue: clueMapping[word.id]
     });
+    this.words[word.id] = wordObj;
+    this.words_list.push(wordObj);
   }
 
   this.completeLoad();

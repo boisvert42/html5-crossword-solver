@@ -152,10 +152,14 @@ export function skipToWord(direction) {
       x = this.selected_cell.x,
       y = this.selected_cell.y;
 
+    const targetDir = this.selected_word.dir;
+
     const cellFound = (cell) => {
       if (cell && !cell.empty) {
         const wordsAtCell = (this.words_list || []).filter(w => w.hasCell(cell.x, cell.y));
-        word = wordsAtCell.find(w => w.dir === this.selected_word.dir) || wordsAtCell[0];
+        word = targetDir
+          ? wordsAtCell.find(w => w.dir === targetDir)
+          : wordsAtCell.find(w => w.id !== this.selected_word.id);
         if (word && word.id !== this.selected_word.id) {
           word_cell = word.getFirstEmptyCell() || word.getFirstCell();
           this.setActiveWord(word);

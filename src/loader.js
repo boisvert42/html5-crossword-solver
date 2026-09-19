@@ -343,7 +343,10 @@ export function parsePuzzle(data) {
 
       // Populate global mapping for quick lookup
       clues.forEach(clue => {
-        if (clue.word) clueMapping[clue.word] = clue;
+        if (clue.word) {
+          clue.groupTitle = title;
+          clueMapping[clue.word] = clue;
+        }
       });
 
       const words_ids = clues.map(c => c.word).filter(Boolean);
@@ -395,9 +398,30 @@ export function parsePuzzle(data) {
   this.words_list = [];
   for (var i = 0; i < puzzle.words.length; i++) {
     const word = puzzle.words[i];
+    const associatedClue = clueMapping[word.id];
+
+    // Determine direction:
+    // 1. Explicitly on word if provided
+    let dir = word.dir;
+    // 2. From associated clue's group title if available
+    if (!dir && associatedClue?.groupTitle) {
+      const gTitle = associatedClue.groupTitle.toLowerCase();
+      if (gTitle.includes('across')) dir = 'across';
+      else if (gTitle.includes('down')) dir = 'down';
+      else dir = gTitle;
+    }
+    // 3. Fallback from cell coordinates (horizontal -> across, vertical -> down)
+    if (!dir && word.cells && word.cells.length > 1) {
+      if (word.cells[0][1] === word.cells[1][1]) {
+        dir = 'across';
+      } else if (word.cells[0][0] === word.cells[1][0]) {
+        dir = 'down';
+      }
+    }
+
     const wordObj = new Word(this, {
       id: word.id,
-      dir: word.dir,
+      dir: dir,
       refs_raw: null,
       cell_ranges: word.cells.map(function(c) {
         return {
@@ -405,7 +429,7 @@ export function parsePuzzle(data) {
           y: (c[1] + 1).toString()
         };
       }),
-      clue: clueMapping[word.id]
+      clue: associatedClue
     });
     this.words[word.id] = wordObj;
     this.words_list.push(wordObj);

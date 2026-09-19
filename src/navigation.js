@@ -21,62 +21,38 @@ import { escape, resizeText } from './utils.js';
 export function changeActiveClues(targetIndex = null) {
   const groups = this.clueGroups || [];
   const n = groups.length;
-  if (!n) return;
 
-  if (n === 1) {
-    const activeGroup = groups[0];
+  if (targetIndex !== null && targetIndex >= 0 && targetIndex < n) {
+    // Explicit jump to a specific clue group (e.g. from clue click in sidebar)
+    this.activeClueGroupIndex = targetIndex;
+    const activeGroup = groups[targetIndex];
     if (this.selected_cell && activeGroup) {
-      const {
-        x,
-        y
-      } = this.selected_cell;
+      const { x, y } = this.selected_cell;
       const word = activeGroup.getMatchingWord(x, y, true);
       if (word) this.setActiveWord(word);
     }
-    this.refreshSidebarHighlighting?.();
+    this.refreshSidebarHighlighting();
     return;
   }
 
-  const curIndex = this.activeClueGroupIndex ?? 0;
-  let newIndex = curIndex;
+  // Double-click / space switch: always move to the next word in words_list containing this square
+  if (this.selected_cell && this.words_list?.length) {
+    const { x, y } = this.selected_cell;
+    const matchingWords = this.words_list.filter(w => w.hasCell(x, y));
 
-  if (targetIndex !== null && targetIndex >= 0 && targetIndex < n) {
-    // Explicit jump — always allow
-    newIndex = targetIndex;
-  } else {
-    // Cycle forward until we find a group that matches the selected cell
-    for (let i = 1; i <= n; i++) {
-      const idx = (curIndex + i) % n;
-      if (!this.selected_cell) {
-        newIndex = idx;
-        break;
+    if (matchingWords.length > 0) {
+      let nextWord = matchingWords[0];
+      if (this.selected_word) {
+        const curIdx = matchingWords.findIndex(w => w.id === this.selected_word.id);
+        if (curIdx !== -1) {
+          nextWord = matchingWords[(curIdx + 1) % matchingWords.length];
+        }
       }
-      const g = groups[idx];
-      if (g?.getMatchingWord(this.selected_cell.x, this.selected_cell.y, true)) {
-        newIndex = idx;
-        break;
-      }
-      // If we went through all and none matched, default to next anyway
-      if (i === n) newIndex = (curIndex + 1) % n;
+      this.setActiveWord(nextWord);
     }
   }
 
-  // --- Apply the new index ---
-  this.activeClueGroupIndex = newIndex;
-  const activeGroup = groups[newIndex];
-
-  // --- Update selected word if we have a cell ---
-  if (this.selected_cell && activeGroup) {
-    const {
-      x,
-      y
-    } = this.selected_cell;
-    const word = activeGroup.getMatchingWord(x, y, true);
-    if (word) this.setActiveWord(word);
-  }
-
-  // --- Refresh sidebar highlighting (optional but recommended) ---
-  this.refreshSidebarHighlighting?.();
+  this.refreshSidebarHighlighting();
 }
 
 export function getCell(x, y) {
@@ -86,21 +62,56 @@ export function getCell(x, y) {
 export function setActiveWord(word) {
   if (word) {
     this.setSelectedWord(word);
+
+    // Keep activeClueGroupIndex in sync:
+    // 1. Check if word ID is listed in group's words_ids
+    let groupIdx = this.clueGroups?.findIndex(g =>
+      (g.words_ids || []).includes(word.id)
+    );
+    // 2. Fallback: match word direction to group title (e.g. unplaced "Down" clue group in BB8)
+    if (groupIdx === -1 || groupIdx === undefined) {
+      if (word.dir) {
+        groupIdx = this.clueGroups?.findIndex(g =>
+          g.title?.trim().toLowerCase() === word.dir.trim().toLowerCase()
+        );
+      }
+    }
+    if (groupIdx !== -1 && groupIdx !== undefined) {
+      this.activeClueGroupIndex = groupIdx;
+    }
+
     // If the entry has no associated clue (e.g. unclued words or variety puzzles), keep top bar blank
     if (!word.clue || (!word.clue.number && !word.clue.text)) {
       this.top_text.html('');
-      return;
+    } else {
+      this.top_text.html(`
+        <span class="cw-clue-number">
+          ${escape(word.clue.number)}
+        </span>
+        <span class="cw-clue-text">
+          ${escape(word.clue.text)}
+        </span>
+      `);
+      resizeText(this.root, this.top_text);
     }
-    this.top_text.html(`
-      <span class="cw-clue-number">
-        ${escape(word.clue.number)}
-      </span>
-      <span class="cw-clue-text">
-        ${escape(word.clue.text)}
-      </span>
-    `);
-    resizeText(this.root, this.top_text);
+
+    this.refreshSidebarHighlighting?.();
   }
+}
+
+export function refreshSidebarHighlighting() {
+  if (!this.selected_cell) return;
+  const { x, y } = this.selected_cell;
+  const groups = this.clueGroups || [];
+
+  groups.forEach(group => {
+    if (typeof group.markActive === 'function') {
+      const matchingWord = group.getMatchingWord?.(x, y);
+      // The clue is passive if the group's matching word is NOT the currently selected word
+      const isPassive = !matchingWord || !this.selected_word || (matchingWord.id !== this.selected_word.id);
+      group.markActive(x, y, isPassive);
+    }
+  });
 }
 
 export function setActiveCell(cell) {
@@ -108,16 +119,8 @@ export function setActiveCell(cell) {
 
   this.setSelectedCell(cell);
 
-  // Mark active/inactive state for all clue groups
-  const groups = this.clueGroups || [];
-
-  groups.forEach(group => {
-    // The first param (`isInactive`) is true for all groups except the active one
-    const isInactive = group !== this.clueGroups[this.activeClueGroupIndex];
-    if (typeof group.markActive === 'function') {
-      group.markActive(cell.x, cell.y, isInactive);
-    }
-  });
+  // Mark active/passive state for all clue groups
+  this.refreshSidebarHighlighting();
 
   // --- Move and focus hidden input ---
   const offset = this.svg.offset();
@@ -145,7 +148,8 @@ export function skipToWord(direction) {
 
     const cellFound = (cell) => {
       if (cell && !cell.empty) {
-        word = this.clueGroups[this.activeClueGroupIndex].getMatchingWord(cell.x, cell.y);
+        const wordsAtCell = (this.words_list || []).filter(w => w.hasCell(cell.x, cell.y));
+        word = wordsAtCell.find(w => w.dir === this.selected_word.dir) || wordsAtCell[0];
         if (word && word.id !== this.selected_word.id) {
           word_cell = word.getFirstEmptyCell() || word.getFirstCell();
           this.setActiveWord(word);
@@ -224,15 +228,8 @@ export function moveToNextWord(to_previous, skip_filled_words = false) {
   }
 
   if (next_word) {
-    // Keep activeClueGroupIndex in sync with whichever clue group contains this word (if any)
-    if (this.clueGroups?.length) {
-      const groupIdx = this.clueGroups.findIndex(g => g.words_ids?.includes(next_word.id));
-      if (groupIdx !== -1 && groupIdx !== this.activeClueGroupIndex) {
-        this.activeClueGroupIndex = groupIdx;
-      }
-    }
-    const cell = next_word.getFirstEmptyCell() || next_word.getFirstCell();
     this.setActiveWord(next_word);
+    const cell = next_word.getFirstEmptyCell() || next_word.getFirstCell();
     this.setActiveCell(cell);
   }
 }
@@ -286,39 +283,15 @@ export function moveSelectionBy(delta_x, delta_y, jumping_over_black) {
     return;
   }
 
-  // All clue groups
-  const groups = this.clueGroups || [];
-  const n = groups.length;
-  if (!n) return;
-
-  // Active clue group
-  let activeGroup = groups[this.activeClueGroupIndex];
-
   // If new cell is outside current word
-  if (!this.selected_word.hasCell(x, y)) {
-    let selectedCellAltWord = null;
-    let newCellAltWord = null;
-    let altGroupIndex = this.activeClueGroupIndex;
+  if (this.selected_word && !this.selected_word.hasCell(x, y)) {
+    // Try to find an alternate word in words_list that includes both current cell and next cell
+    const altWord = (this.words_list || []).find(w =>
+      w.hasCell(this.selected_cell.x, this.selected_cell.y) && w.hasCell(new_cell.x, new_cell.y)
+    );
 
-    // Try to find an alternate word (perhaps in an inactive clue list) that includes current + next cell
-    for (let offset = 1; offset < n; offset++) {
-      const i = (this.activeClueGroupIndex + offset) % n;
-      const group = groups[i];
-      const match1 = group.getMatchingWord(this.selected_cell.x, this.selected_cell.y, true);
-      const match2 = group.getMatchingWord(new_cell.x, new_cell.y, true);
-      if (match1 && match2 && match1.id === match2.id) {
-        selectedCellAltWord = match1;
-        newCellAltWord = match2;
-        altGroupIndex = i;
-        break;
-      }
-    }
-
-    // Case 1: Found a matching word in another group (switch direction)
-    if (selectedCellAltWord && newCellAltWord) {
-      this.activeClueGroupIndex = altGroupIndex;
-      this.changeActiveClues(altGroupIndex);
-      activeGroup = groups[altGroupIndex];
+    if (altWord) {
+      this.setActiveWord(altWord);
 
       // arrow-stay / arrow-move_filled config logic
       if (
@@ -327,27 +300,13 @@ export function moveSelectionBy(delta_x, delta_y, jumping_over_black) {
       ) {
         new_cell = this.selected_cell;
       }
-    }
-
-    // Case 2: If the new cell has no word in the current group, switch groups
-    let newCellActiveWord = activeGroup.getMatchingWord(new_cell.x, new_cell.y, true);
-    if (!newCellActiveWord) {
-      // find the first group that *does* have a word here
-      for (let offset = 1; offset < n; offset++) {
-        const i = (this.activeClueGroupIndex + offset) % n;
-        const group = groups[i];
-        const candidate = group.getMatchingWord(x, y, true);
-        if (candidate) {
-          newCellActiveWord = candidate;
-          this.activeClueGroupIndex = i;
-          break;
-        }
+    } else {
+      // Find a word at new_cell (prefer matching current direction)
+      const wordsAtNewCell = (this.words_list || []).filter(w => w.hasCell(new_cell.x, new_cell.y));
+      let newWord = wordsAtNewCell.find(w => w.dir === this.selected_word.dir) || wordsAtNewCell[0];
+      if (newWord) {
+        this.setActiveWord(newWord);
       }
-    }
-
-    // Always update active word
-    if (newCellActiveWord) {
-      this.setActiveWord(newCellActiveWord);
     }
   }
 

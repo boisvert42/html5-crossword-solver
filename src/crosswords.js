@@ -70,6 +70,7 @@ import {
   getCell,
   setActiveWord,
   setActiveCell,
+  refreshSidebarHighlighting,
   skipToWord,
   moveToNextWord,
   hasUnfilledWords,
@@ -917,6 +918,10 @@ import {
 
       setActiveCell(cell) {
         setActiveCell.call(this, cell);
+      }
+
+      refreshSidebarHighlighting() {
+        refreshSidebarHighlighting.call(this);
       }
 
       // Clears canvas and re-renders all cells

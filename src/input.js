@@ -84,17 +84,8 @@ export function keyPressed(e) {
       if (this.selected_cell && this.selected_word) {
         // check config
         if (this.config.space_bar === 'space_switch') {
-          const {
-            x,
-            y
-          } = this.selected_cell;
-          const groups = this.clueGroups || [];
-          const n = groups.length;
-
-          if (n >= 1) {
-            this.changeActiveClues();
-            this.setActiveCell(this.selected_cell);
-          }
+          this.changeActiveClues();
+          this.setActiveCell(this.selected_cell);
         } else {
           // --- normal space behavior: clear and move to next cell
           this.updateCell(this.selected_cell, {
@@ -379,21 +370,23 @@ export function mouseClicked(e) {
     return;
   }
 
-  // Try to find a matching word in the current group
-  const currentGroup = this.clueGroups[this.activeClueGroupIndex];
-  let matchingWord = currentGroup.getMatchingWord(index_x, index_y, true);
+  // Find matching words in words_list at this cell
+  const matchingWords = (this.words_list || []).filter(w => w.hasCell(index_x, index_y));
+  let matchingWord = null;
 
-  // If not found, try other groups in order
-  if (!matchingWord) {
-    for (let i = 0; i < this.clueGroups.length; i++) {
-      if (i === this.activeClueGroupIndex) continue;
-      const testGroup = this.clueGroups[i];
-      const testWord = testGroup.getMatchingWord(index_x, index_y, true);
-      if (testWord) {
-        matchingWord = testWord;
-        this.activeClueGroupIndex = i; // switch to that group
-        break;
-      }
+  if (matchingWords.length > 0) {
+    // 1. Prefer word with the same direction as current selection
+    if (this.selected_word && this.selected_word.dir) {
+      matchingWord = matchingWords.find(w => w.dir === this.selected_word.dir);
+    }
+    // 2. Otherwise prefer word matching the active clue group
+    if (!matchingWord && this.clueGroups && this.clueGroups[this.activeClueGroupIndex]) {
+      const currentGroup = this.clueGroups[this.activeClueGroupIndex];
+      matchingWord = matchingWords.find(w => (currentGroup.words_ids || []).includes(w.id));
+    }
+    // 3. Fallback to first matching word at cell
+    if (!matchingWord) {
+      matchingWord = matchingWords[0];
     }
   }
 

@@ -163,8 +163,6 @@ export function parsePuzzle(data) {
   this.author = puzzle.metadata.author || '';
   this.copyright = puzzle.metadata.copyright || '';
   this.crossword_type = puzzle.metadata.crossword_type;
-  this.fakeclues = puzzle.metadata.fakeclues || false;
-  this.realwords = puzzle.metadata.realwords || false;
   this.is_autofill = puzzle.metadata.autofill || false;
   this.notepad = puzzle.metadata.description || '';
   this.grid_width = puzzle.metadata.width;
@@ -179,9 +177,9 @@ export function parsePuzzle(data) {
     this.is_autofill = true;
   }
 
-  const allGroupsFake = this.fakeclues || (puzzle.clues || []).every(g => g.fake);
-  if (allGroupsFake || this.crossword_type === 'diagramless' || this.crossword_type === 'coded') {
-    // top-text is meaningless if all groups are fake, or for diagramless/coded puzzles
+  const hasAnyCluedWords = (puzzle.clues || []).some(g => (g.clue || []).some(c => c.word));
+  if (!hasAnyCluedWords || this.crossword_type === 'diagramless' || this.crossword_type === 'coded') {
+    // top-text is meaningless if there are no clued words, or for diagramless/coded puzzles
     $('div.cw-top-text-wrapper').css({
       display: 'none'
     });

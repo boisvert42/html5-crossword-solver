@@ -115,7 +115,7 @@ export function setActiveCell(cell) {
     // The first param (`isInactive`) is true for all groups except the active one
     const isInactive = group !== this.clueGroups[this.activeClueGroupIndex];
     if (typeof group.markActive === 'function') {
-      group.markActive(cell.x, cell.y, isInactive, this.fakeclues);
+      group.markActive(cell.x, cell.y, isInactive);
     }
   });
 

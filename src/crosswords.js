@@ -357,9 +357,9 @@ import {
         this.grid_height = 0;
         this.cells = {};
         this.words = {};
+        this.words_list = [];
 
         this.clueGroups = []; // array of clue groups
-        this.displayClueGroups = null; // for "fakeclues" puzzles
         this.activeClueGroupIndex = 0;
 
         this.selected_word = null;
@@ -415,8 +415,8 @@ import {
 
         this.cells = {};
         this.words = {};
+        this.words_list = [];
         this.clueGroups = [];
-        this.displayClueGroups = null;
 
         this.has_reveal = this.config.has_reveal;
         this.has_check = this.config.has_check;
@@ -646,15 +646,14 @@ import {
 
         this.notepad_icon = this.root.find('.cw-button-notepad');
 
-        // === Initial cell selection (diagramless or fakeclues) ===
-        if (this.diagramless_mode || this.fakeclues) {
+        // === Initial cell selection (diagramless mode) ===
+        if (this.diagramless_mode) {
           const firstCell = this.getCell(1, 1);
           if (firstCell) {
             this.setSelectedCell(firstCell);
             this.setSelectedWord(null);
             this.top_text.html(''); // Clear top clue text
-            const initMessage = (this.diagramless_mode ? '[Diagramless Init]' : '[Fakeclues Init]');
-            console.log(initMessage, {
+            console.log('[Diagramless Init]', {
               selected_cell: this.selected_cell,
               selected_word: this.selected_word,
               top_text: this.top_text.html()
@@ -663,12 +662,11 @@ import {
         }
 
         //this.changeActiveClues();
-        (this.displayClueGroups || this.clueGroups || []).forEach(group => {
+        (this.clueGroups || []).forEach(group => {
           // Find the container that matches this group’s ID
           const container = document.querySelector(`.cw-clues[data-group-id="${group.id}"] .cw-clues-items`);
           if (container) {
-            const displayGroup = group; // preserve old logic
-            this.renderClues(displayGroup, container);
+            this.renderClues(group, container);
           }
         });
         this.addListeners();
@@ -684,8 +682,7 @@ import {
 
           extraCluesBtn.onclick = () => {
             let cluesHtml = '<div class="unmatched-clues-modal-wrapper">';
-            // Use displayClueGroups if available, otherwise fallback to clueGroups
-            const groupsToShow = (this.displayClueGroups || this.clueGroups).filter(g => g.isFake);
+            const groupsToShow = (this.clueGroups || []).filter(g => g.isFake);
             groupsToShow.forEach(group => {
               cluesHtml += `<div class="unmatched-clue-group-title">${group.title}</div><div class="unmatched-clues-list">`;
               group.clues.forEach(clue => {
@@ -707,8 +704,7 @@ import {
               const groupId = target.attr('data-clues');
               const wordId = target.attr('data-word');
 
-              // Find group in either collection
-              const clueGroup = (this.displayClueGroups || this.clueGroups).find(g => g.id === groupId);
+              const clueGroup = (this.clueGroups || []).find(g => g.id === groupId);
               if (!clueGroup) return;
 
               const clue = clueGroup.clues.find(c => String(c.wordId) === String(wordId));
@@ -751,7 +747,7 @@ import {
             this.top_text.html('');
           }
         } else {
-          const first_word = this.clueGroups[this.activeClueGroupIndex].getFirstWord?.();
+          const first_word = this.clueGroups[this.activeClueGroupIndex]?.getFirstWord?.() || (this.words_list && this.words_list[0]);
           if (first_word) {
             this.setActiveWord(first_word);
             const firstCell = first_word.getFirstCell?.();

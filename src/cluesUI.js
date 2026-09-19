@@ -145,29 +145,28 @@ export function updateClueAppearance(clue, $el) {
   if (!clue) return;
 
   // Use provided $el or look it up in the DOM using unique identifying info
-  const clueEl = $el || $(document).find(`.cw-clue.word-${clue.word}[data-number="${clue.number}"]`);
+  const clueEl = $el || (clue.word ? $(document).find(`.cw-clue.word-${clue.word}[data-number="${clue.number}"]`) : null);
+  if (!clueEl || !clueEl.length) return;
 
   // We specifically target the clue-text span to avoid graying out the clue number
   const textEl = clueEl.hasClass('cw-clue-text') ? clueEl : clueEl.find('.cw-clue-text');
 
-  const groupId = clueEl.data('clues');
-  const group = this.clueGroups.find(g => g.id === groupId);
+  const word = clue.word && this.words ? this.words[clue.word] : null;
 
-  if (!this.config.gray_completed_clues && (!group || !group.isFake) && !this.fakeclues) {
-    // Reset clue styling if the setting is turned off and this is not a fake clue context
-    textEl.css({
-      "text-decoration": "",
-      "color": ""
-    });
-    return;
-  }
-
-  // Determine if it should be gray based on fakeclues context or word fill state
   let shouldGray = false;
-  if (this.fakeclues || (group && group.isFake)) {
+  if (!word) {
+    // Fake / unplaced clue: manual completion state determines graying
     shouldGray = Boolean(clue.fakeClueCompleted);
-  } else if (clue.word && this.words[clue.word]) {
-    shouldGray = this.words[clue.word].isFilled();
+  } else {
+    // Real clue: automatic graying when word is filled, if config option is enabled
+    if (!this.config.gray_completed_clues) {
+      textEl.css({
+        "text-decoration": "",
+        "color": ""
+      });
+      return;
+    }
+    shouldGray = word.isFilled();
   }
 
   textEl.css({

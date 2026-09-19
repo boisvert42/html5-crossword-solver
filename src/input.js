@@ -401,11 +401,8 @@ export function mouseClicked(e) {
   if (matchingWord) {
     this.setActiveWord(matchingWord);
   } else {
-    // If no matching word found and current group is fake, clear top text
-    const currentGroup = this.clueGroups[this.activeClueGroupIndex];
-    if (this.fakeclues || (currentGroup && currentGroup.isFake)) {
-      this.top_text.html('');
-    }
+    // If clicked cell is not part of any word, clear top text
+    this.top_text.html('');
   }
 
   // Update cell selection and redraw
@@ -424,14 +421,17 @@ export function clueClicked(e) {
   const target = $(e.currentTarget);
   const clue = target.data('clue');
   const wordId = target.data('word');
-  const word = this.words[wordId];
+  const word = wordId && this.words ? this.words[wordId] : null;
 
   // Find which clue group this clue belongs to
   const clickedGroupId = target.data('clues');
   const groupIndex = this.clueGroups.findIndex(g => g.id === clickedGroupId);
   const group = this.clueGroups[groupIndex];
 
-  if (this.fakeclues || (group && group.isFake)) {
+  // A clue is fake if it is not associated with a word in the grid.
+  const isFake = !word;
+
+  if (isFake) {
     // Toggle "completed" state on the clue itself
     clue.fakeClueCompleted = !clue.fakeClueCompleted;
 
@@ -439,8 +439,6 @@ export function clueClicked(e) {
     this.updateClueAppearance(clue, target);
     return;
   }
-
-  if (!word) return;
 
   if (this.diagramless_mode) return;
 

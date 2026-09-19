@@ -749,7 +749,7 @@ import {
             this.top_text.html('');
           }
         } else {
-          const first_word = this.clueGroups[this.activeClueGroupIndex]?.getFirstWord?.() || (this.words_list && this.words_list[0]);
+          const first_word = this.words_list[0];
           if (first_word) {
             this.setActiveWord(first_word);
             const firstCell = first_word.getFirstCell?.();

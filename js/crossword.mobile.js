@@ -220,7 +220,7 @@ $(document).ready(function() {
           const clickedGroupId = target.data('clues');
           const groupIdx = (gCrossword.clueGroups || []).findIndex(g => g.id === clickedGroupId);
           if (groupIdx !== -1 && groupIdx !== gCrossword.activeClueGroupIndex) {
-            gCrossword.changeActiveClues(groupIdx);
+            gCrossword.cycleWordsAtCell(groupIdx);
           }
           gCrossword.setActiveCell(cell);
           gCrossword.renderCells();

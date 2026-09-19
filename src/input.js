@@ -84,7 +84,7 @@ export function keyPressed(e) {
       if (this.selected_cell && this.selected_word) {
         // check config
         if (this.config.space_bar === 'space_switch') {
-          this.changeActiveClues();
+          this.cycleWordsAtCell();
           this.setActiveCell(this.selected_cell);
         } else {
           // --- normal space behavior: clear and move to next cell
@@ -361,8 +361,8 @@ export function mouseClicked(e) {
     this.selected_cell.y === index_y;
 
   if (sameCellClicked) {
-    // Cycle to the next clue group (or next word in group) if clicking same square again
-    this.changeActiveClues();
+    // Cycle to the next word in words_list containing this square
+    this.cycleWordsAtCell();
     this.setActiveCell(clickedCell);
     if (!IS_MOBILE) {
       this.hidden_input.focus();
@@ -440,7 +440,7 @@ export function clueClicked(e) {
 
   // Switch directly to that group if needed
   if (groupIndex !== -1 && groupIndex !== this.activeClueGroupIndex) {
-    this.changeActiveClues(groupIndex);
+    this.cycleWordsAtCell(groupIndex);
   }
 
   this.setActiveWord(word);

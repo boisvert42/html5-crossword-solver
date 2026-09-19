@@ -12,13 +12,11 @@ import { IS_MOBILE, SKIP_UP, SKIP_DOWN, SKIP_LEFT, SKIP_RIGHT } from './constant
 import { escape, resizeText } from './utils.js';
 
 /**
- * Switch active clue group or active word.
- * - If targetIndex is provided, jump directly to that clue group.
- * - If there are multiple clue groups, cycle to the next group that contains the selected cell.
- * - If there is only one clue group (e.g., variety puzzles), cycle to the next word containing the selected cell.
- * @param {number|null} targetIndex - Explicit group index to switch to, or null to cycle.
+ * Cycle to the next word in words_list containing the selected cell.
+ * If targetIndex is provided, switches to that clue group instead.
+ * @param {number|null} targetIndex - Explicit clue group index to jump to, or null to cycle words at cell.
  */
-export function changeActiveClues(targetIndex = null) {
+export function cycleWordsAtCell(targetIndex = null) {
   const groups = this.clueGroups || [];
   const n = groups.length;
 
@@ -53,6 +51,14 @@ export function changeActiveClues(targetIndex = null) {
   }
 
   this.refreshSidebarHighlighting();
+}
+
+/**
+ * Backwards-compatible alias for cycleWordsAtCell.
+ * @param {number|null} targetIndex
+ */
+export function changeActiveClues(targetIndex = null) {
+  return cycleWordsAtCell.call(this, targetIndex);
 }
 
 export function getCell(x, y) {

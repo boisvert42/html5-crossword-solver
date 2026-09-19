@@ -66,6 +66,7 @@ import {
   checkIfSolved
 } from './validation.js';
 import {
+  cycleWordsAtCell,
   changeActiveClues,
   getCell,
   setActiveWord,
@@ -904,6 +905,11 @@ import {
        * - If there is only one clue group (e.g., variety puzzles), cycle to the next word containing the selected cell.
        * - If none match, just stay on the next group.
        */
+      cycleWordsAtCell(targetIndex = null) {
+        cycleWordsAtCell.call(this, targetIndex);
+      }
+
+      // Backwards-compatible alias
       changeActiveClues(targetIndex = null) {
         changeActiveClues.call(this, targetIndex);
       }

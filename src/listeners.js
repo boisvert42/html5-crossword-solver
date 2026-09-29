@@ -21,6 +21,7 @@ export function removeGlobalListeners() {
 export function removeListeners() {
   this.removeGlobalListeners();
   this.root.undelegate();
+  this.root.off('click', '.clue-char');
   this.clues_holder.undelegate('div.cw-clues-items div.cw-clue', 'click');
   this.clues_holder.undelegate('div.cw-clues-items span', 'click');
   this.svg.off('mousemove click');
@@ -95,6 +96,34 @@ export function addListeners() {
   );
 
   this.svg.on('click', $.proxy(this.mouseClicked, this));
+
+  if (this.isClueDecipherMode) {
+    this.root.on('click', '.clue-char', (e) => {
+      e.stopPropagation();
+      const target = $(e.currentTarget);
+      const key = target.attr('data-clue-key');
+      if (!key) return;
+      const parts = key.split('-');
+      const dir = parts[0];
+      const num = parseInt(parts[1], 10);
+      const idx = parseInt(parts[2], 10);
+
+      const word = Object.values(this.words).find(w => {
+        const wDir = this.normalizeDirection(w.dir);
+        return wDir === dir && w.clue && w.clue.number == num;
+      });
+
+      if (word) {
+        this.setActiveWord(word);
+        const cell = word.getFirstEmptyCell() || word.getFirstCell();
+        if (cell) {
+          this.setActiveCell(cell);
+        }
+        this.activeClueCharIndex = idx;
+        this.updateClueHighlights();
+      }
+    });
+  }
 
   // REVEAL
   this.reveal_letter.on(

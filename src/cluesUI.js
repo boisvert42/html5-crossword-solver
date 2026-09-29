@@ -48,11 +48,15 @@ export function renderClues(clues_group, clues_container) {
 
   // --- render each clue ---
   for (const clue of clues_group.clues) {
+    const clueTextHtml = this.getClueTextHtml
+      ? this.getClueTextHtml(clue.text, clues_group.id, clue.number)
+      : escape(clue.text);
+
     const clue_el = $(`
       <div style="position: relative">
         <span class="cw-clue-number">${escape(clue.number)}</span>
         <span class="cw-clue-text">
-          ${escape(clue.text)}
+          ${clueTextHtml}
           <div class="cw-edit-container" style="display: none;">
             <input class="cw-input note-style" type="text">
           </div>

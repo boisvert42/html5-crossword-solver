@@ -100,6 +100,15 @@ import {
   saveAsIpuz
 } from './export.js';
 import {
+  normalizeDirection,
+  getClueTextHtml,
+  initActiveClueCharIndex,
+  updateClueHighlights,
+  moveClueCharSelection,
+  typeClueChar,
+  backspaceClueChar
+} from './clueDecipher.js';
+import {
   IS_MOBILE,
   CONFIGURABLE_SETTINGS,
   STORAGE_KEY,
@@ -157,6 +166,7 @@ import {
       notepad_name: 'Notes',
       downsOnly: false,
       kelsey: false,
+      char_obscure: '▮',
     };
 
     /*const PUZZLE_STORAGE_VERSION = 'v3';  // bump this anytime you change the structure*/
@@ -417,6 +427,12 @@ import {
         this.selected_cell = null;
         this.isSolved = false;
         this.diagramless_mode = false;
+        this.isClueDecipherMode = false;
+        this.clueLetterMappings = null;
+        this.clueLetterLinkMap = {};
+        this.clueLetterState = {};
+        this.clueLetterOriginal = {};
+        this.activeClueCharIndex = undefined;
         this.rebus_mode = false;
         this.rebus_cell_previous_letter = '';
         this.strictRebus = false;
@@ -982,6 +998,38 @@ import {
 
       adjustRebusFrame() {
         adjustRebusFrame.call(this);
+      }
+
+      // =========================================================================
+      // CLUE DECIPHER MODE (delegates)
+      // =========================================================================
+
+      normalizeDirection(dir) {
+        return normalizeDirection.call(this, dir);
+      }
+
+      getClueTextHtml(clueText, dir, number) {
+        return getClueTextHtml.call(this, clueText, dir, number);
+      }
+
+      initActiveClueCharIndex(word) {
+        return initActiveClueCharIndex.call(this, word);
+      }
+
+      updateClueHighlights() {
+        return updateClueHighlights.call(this);
+      }
+
+      moveClueCharSelection(step) {
+        return moveClueCharSelection.call(this, step);
+      }
+
+      typeClueChar(char) {
+        return typeClueChar.call(this, char);
+      }
+
+      backspaceClueChar() {
+        return backspaceClueChar.call(this);
       }
 
       // =========================================================================

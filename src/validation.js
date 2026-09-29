@@ -174,17 +174,34 @@ export function check_reveal(to_solve, reveal_or_check, e) {
 
 export function checkIfSolved(do_reveal = true) {
   const wasSolved = this.isSolved;
-  let i, j, cell;
-  for (i in this.cells) {
-    for (j in this.cells[i]) {
-      cell = this.cells[i][j];
-      // if found cell without letter or with incorrect letter - return
-      if (
-        (!cell.empty && (!cell.letter || !isCorrect(cell.letter, cell.solution, this.strictRebus))) ||
-        (this.diagramless_mode && ((cell.type === 'block') !== (cell.solution === '#')))
-      ) {
+
+  if (this.isClueDecipherMode) {
+    for (const key in this.clueLetterState) {
+      const userVal = this.clueLetterState[key];
+      if (!userVal) {
         this.isSolved = false;
         return;
+      }
+
+      const origChar = this.clueLetterOriginal ? this.clueLetterOriginal[key] : '';
+      if (origChar && userVal.toLowerCase() !== origChar.toLowerCase()) {
+        this.isSolved = false;
+        return;
+      }
+    }
+  } else {
+    let i, j, cell;
+    for (i in this.cells) {
+      for (j in this.cells[i]) {
+        cell = this.cells[i][j];
+        // if found cell without letter or with incorrect letter - return
+        if (
+          (!cell.empty && (!cell.letter || !isCorrect(cell.letter, cell.solution, this.strictRebus))) ||
+          (this.diagramless_mode && ((cell.type === 'block') !== (cell.solution === '#')))
+        ) {
+          this.isSolved = false;
+          return;
+        }
       }
     }
   }

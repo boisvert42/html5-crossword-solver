@@ -30,6 +30,10 @@ export function keyPressed(e) {
       this.moveToFirstCell(false);
       break;
     case 37: // left
+      if (this.isClueDecipherMode) {
+        this.moveClueCharSelection(-1);
+        break;
+      }
       if (this.rebus_mode) this.exitRebusMode(true, false);
       if (this.diagramless_mode) this.setDiagramlessDir('across'); // set BEFORE moving
       if (e.shiftKey) {
@@ -48,6 +52,10 @@ export function keyPressed(e) {
       }
       break;
     case 39: // right
+      if (this.isClueDecipherMode) {
+        this.moveClueCharSelection(1);
+        break;
+      }
       if (this.rebus_mode) this.exitRebusMode(true, false);
       if (this.diagramless_mode) this.setDiagramlessDir('across'); // set BEFORE moving
       if (e.shiftKey) {
@@ -67,6 +75,9 @@ export function keyPressed(e) {
       break;
 
     case 32: // space
+      if (this.isClueDecipherMode) {
+        break;
+      }
       if (this.rebus_mode) {
         this.exitRebusMode(true, true);
         prevent = true;
@@ -157,7 +168,11 @@ export function keyPressed(e) {
       this.checkIfSolved();
       break;
     case 8: // backspace
-      this.backspace();
+      if (this.isClueDecipherMode) {
+        this.backspaceClueChar();
+      } else {
+        this.backspace();
+      }
       break;
     case 9: // tab
       if (this.rebus_mode) this.exitRebusMode(true, false);
@@ -233,6 +248,13 @@ export function keyPressed(e) {
         e.key !== ' ' &&
         !e.ctrlKey && !e.metaKey && !e.altKey;
 
+      if (this.isClueDecipherMode && isPrintableChar) {
+        if (/[a-zA-Z]/.test(e.key)) {
+          this.typeClueChar(e.key);
+        }
+        break;
+      }
+
       if (this.selected_cell && isPrintableChar && !this.selected_cell.fixed) {
         if (this.rebus_mode) {
           prevent = true;
@@ -252,6 +274,11 @@ export function keyPressed(e) {
  * Deletes the letter value of the currently selected cell and moves cursor backwards.
  */
 export function backspace() {
+  if (this.isClueDecipherMode) {
+    this.backspaceClueChar();
+    return;
+  }
+
   if (this.selected_cell && !this.selected_cell.fixed) {
     if (this.rebus_mode) {
       this.backspaceRebus();
@@ -418,6 +445,13 @@ export function clueClicked(e) {
  * @param {string} text - The character or string to enter.
  */
 export function enterLetter(text) {
+  if (this.isClueDecipherMode) {
+    if (/[a-zA-Z]/.test(text)) {
+      this.typeClueChar(text);
+    }
+    return;
+  }
+
   if (!this.selected_cell || this.selected_cell.fixed) return;
 
   const str = (text || '').trim();

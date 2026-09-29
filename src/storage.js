@@ -27,6 +27,9 @@ export function saveGameImmediate() {
   const jsxw_str = JSON.stringify(this.jsxw.cells);
   try {
     localStorage.setItem(this.savegame_name, jsxw_str);
+    if (this.isClueDecipherMode && this.clueLetterState) {
+      localStorage.setItem(this.savegame_name + "_clue_letters", JSON.stringify(this.clueLetterState));
+    }
     localStorage.setItem(this.savegame_name + "_notes", JSON.stringify(Array.from(this.notes.entries()).map(n => {
       return {
         key: n[0],
@@ -42,6 +45,9 @@ export function saveGameImmediate() {
     try {
       // try again once
       localStorage.setItem(this.savegame_name, jsxw_str);
+      if (this.isClueDecipherMode && this.clueLetterState) {
+        localStorage.setItem(this.savegame_name + "_clue_letters", JSON.stringify(this.clueLetterState));
+      }
       localStorage.setItem(this.savegame_name + "_timer", (this.xw_timer_seconds || 0).toString());
       localStorage.setItem(this.savegame_name + "_lastmodified", Date.now());
     } catch (e2) {
@@ -68,6 +74,7 @@ export function cleanupSaves(limit = null) {
       !key.endsWith('_notes') &&
       !key.endsWith('_version') &&
       !key.endsWith('_timer') &&
+      !key.endsWith('_clue_letters') &&
       !key.endsWith('_lastmodified')) {
 
       const lastModifiedStr = localStorage.getItem(key + '_lastmodified');
@@ -90,6 +97,7 @@ export function cleanupSaves(limit = null) {
     localStorage.removeItem(key + '_notes');
     localStorage.removeItem(key + '_version');
     localStorage.removeItem(key + '_timer');
+    localStorage.removeItem(key + '_clue_letters');
     localStorage.removeItem(key + '_lastmodified');
   });
 
@@ -106,6 +114,7 @@ export function cleanupSaves(limit = null) {
     localStorage.removeItem(keyToDelete + '_notes');
     localStorage.removeItem(keyToDelete + '_version');
     localStorage.removeItem(keyToDelete + '_timer');
+    localStorage.removeItem(keyToDelete + '_clue_letters');
     localStorage.removeItem(keyToDelete + '_lastmodified');
   }
 }

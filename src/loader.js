@@ -117,10 +117,32 @@ export function normalizeClueTitle(rawTitle) {
 }
 
 export function parsePuzzle(data) {
+  this.isClueDecipherMode = false;
+  this.clueLetterMappings = null;
+
+  if (!(data instanceof JSCrossword)) {
+    try {
+      const jsonText = new TextDecoder("utf-8").decode(new Uint8Array(data));
+      const rawJson = JSON.parse(jsonText);
+      if (rawJson && (rawJson.clue_letter_mappings || (rawJson.kind && rawJson.kind.indexOf("http://ipuz.org/ext/clue-decipher") !== -1))) {
+        console.log("Enabling 'clue decipher mode'");
+        this.isClueDecipherMode = true;
+        this.clueLetterMappings = rawJson.clue_letter_mappings;
+      }
+    } catch (e) {
+      // Ignore if not valid JSON/UTF-8
+    }
+  }
+
   // if it's already a JSCrossword, return it as-is
   let puzzle;
   if (data instanceof JSCrossword) {
     puzzle = data;
+    if (puzzle.metadata && puzzle.metadata.clue_letter_mappings) {
+      console.log("Enabling 'clue decipher mode' (load from JSCrossword)");
+      this.isClueDecipherMode = true;
+      this.clueLetterMappings = puzzle.metadata.clue_letter_mappings;
+    }
   } else {
     // otherwise, parse it directly -- JSCrossword handles the format detection
     puzzle = JSCrossword.fromData(new Uint8Array(data), {
@@ -128,8 +150,29 @@ export function parsePuzzle(data) {
     });
   }
 
+  if (!this.clueLetterMappings && puzzle.metadata && puzzle.metadata.clue_letter_mappings) {
+    this.isClueDecipherMode = true;
+    this.clueLetterMappings = puzzle.metadata.clue_letter_mappings;
+  }
+
   puzzle.kind = puzzle.metadata.kind;
   this.jsxw = puzzle;
+
+  this.clueLetterLinkMap = {};
+  this.clueLetterState = {};
+  this.clueLetterOriginal = {};
+
+  if (this.isClueDecipherMode && this.clueLetterMappings) {
+    console.log("Indexing clue letter mappings...");
+    this.clueLetterMappings.forEach(group => {
+      const keys = group.map(coord => `${coord.dir}-${coord.num}-${coord.idx}`);
+      group.forEach(coord => {
+        const key = `${coord.dir}-${coord.num}-${coord.idx}`;
+        this.clueLetterLinkMap[key] = keys;
+        this.clueLetterState[key] = null;
+      });
+    });
+  }
 
   // Expose ipuz string
   window.ipuz = this.jsxw.toIpuzString();
@@ -328,6 +371,13 @@ export function parsePuzzle(data) {
       c.clue = (c.type === 'clue');
     }
 
+    if (this.isClueDecipherMode) {
+      if (c.solution && c.solution !== '#' && c.solution !== '.' && c.solution !== '-') {
+        c.letter = c.solution;
+        c.fixed = true;
+      }
+    }
+
     if (!this.cells[c.x]) {
       this.cells[c.x] = {};
     }
@@ -474,6 +524,33 @@ export function parsePuzzle(data) {
       }),
       clue: clueMapping[word.id]
     });
+  }
+
+  if (this.isClueDecipherMode && this.clueLetterMappings) {
+    this.clueLetterMappings.forEach(group => {
+      group.forEach(coord => {
+        const key = `${coord.dir}-${coord.num}-${coord.idx}`;
+        const word = Object.values(this.words).find(w => {
+          const wDir = this.normalizeDirection(w.dir);
+          return wDir === coord.dir && w.clue && w.clue.number == coord.num;
+        });
+        if (word && word.clue && word.clue.text) {
+          this.clueLetterOriginal[key] = word.clue.text[coord.idx];
+        } else {
+          this.clueLetterOriginal[key] = '';
+        }
+      });
+    });
+
+    const savedClueLetters = localStorage.getItem(this.savegame_name + "_clue_letters");
+    if (savedClueLetters) {
+      try {
+        const parsed = JSON.parse(savedClueLetters);
+        if (parsed && typeof parsed === 'object') {
+          Object.assign(this.clueLetterState, parsed);
+        }
+      } catch (e) {}
+    }
   }
 
   this.completeLoad();

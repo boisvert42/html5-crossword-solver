@@ -85,21 +85,32 @@ export function getCell(x, y) {
 
 export function setActiveWord(word) {
   if (word) {
+    const wordChanged = this.selected_word !== word;
     this.setSelectedWord(word);
     const group = this.clueGroups[this.activeClueGroupIndex];
     if (this.fakeclues || (group && group.isFake)) {
       this.top_text.html('');
       return;
     }
+    const clueTextHtml = this.getClueTextHtml
+      ? this.getClueTextHtml(word.clue.text, word.dir, word.clue.number)
+      : escape(word.clue.text);
     this.top_text.html(`
       <span class="cw-clue-number">
         ${escape(word.clue.number)}
       </span>
       <span class="cw-clue-text">
-        ${escape(word.clue.text)}
+        ${clueTextHtml}
       </span>
     `);
     resizeText(this.root, this.top_text);
+
+    if (this.isClueDecipherMode) {
+      if (this.activeClueCharIndex === undefined || wordChanged) {
+        this.initActiveClueCharIndex(word);
+      }
+      this.updateClueHighlights();
+    }
   }
 }
 

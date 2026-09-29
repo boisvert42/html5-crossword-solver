@@ -925,3 +925,24 @@ input[type='radio'] {
 .cw-max-width-420 .cw-buttons-holder .cw-button {
   font-size: 0.85rem;
 }
+
+/* --- Clue Decipher Mode highlighting --- */
+.clue-char {
+  display: inline-block;
+  text-align: center;
+  border-radius: 2px;
+  transition: background-color 0.1s ease, color 0.1s ease;
+  cursor: pointer;
+}
+
+.clue-char-selected {
+  background-color: #2ECC40 !important; /* Green */
+  color: #FFFFFF !important;
+  font-weight: bold;
+}
+
+.clue-char-mapped {
+  background-color: #FF851B !important; /* Orange */
+  color: #FFFFFF !important;
+}
+

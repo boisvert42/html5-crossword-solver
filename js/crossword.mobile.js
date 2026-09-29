@@ -14,7 +14,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 **/
 
 var gCrossword;
-let isAltKeyboard = false;
 
 $(document).ready(function() {
   let initialWindowHeight = window.innerHeight;
@@ -64,8 +63,17 @@ $(document).ready(function() {
     document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
 
+  function updateRebusKeyUI(active) {
+    const rebusKey = document.querySelector('.cw-key-rebus, .rebus-key');
+    if (rebusKey) {
+      rebusKey.textContent = active ? 'DONE' : 'REBUS';
+      rebusKey.classList.toggle('active', Boolean(active));
+    }
+  }
+
   function rebuildKeyboard() {
     const wrapper = document.querySelector('.keyboard-wrapper-placeholder');
+    if (!wrapper) return;
     const oldKeyboard = wrapper.querySelector('#custom-keyboard');
     if (oldKeyboard) oldKeyboard.remove();
 
@@ -73,24 +81,6 @@ $(document).ready(function() {
 
     wrapper.appendChild(newKeyboard);
     wrapper.style.height = `${newKeyboard.offsetHeight}px`;
-
-    /* // Reattach Rebus key
-    newKeyboard.querySelector('.cw-key-rebus')?.addEventListener('click', () => {
-      const rebusEntry = prompt('Rebus entry', '');
-      if (rebusEntry) {
-        gCrossword.hiddenInputChanged(rebusEntry.toUpperCase());
-      }
-    });
-
-    newKeyboard.querySelector('.cw-key-left')?.addEventListener('click', () => {
-      const skipFilled = gCrossword.config?.tab_key === 'tab_skip';
-      gCrossword.moveToNextWord(true, skipFilled); // ← previous word
-    });
-
-    newKeyboard.querySelector('.cw-key-right')?.addEventListener('click', () => {
-      const skipFilled = gCrossword.config?.tab_key === 'tab_skip';
-      gCrossword.moveToNextWord(false, skipFilled); // → next word
-    });*/
   }
 
   function rebuildKeyboardAndPositionDrawer() {
@@ -110,6 +100,13 @@ $(document).ready(function() {
   const params = CrosswordShared.getCrosswordParams();
 
   gCrossword = CrosswordNexus.createCrossword($('div.crossword'), params);
+  if (gCrossword) {
+    window.gCrossword = gCrossword;
+    gCrossword.onRebusModeChange = updateRebusKeyUI;
+  }
+  $('div.crossword').on('rebusModeChange', (e, data) => {
+    updateRebusKeyUI(data?.active);
+  });
   if (gCrossword?.syncTopTextWidth) {
     window.gCrossword.syncTopTextWidth = gCrossword.syncTopTextWidth.bind(gCrossword);
   }
@@ -125,20 +122,23 @@ $(document).ready(function() {
         const check = allButtons.find(btn => btn.textContent.includes('Check'));
         const reveal = allButtons.find(btn => btn.textContent.includes('Reveal'));
         const settings = allButtons.find(btn => btn.textContent.includes('Settings'));
+        const done = allButtons.find(btn => btn.textContent.includes("I'm done!"));
         const timer = allButtons.find(btn => btn.textContent.match(/[\d:]+/)); // crude match for timer
 
-        // Only reflow if all buttons were found
-        if (file && check && reveal && settings && timer) {
+        // Only reflow if all buttons were found (except File/Reveal/Check which might be hidden)
+        if (settings && timer) {
 
           const row1 = document.createElement('div');
           row1.className = 'cw-buttons-row';
-          row1.append(file, check, reveal);
+
+          if (file && file.style.display !== 'none') row1.append(file);
+          if (check && check.style.display !== 'none') row1.append(check);
+          if (reveal && reveal.style.display !== 'none') row1.append(reveal);
 
           const row2 = document.createElement('div');
           row2.className = 'cw-buttons-row';
           row2.append(settings, timer);
-
-          // Clear and re-append
+          if (done) row2.append(done);          // Clear and re-append
           buttons.innerHTML = '';
           buttons.append(row1, row2);
         }
@@ -278,12 +278,74 @@ $(document).ready(function() {
         let timer = null;
         let startX = 0,
           startY = 0;
+        let targetCell = null;
+        let isLongPressTriggered = false;
 
-        function openRebusEditor() {
-          if (!gCrossword?.selected_cell || gCrossword.selected_cell.empty) return;
-          const val = prompt('Rebus entry', gCrossword.selected_cell.letter || '');
-          if (val && gCrossword?.hiddenInputChanged) {
-            gCrossword.hiddenInputChanged(val.toUpperCase());
+        function findCellFromEvent(e) {
+          if (!gCrossword) return null;
+          const target = e.target;
+          if (target && typeof target.getAttribute === 'function') {
+            const x = parseInt(target.getAttribute('data-x'), 10);
+            const y = parseInt(target.getAttribute('data-y'), 10);
+            if (!isNaN(x) && !isNaN(y)) {
+              return gCrossword.getCell?.(x, y) || null;
+            }
+          }
+          const closest = target?.closest?.('[data-x]');
+          if (closest && typeof closest.getAttribute === 'function') {
+            const x = parseInt(closest.getAttribute('data-x'), 10);
+            const y = parseInt(closest.getAttribute('data-y'), 10);
+            if (!isNaN(x) && !isNaN(y)) {
+              return gCrossword.getCell?.(x, y) || null;
+            }
+          }
+          return gCrossword.selected_cell || null;
+        }
+
+        function triggerRebusLongPress() {
+          if (!gCrossword) return;
+          const cell = targetCell || gCrossword.selected_cell;
+          if (!cell || cell.empty || cell.type === 'block') return;
+
+          isLongPressTriggered = true;
+
+          const isSameCell = gCrossword.selected_cell &&
+            gCrossword.selected_cell.x === cell.x &&
+            gCrossword.selected_cell.y === cell.y;
+
+          if (!isSameCell) {
+            if (!gCrossword.diagramless_mode) {
+              const groups = gCrossword.clueGroups || [];
+              const n = groups.length;
+              let newActiveWord = null;
+              let newGroupIndex = gCrossword.activeClueGroupIndex ?? 0;
+              if (groups[newGroupIndex]) {
+                newActiveWord = groups[newGroupIndex].getMatchingWord(cell.x, cell.y, false);
+              }
+              if (!newActiveWord && n) {
+                for (let offset = 1; offset < n; offset++) {
+                  const i = (newGroupIndex + offset) % n;
+                  const match = groups[i]?.getMatchingWord(cell.x, cell.y, false);
+                  if (match) {
+                    newActiveWord = match;
+                    newGroupIndex = i;
+                    break;
+                  }
+                }
+              }
+              if (newActiveWord) {
+                gCrossword.activeClueGroupIndex = newGroupIndex;
+                gCrossword.setActiveWord(newActiveWord);
+              }
+            }
+            gCrossword.setActiveCell(cell);
+            gCrossword.enterRebusMode?.();
+          } else {
+            if (gCrossword.toggleRebusMode) {
+              gCrossword.toggleRebusMode();
+            } else {
+              gCrossword.enterRebusMode?.();
+            }
           }
         }
 
@@ -295,11 +357,13 @@ $(document).ready(function() {
         }
 
         grid.addEventListener('pointerdown', (e) => {
-          if (!gCrossword?.selected_cell || gCrossword.selected_cell.empty) return;
+          isLongPressTriggered = false;
+          targetCell = findCellFromEvent(e);
+          if (!targetCell || targetCell.empty || targetCell.type === 'block') return;
           startX = e.clientX;
           startY = e.clientY;
           clearTimer();
-          timer = setTimeout(openRebusEditor, LP_MS);
+          timer = setTimeout(triggerRebusLongPress, LP_MS);
         });
 
         grid.addEventListener('pointermove', (e) => {
@@ -309,9 +373,36 @@ $(document).ready(function() {
           if (dx > MAX_MOVE || dy > MAX_MOVE) clearTimer(); // treat as scroll/drag, cancel LP
         });
 
-        grid.addEventListener('pointerup', clearTimer);
+        grid.addEventListener('pointerup', () => {
+          clearTimer();
+          if (isLongPressTriggered) {
+            setTimeout(() => {
+              isLongPressTriggered = false;
+            }, 300);
+          }
+        });
+
         grid.addEventListener('pointerleave', clearTimer);
-        grid.addEventListener('pointercancel', clearTimer);
+        grid.addEventListener('pointercancel', () => {
+          clearTimer();
+          isLongPressTriggered = false;
+        });
+
+        grid.addEventListener(
+          'click',
+          (e) => {
+            if (isLongPressTriggered) {
+              e.preventDefault();
+              e.stopPropagation();
+              isLongPressTriggered = false;
+            }
+          },
+          true
+        );
+
+        grid.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+        });
       })();
 
 
@@ -351,16 +442,68 @@ $(document).ready(function() {
         gCrossword.setActiveWord(firstWord);
         gCrossword.setActiveCell(firstWord.getFirstCell());
         gCrossword.renderCells();
-        // Match the width of the top clue bar to the grid
-        setTimeout(() => {
-          const gridEl = document.getElementById('cw-puzzle-grid');
           const clueBar = document.querySelector('.cw-top-text-wrapper');
-          if (gridEl && clueBar) {
-            clueBar.style.width = gridEl.getBoundingClientRect().width + 'px';
+          if (clueBar) {
+            clueBar.style.width = '100%';
           }
-        }, 100);
       }, 50);
+
+      setupKeyboardToggleButton();
+      const headerEl = document.querySelector('.cw-header');
+      if (headerEl) {
+        const headerObserver = new MutationObserver(() => {
+          setupKeyboardToggleButton();
+        });
+        headerObserver.observe(headerEl, { childList: true });
+      }
     };
+
+    function setupKeyboardToggleButton() {
+      const header = document.querySelector('.cw-header');
+      const root = document.querySelector('.crossword');
+      if (!header || !root) return;
+      if (header.querySelector('.cw-button-keyboard-toggle')) return;
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'cw-button cw-button-keyboard-toggle';
+
+      const updateToggleBtnText = (isHidden) => {
+        toggleBtn.innerHTML = `<span class="cw-button-icon">⌨️</span> <span class="cw-keyboard-toggle-text">${isHidden ? 'Show Keyboard' : 'Hide Keyboard'}</span>`;
+      };
+
+      const isTablet = window.innerWidth >= 768;
+      let isHidden = isTablet && localStorage.getItem('cw_hide_virtual_keyboard') === '1';
+      if (isHidden) {
+        root.classList.add('keyboard-hidden');
+      }
+      updateToggleBtnText(isHidden);
+
+      toggleBtn.addEventListener('click', () => {
+        isHidden = !root.classList.contains('keyboard-hidden');
+        root.classList.toggle('keyboard-hidden', isHidden);
+        updateToggleBtnText(isHidden);
+        try {
+          localStorage.setItem('cw_hide_virtual_keyboard', isHidden ? '1' : '0');
+        } catch (e) {}
+
+        setTimeout(() => {
+          if (gCrossword?.renderCells) {
+            gCrossword.renderCells();
+          }
+          if (gCrossword?.windowResized) {
+            gCrossword.windowResized();
+          }
+          window.dispatchEvent(new Event('resize'));
+        }, 100);
+      });
+
+      const spacer = header.querySelector('.cw-flex-spacer');
+      if (spacer) {
+        header.insertBefore(toggleBtn, spacer);
+      } else {
+        header.appendChild(toggleBtn);
+      }
+    }
 
     setTimeout(tryWrapLayout, 300);
   }
@@ -378,13 +521,7 @@ function createCustomKeyboard() {
     'ZXCVBNM'.split('')
   ];
 
-  const symbolRows = [
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')'],
-    ['-', '+', '=', '/', '?', ':', ';', '"', "'", '\\']
-  ];
-
-  const rows = isAltKeyboard ? symbolRows : letterRows;
+  const rows = letterRows;
 
   rows.forEach((row, rowIndex) => {
     const rowDiv = document.createElement('div');
@@ -402,24 +539,27 @@ function createCustomKeyboard() {
       rowDiv.appendChild(leftArrow);
     }
 
-    // ── BOTTOM ROW: 123/ABC toggle on the far left
+    // ── BOTTOM ROW: REBUS toggle on the far left
     if (rowIndex === 2) {
-      const altKey = document.createElement('div');
-      altKey.className = 'custom-key cw-key-alt-toggle';
-      altKey.dataset.key = 'ALT';
-      altKey.textContent = isAltKeyboard ? 'ABC' : '123';
-      altKey.addEventListener('click', () => {
-        isAltKeyboard = !isAltKeyboard;
-
-        const wrapper = document.querySelector('.keyboard-wrapper-placeholder');
-        const oldKeyboard = wrapper.querySelector('#custom-keyboard');
-        if (oldKeyboard) oldKeyboard.remove();
-
-        const newKeyboard = createCustomKeyboard();
-        wrapper.appendChild(newKeyboard);
-        wrapper.style.height = `${newKeyboard.offsetHeight}px`;
+      const rebusKey = document.createElement('div');
+      rebusKey.className = 'custom-key rebus-key cw-key-rebus';
+      rebusKey.dataset.key = 'REBUS';
+      const isRebus = Boolean(gCrossword?.rebus_mode);
+      rebusKey.textContent = isRebus ? 'DONE' : 'REBUS';
+      if (isRebus) {
+        rebusKey.classList.add('active');
+      }
+      rebusKey.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!gCrossword) return;
+        if (gCrossword.rebus_mode) {
+          gCrossword.exitRebusMode(true, true);
+        } else {
+          gCrossword.enterRebusMode();
+        }
       });
-      rowDiv.appendChild(altKey);
+      rowDiv.appendChild(rebusKey);
     }
 
     // main keys for the row
@@ -428,7 +568,9 @@ function createCustomKeyboard() {
       key.className = 'custom-key';
       key.textContent = letter;
       key.addEventListener('click', () => {
-        if (gCrossword?.hidden_input) {
+        if (gCrossword?.enterLetter) {
+          gCrossword.enterLetter(letter);
+        } else if (gCrossword?.hidden_input) {
           gCrossword.hiddenInputChanged(letter);
         }
       });
@@ -452,7 +594,9 @@ function createCustomKeyboard() {
       periodKey.className = 'custom-key period-key';
       periodKey.textContent = '.';
       periodKey.addEventListener('click', () => {
-        if (gCrossword?.hidden_input) {
+        if (gCrossword?.enterLetter) {
+          gCrossword.enterLetter('.');
+        } else if (gCrossword?.hidden_input) {
           gCrossword.hiddenInputChanged('.');
         }
       });

@@ -45,12 +45,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
   background-color: var(--clue-scrollbar-color-thumb)
 }
 
-.cw-clue {
-  padding: 2px 0px;
-  line-height: 1.4rem;
-  font-size: 0.7em;
-}
-
 /**
 * Utilities
 **/
@@ -65,7 +59,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 * window.
 **/
 .cw-clues {
-  width: 350px;
+  width: auto;
+  max-width: 100%;
 }
 
 /* MOBILE BASE OVERRIDES */
@@ -140,14 +135,6 @@ html.mobile-mode {
   max-height: 100%;
   overflow-y: auto;
   scroll-snap-type: y proximity;
-  font-size: 1.2em;
-}
-
-.crossword.mobile .cw-clue {
-  padding: 2px 0;
-  margin-bottom: 0;
-  line-height: 1rem;
-  scroll-snap-align: start;
 }
 
 .crossword.mobile .cw-puzzle-container {
@@ -170,7 +157,15 @@ html.mobile-mode {
 
 .crossword.mobile #cw-puzzle-grid {
   display: inline-block;
-  margin-top: 48px;
+  margin-top: 65px;
+}
+
+.crossword.mobile .cw-max-width-1200 #cw-puzzle-grid {
+  margin-top: 55px;
+}
+
+.crossword.mobile .cw-max-width-1080 #cw-puzzle-grid {
+  margin-top: 45px;
 }
 
 .crossword.mobile .cw-buttons-holder {
@@ -197,8 +192,8 @@ html.mobile-mode {
   gap: 5.5em;
 }
 
-/* Smaller mobile buttons */
-.crossword.mobile .cw-button {
+/* Smaller mobile buttons in buttons holder */
+.crossword.mobile .cw-buttons-holder .cw-button {
   flex: 1;
   font-size: 0.75em;
   padding: 1em 2.5em;
@@ -206,6 +201,53 @@ html.mobile-mode {
   max-width: 10em;
   text-align: center;
   box-shadow: var(--main-shadow);
+}
+
+/* Compact notes button in header */
+.crossword.mobile .cw-button-notepad {
+  flex: 0 0 auto;
+  font-size: 0.65em;
+  padding: 0.3em 0.7em;
+  min-width: 0;
+  max-width: none;
+  width: auto;
+  height: auto;
+  line-height: normal;
+  align-self: center;
+  margin: 0;
+}
+
+/* Keyboard toggle button in header */
+.crossword.mobile .cw-button-keyboard-toggle {
+  flex: 0 0 auto;
+  font-size: 0.65em;
+  padding: 0.3em 0.7em;
+  min-width: 0;
+  max-width: none;
+  width: auto;
+  height: auto;
+  line-height: normal;
+  align-self: center;
+  margin-left: 0.5em;
+  background-color: var(--button-note-timer-bg-color);
+  color: var(--button-note-timer-text-color);
+  border: 1px solid var(--button-note-timer-border);
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: var(--main-shadow);
+  display: inline-flex;
+  align-items: center;
+}
+
+.crossword.mobile .cw-button-keyboard-toggle:hover {
+  background-color: var(--button-note-timer-hover-bg-color);
+  color: var(--button-note-timer-hover-text-color);
+}
+
+@media (max-width: 767px) {
+  .crossword.mobile .cw-button-keyboard-toggle {
+    display: none !important;
+  }
 }
 
 /* Hide buttons before they're moved by the mobile code */
@@ -270,12 +312,13 @@ html.mobile-mode {
   user-select: none;
   cursor: pointer;
   transition: background 0.2s ease;
+  max-width: 50px;
 }
 
 .crossword.mobile .wide-key {
   flex: 1;
   /* takes up more space */
-  max-width: none;
+  max-width: 60px;
 }
 
 .crossword.mobile .custom-key:active {
@@ -297,11 +340,15 @@ html.mobile-mode {
   font-size: 0;
 }
 
+.crossword.mobile #cw-puzzle-grid,
 .crossword.mobile #cw-puzzle-grid text {
-  pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+
+.crossword.mobile #cw-puzzle-grid text {
+  pointer-events: none;
 }
 
 .crossword.mobile .custom-key.cw-key-left,
@@ -320,9 +367,12 @@ html.mobile-mode {
   padding: 0;
 }
 
-.cw-key-alt-toggle.active {
+.cw-key-alt-toggle.active,
+.crossword.mobile .custom-key.rebus-key.active,
+.cw-key-rebus.active {
   background-color: var(--button-hover-color);
-  font-weight: bold
+  color: var(--button-hover-text-color);
+  font-weight: bold;
 }
 
 .keyboard-wrapper-placeholder {
@@ -354,6 +404,16 @@ html.mobile-mode {
 .crossword.mobile .cw-buttons-drawer.open {
   transform: translateY(-160%);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+}
+
+/* Hidden virtual keyboard state */
+.crossword.mobile.keyboard-hidden .keyboard-wrapper-placeholder {
+  display: none !important;
+}
+
+.crossword.mobile.keyboard-hidden .cw-buttons-drawer.open {
+  transform: translateY(0);
+  bottom: 24px;
 }
 
 .crossword.mobile .cw-menu {
@@ -419,7 +479,7 @@ html.mobile-mode {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 2px;
+  padding: 4px;
   box-sizing: border-box;
   background: var(--clues-holder-bg-color);
   box-shadow: var(--mobile-shadow);
@@ -427,10 +487,19 @@ html.mobile-mode {
 }
 
 .crossword.mobile .cw-mobile-clues-side .cw-clues {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
   flex: 1;
   overflow-y: auto;
   padding: 4px;
-  font-size: 1em;
+  font-size: 0.9em;
+  box-sizing: border-box;
+}
+
+.crossword.mobile .cw-mobile-clues-side .cw-clues-items {
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -446,11 +515,11 @@ html.mobile-mode {
 
 /* smaller buttons and no icons for phones*/
 @media (max-width: 480px) {
-  .cw-button svg {
+  .cw-buttons-holder .cw-button svg {
     display: none !important;
   }
 
-  .cw-button {
+  .cw-buttons-holder .cw-button {
     font-size: 0.75em !important;
     padding: 0.6em 1.1em !important;
   }
@@ -464,9 +533,14 @@ html.mobile-mode {
   }
 }
 
-@media (min-width: 768px) and (max-width: 1024px) {
+@media (min-width: 768px) {
   .crossword.mobile .custom-key {
     width: 6.5%;
+    max-width: 50px;
+  }
+
+  .crossword.mobile .wide-key {
+    max-width: 60px;
   }
 }
 
@@ -475,10 +549,17 @@ html.mobile-mode {
 .crossword.mobile .custom-key.backspace-key {
   width: auto;
   min-width: .6em;
+  max-width: 75px;
   padding: 0.65em 0.8em;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1em;
   white-space: nowrap;
+}
+
+.crossword.mobile .custom-key.rebus-key {
+  font-size: 0.85em;
+  padding: 0.65em 0.5em;
+  letter-spacing: 0.5px;
 }

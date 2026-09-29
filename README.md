@@ -72,6 +72,7 @@ You can customize the solver's behavior by passing a parameters object. Here are
 | `skip_filled_letters` | `boolean` | `true` | If true, the cursor skips over already-filled cells. |
 | `arrow_direction`| `string` | `'arrow_move_filled'` | Controls how arrow keys behave (e.g., `'arrow_move_filled'` skips filled cells, `'arrow_always_move'` does not). |
 | `space_bar` | `string` | `'space_clear'` | Defines the action of the spacebar (e.g., `'space_clear'` clears a cell, `'space_toggles_direction'` switches between Across/Down). |
+| `after_completing_word` | `string` | `'stay_in_word'` | Defines behavior after completely filling a word (`'stay_in_word'` or `'jump_to_next_word'`). |
 | `tab_key` | `string` | `'tab_noskip'` | Defines the behavior of the Tab key for navigating clues. |
 | `gray_completed_clues` | `boolean`| `false` | If true, clues are automatically grayed out when the corresponding word is filled. |
 | `timer_autostart`| `boolean`| `false` | If true, the puzzle timer starts automatically on load. |
@@ -107,4 +108,4 @@ The following parameters allow you to change the solver's color scheme.
 | `bar_linewidth` | `number`| `3.2` | Line width for cell borders (bars). |
 
 ## Deployment Note
-**CRITICAL:** Every time you deploy a new update to the solver, you **must** update the `CACHE_NAME` constant in `sw.js` (e.g., `const CACHE_NAME = "xw-solver-v2026.4.26";`). This ensures that users' browsers invalidate the old cache and download the latest versions of the files.
+**Note:** When building the project, Vite's custom bundler plugin automatically updates the `CACHE_NAME` constant in `sw.js` with a new unique timestamp version (e.g. `const CACHE_NAME = "xw-solver-v20260802133000";`). This automates browser cache invalidation for client updates.

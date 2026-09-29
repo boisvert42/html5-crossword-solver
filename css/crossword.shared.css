@@ -21,6 +21,7 @@ This file contains shared styles always loaded (mobile or desktop)
     --button-note-timer-hover-text-color: #000000;
     --button-note-timer-border: #888888;
     --button-menu-bg-color: #FFFFFF;
+    --button-menu-text-color: #000000;
     --top-text-wrapper-bg-color: #fff5d7;
     --top-text-wrapper-text-color: #000000;
     --clues-holder-bg-color: #EDE7DF;
@@ -40,6 +41,8 @@ This file contains shared styles always loaded (mobile or desktop)
     /* Grid Specific Colors */
     --grid-selected-square-color: #FF4136;
     --grid-selected-square-text-color: #ffffff;
+    --grid-rebus-stroke-color: #000000;
+    --grid-rebus-cursor-color: #ffffff;
     --grid-selected-word-color: #FEE300;
     --grid-selected-word-text-color: #000000;
     --grid-block-color: #212121;
@@ -83,6 +86,7 @@ body.dark-mode {
     --copyright-text-color: #aaaaaa;
     
     --button-menu-bg-color: #2c2c2c;
+    --button-menu-text-color: #e0e0e0;
 
     --top-text-wrapper-bg-color: #2c2c2c;
     --top-text-wrapper-text-color: #e0e0e0;
@@ -96,6 +100,8 @@ body.dark-mode {
     --grid-block-color: #000000;
     --grid-none-color: #1e1e1e;
     --grid-none-text-color: #e0e0e0;
+    --grid-rebus-stroke-color: #ffffff;
+    --grid-rebus-cursor-color: #ffffff;
     --grid-stroke-color: #555555;
     --grid-number-color: #bbbbbb;
     --grid-letter-color: #ffffff;
@@ -434,7 +440,7 @@ div.is-dragover {
   background: none;
   border: none;
   border-radius: 4px;
-  color: var(--button-text-color);
+  color: var(--button-menu-text-color);
   /* avoid Safari active style */
   cursor: pointer;
   display: block;
@@ -447,6 +453,7 @@ div.is-dragover {
 
 .cw-menu-item:hover {
   background-color: var(--button-hover-color);
+  color: var(--button-hover-text-color);
   transition: all 0.3s ease-in-out;
 }
 
@@ -601,6 +608,15 @@ div.is-dragover {
     flex: 0 0 auto;
 }
 
+.cw-author {
+    margin-right: 0.5em;
+}
+
+.cw-copyright {
+    color: var(--copyright-text-color);
+    margin-right: 0.5em;
+}
+
 .cw-flex-spacer {
     flex-grow: 1;
 }
@@ -614,7 +630,8 @@ div.is-dragover {
 /** Top text **/
 .cw-top-text-wrapper {
   position: absolute;
-  width: 100%;
+  width: calc(100% - 16px);
+  left: 8px;
   top: 0;
   text-align: center;
   align-items: center;
@@ -625,6 +642,7 @@ div.is-dragover {
   flex-shrink: 0;
   border-radius: 4px;
   box-shadow: var(--main-shadow);
+  box-sizing: border-box;
 }
 
 .cw-clue-number {
@@ -638,7 +656,9 @@ div.is-dragover {
 
 .cw-clue-text {
   flex: 1 1 auto;
+  min-width: 0;
   word-wrap: break-word;
+  overflow-wrap: break-word;
   margin-right: 3px;
 }
 
@@ -669,9 +689,12 @@ div.is-dragover {
   min-height: 1px;
   overflow-y: auto;
   overflow-x: hidden;
+  font-size: 1em;
 }
 
 .cw-clue {
+  padding: 6px 0px;
+  margin-right: 3px;
   margin-bottom: 1px;
   cursor: pointer;
   display: flex;
@@ -746,6 +769,24 @@ div.is-dragover {
 
 .cw-cell-image {
   pointer-events: none;
+}
+
+.cw-rebus-frame {
+  animation: none;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
+}
+
+@keyframes cw-cursor-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.cw-rebus-cursor {
+  animation: cw-cursor-blink 0.9s step-start infinite;
 }
 
 /** Inputs **/

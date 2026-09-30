@@ -43,6 +43,11 @@ export function keyPressed(e) {
       }
       break;
     case 38: // up
+      if (this.isClueDecipherMode) {
+        const skip_filled_words = this.config.tab_key === 'tab_skip';
+        this.moveToNextWord(true, skip_filled_words);
+        break;
+      }
       if (this.rebus_mode) this.exitRebusMode(true, false);
       if (this.diagramless_mode) this.setDiagramlessDir('down'); // vertical mode (set BEFORE)
       if (e.shiftKey) {
@@ -65,6 +70,11 @@ export function keyPressed(e) {
       }
       break;
     case 40: // down
+      if (this.isClueDecipherMode) {
+        const skip_filled_words = this.config.tab_key === 'tab_skip';
+        this.moveToNextWord(false, skip_filled_words);
+        break;
+      }
       if (this.rebus_mode) this.exitRebusMode(true, false);
       if (this.diagramless_mode) this.setDiagramlessDir('down'); // vertical mode (set BEFORE)
       if (e.shiftKey) {

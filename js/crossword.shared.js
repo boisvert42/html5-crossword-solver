@@ -5,7 +5,8 @@
 window.CrosswordShared = {
   getCrosswordParams() {
     const url = new URL(window.location.href);
-    const puzzle = url.searchParams.get("puzzle") || url.searchParams.get("file");
+    //const puzzle = url.searchParams.get("puzzle") || url.searchParams.get("file");
+    const puzzle = "clue_decipher_test.ipuz";
     const downsOnly = url.searchParams.has("downsonly") && url.searchParams.get("downsonly") !== "false";
     const kelsey = url.searchParams.has("kelsey") && url.searchParams.get("kelsey") !== "false";
     const b64config = url.searchParams.get("config");
@@ -81,4 +82,3 @@ window.CrosswordShared = {
     });
   }
 };
-

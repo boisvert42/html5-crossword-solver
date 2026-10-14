@@ -1,7 +1,7 @@
 /**
  * @file modal.js
  * @description Manages crossword dialog overlays, user settings modals, and rebus entry inputs.
- * 
+ *
  * What belongs here:
  * - Generic modal container constructor (like createModalBox) handling sizing, placement, and keyboard closing.
  * - Rebus text inputs and key event traps (like openRebusModal).
@@ -107,6 +107,7 @@ export function openSettings() {
           </input>
         </label>
       </div>
+      <!--
       <div class="settings-option">
         <label class="settings-label">
           <input id="gray_completed_clues" type="checkbox" name="gray_completed_clues" class="settings-changer">
@@ -114,6 +115,7 @@ export function openSettings() {
           </input>
         </label>
       </div>
+      -->
     </div>
 
     <!-- After completing a word -->
@@ -258,10 +260,12 @@ export function openSettings() {
           }
 
           // If the toggled setting is gray_completed_clues, re-render clues immediately
+          /**
           if (event.target.name === 'gray_completed_clues') {
             this.styleClues();
             this.syncTopTextWidth();
           }
+          **/
 
         } else if (event.target.type === 'radio') {
           this.config[event.target.name] = event.target.id;

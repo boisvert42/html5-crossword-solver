@@ -320,6 +320,9 @@ import {
           }
         }
 
+        // Overwrite "gray_completed_clues"
+        this.config["gray_completed_clues"] = false;
+
         // Copy any other properties from user_config that aren't in default_config
         // This is important for custom callbacks like onSolved
         if (user_config) {

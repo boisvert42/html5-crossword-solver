@@ -41,8 +41,25 @@ export function getClueTextHtml(clueText, dir, number) {
   let html = '';
   const originalText = clueText || '';
   const normalizedDir = this.normalizeDirection(dir);
+  let inWord = false;
+
   for (let idx = 0; idx < originalText.length; idx++) {
     const char = originalText[idx];
+
+    if (/\s/.test(char)) {
+      if (inWord) {
+        html += '</span>';
+        inWord = false;
+      }
+      html += escape(char);
+      continue;
+    }
+
+    if (!inWord) {
+      html += '<span class="clue-word">';
+      inWord = true;
+    }
+
     if (/[a-zA-Z]/.test(char)) {
       const key = `${normalizedDir}-${number}-${idx}`;
       let userVal = this.clueLetterState ? this.clueLetterState[key] : null;
@@ -54,6 +71,11 @@ export function getClueTextHtml(clueText, dir, number) {
       html += escape(char);
     }
   }
+
+  if (inWord) {
+    html += '</span>';
+  }
+
   return html;
 }
 

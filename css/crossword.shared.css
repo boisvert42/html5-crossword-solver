@@ -928,6 +928,11 @@ input[type='radio'] {
 }
 
 /* --- Clue Decipher Mode highlighting --- */
+.clue-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .clue-char {
   display: inline-block;
   text-align: center;
